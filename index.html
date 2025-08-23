@@ -77,7 +77,6 @@
             transition: all 0.6s ease-in-out;
         }
 
-        /* --- INICIO: NUEVA ANIMACIÓN DE CUBO CONSTRUIDO --- */
         .preloader-logo-container {
             width: 150px;
             height: 150px;
@@ -96,10 +95,9 @@
             stroke-dashoffset: 70;
             animation: draw-line 1s ease-out forwards;
         }
-        /* Orden de dibujado de las líneas */
-        .constructing-logo .logo-line:nth-of-type(4) { animation-delay: 0s; }    /* Contorno */
-        .constructing-logo .logo-line:nth-of-type(5) { animation-delay: 0.6s; }  /* 'Y' superior */
-        .constructing-logo .logo-line:nth-of-type(6) { animation-delay: 0.8s; }  /* Línea vertical */
+        .constructing-logo .logo-line:nth-of-type(4) { animation-delay: 0s; }
+        .constructing-logo .logo-line:nth-of-type(5) { animation-delay: 0.6s; }
+        .constructing-logo .logo-line:nth-of-type(6) { animation-delay: 0.8s; }
 
         @keyframes draw-line {
             to { stroke-dashoffset: 0; }
@@ -112,7 +110,6 @@
             transform-origin: center center;
             animation: fill-face 0.7s ease-out forwards;
         }
-        /* Orden de rellenado de las caras */
         .constructing-logo .face-top { animation-delay: 1.2s; }
         .constructing-logo .face-left { animation-delay: 1.4s; }
         .constructing-logo .face-right { animation-delay: 1.4s; }
@@ -128,7 +125,6 @@
              from { opacity: 0; transform: scale(0.95); }
              to { opacity: 0.25; transform: scale(1); }
         }
-        /* --- FIN: NUEVA ANIMACIÓN --- */
         
         body.app-loaded #preloader {
             top: 24px;
@@ -140,7 +136,7 @@
             background-color: transparent;
         }
         body.app-loaded #preloader .preloader-logo-container {
-             display: none; /* Oculta la animación grande */
+             display: none;
         }
         #static-preloader-logo { display: none; }
         body.app-loaded #static-preloader-logo {
@@ -174,8 +170,28 @@
             transition: width 0.3s ease, background-color 0.3s ease; z-index: 900;
         }
 
-        .sidebar-header { height: 50px; margin-bottom: 2rem; position: relative; display: flex; align-items: center; }
-        #sidebar-bar-name { font-size: 1.5rem; font-weight: 700; margin: 0 0 0 65px; line-height: 50px; color: var(--text-color); opacity: 0; animation: fadeIn 0.5s ease 0.6s forwards; white-space: nowrap; }
+        .sidebar-header {
+            height: 50px;
+            margin-bottom: 2rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .sidebar-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+            background-color: var(--primary-light);
+            padding: 4px;
+        }
+        .sidebar-logo-placeholder {
+            width: 50px;
+            height: 50px;
+            color: var(--primary-color);
+        }
+        #sidebar-bar-name { font-size: 1.5rem; font-weight: 700; margin: 0; line-height: 1.2; color: var(--text-color); white-space: nowrap; opacity: 0; animation: fadeIn 0.5s ease 0.6s forwards; }
         
         #app-nav { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
         .nav-tab {
@@ -292,18 +308,75 @@
         .quantity-control input::-webkit-outer-spin-button, .quantity-control input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .quantity-control input[type=number] { -moz-appearance: textfield; }
         .actions { display: flex; flex-wrap: wrap; }
-        /* Estilo para transacción de caja */
         .caja-tx-ingreso { color: var(--success-color); }
         .caja-tx-egreso { color: var(--danger-color); }
+        
+        .logo-uploader {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            position: relative;
+        }
+        .logo-uploader:hover { border-color: var(--primary-color); }
+        .logo-uploader input[type="file"] { display: none; }
+        .logo-uploader .uploader-text { color: var(--text-muted); }
+        .logo-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        .logo-uploader.has-logo .uploader-text { opacity: 0; }
+        .logo-uploader.has-logo .logo-preview { display: block; }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .category-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem 1rem;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .form-summary {
+            background-color: var(--bg-color);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            border: 1px solid var(--border-color);
+        }
 
         @media (max-width: 992px) {
             :root { --sidebar-width: 220px; }
             main { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
         }
 
-        /* --- INICIO: Nuevo Diseño Móvil con Barra de Navegación Inferior --- */
         @media (max-width: 768px) {
-            body.app-loaded #preloader { display: none; } /* Oculta el logo estático en móvil */
+            body.app-loaded #preloader { display: none; }
 
             #sidebar {
                 flex-direction: row;
@@ -317,7 +390,8 @@
                 box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
             }
             [data-theme="dark"] #sidebar { box-shadow: 0 -2px 5px rgba(0,0,0,0.2); }
-            .sidebar-header, .sidebar-footer { display: none; }
+            .sidebar-header { display: none; }
+            .sidebar-footer { display: none; }
 
             #app-nav {
                 flex-direction: row;
@@ -335,14 +409,13 @@
                 padding: 0.25rem 0;
                 gap: 4px;
                 border-radius: 6px;
-                background: none !important; /* Anula el fondo del estado activo */
+                background: none !important;
             }
             .nav-tab .icon { width: 22px; height: 22px; }
             .nav-tab span { font-size: 0.7rem; font-weight: 500; }
             .nav-tab.active { color: var(--primary-color); font-weight: 600; }
             
-            /* Indicador activo como una línea superior */
-            .nav-tab::before { display: none; } /* Oculta el indicador lateral */
+            .nav-tab::before { display: none; }
             .nav-tab.active::after {
                 content: '';
                 position: absolute;
@@ -358,10 +431,9 @@
                 margin-left: 0;
                 width: 100%;
                 padding: 1.5rem 1rem;
-                padding-bottom: calc(var(--bottom-nav-height) + 1.5rem); /* Espacio para no ser tapado por la nav */
+                padding-bottom: calc(var(--bottom-nav-height) + 1.5rem);
             }
 
-            /* Estilos de tablas responsivas */
             .management-table thead { display: none; }
             .management-table, .management-table tbody, .management-table tr, .management-table td { display: block; width: 100%; }
             .management-table tr { margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; }
@@ -370,7 +442,6 @@
             .management-table td::before { content: attr(data-label); position: absolute; left: 0.75rem; width: calc(50% - 1.5rem); text-align: left; font-weight: bold; color: var(--text-muted); }
             .stats-grid { grid-template-columns: 1fr; }
         }
-        /* --- FIN: Nuevo Diseño Móvil --- */
     </style>
 </head>
 <body>
@@ -409,14 +480,21 @@
         <svg id="static-preloader-logo"><use href="#icon-logo"></use></svg>
     </div>
 
-    <div id="auth-container"><div class="auth-box"><svg class="static-logo"><use href="#icon-logo"></use></svg><h2>InventaPro</h2><p>La solución definitiva para gestionar tu negocio.</p><div class="auth-buttons"><button id="show-login-btn" class="btn btn-primary">Iniciar Sesión</button><button id="show-register-btn" class="btn btn-outline">Registrarse</button></div></div></div>
-    <div id="login-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Iniciar Sesión</h2><form id="login-form"><div class="form-group"><label for="username">Usuario</label><input type="text" id="username" required></div><div class="form-group"><label for="password">Contraseña</label><input type="password" id="password" required></div><div class="form-error-msg" id="login-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
-    <div id="register-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Crear Cuenta</h2><form id="register-form"><div class="form-group"><label for="reg-username">Usuario</label><input type="text" id="reg-username" required></div><div class="form-group"><label for="reg-barname">Nombre del Negocio</label><input type="text" id="reg-barname" required></div><div class="form-group"><label for="reg-password">Crear Contraseña</label><input type="password" id="reg-password" required></div><div class="form-group"><label for="reg-password-confirm">Confirmar Contraseña</label><input type="password" id="reg-password-confirm" required></div><div class="form-error-msg" id="register-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Registrarse</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
+    <div id="auth-container"><div class="auth-box"><svg class="static-logo"><use href="#icon-logo"></use></svg><h2>Bienvenido a InventaPro</h2><p>La solución definitiva para gestionar tu negocio.</p><div class="auth-buttons"><button id="show-login-btn" class="btn btn-primary">Iniciar Sesión</button><button id="show-register-btn" class="btn btn-outline">Crear una cuenta nueva</button></div></div></div>
     
+    <div id="login-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Iniciar Sesión</h2><form id="login-form"><div class="form-group"><label for="username">Correo Electrónico</label><input type="email" id="username" required></div><div class="form-group"><label for="password">Contraseña</label><input type="password" id="password" required></div><div class="form-error-msg" id="login-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
+    
+    <div id="register-modal" class="modal"><div class="modal-content" style="max-width: 600px;"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Configura tu Cuenta y Negocio</h2><p style="text-align: center; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 2rem;">Un solo paso para empezar a organizar todo.</p><form id="register-form"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem 1.5rem;"><div class="form-group"><label for="reg-fullname">Nombre Completo</label><input type="text" id="reg-fullname" required></div><div class="form-group"><label for="reg-phone">Teléfono</label><input type="tel" id="reg-phone"></div><div class="form-group"><label for="reg-email">Correo Electrónico</label><input type="email" id="reg-email" required></div><div class="form-group"><label for="reg-password">Crear Contraseña</label><input type="password" id="reg-password" required></div><div class="form-group"><label for="reg-barname">Nombre del Establecimiento</label><input type="text" id="reg-barname" required></div><div class="form-group"><label for="reg-role">Tu Rol Principal</label><select id="reg-role" required><option value="" disabled selected>Selecciona un rol...</option><option value="propietario">Propietario</option><option value="administrador">Administrador</option><option value="empleado">Empleado</option></select></div><div class="form-group" style="grid-column: 1 / -1;"><label for="reg-logo">Logo del Establecimiento</label><label class="logo-uploader" for="reg-logo"><span class="uploader-text">Click para subir una imagen</span><img id="logo-preview" class="logo-preview" src="#" alt="Vista previa del logo"><input type="file" id="reg-logo" accept="image/png, image/jpeg, image/webp"></label></div></div><div class="form-error-msg" id="register-error" style="margin-top: 1.5rem;"></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-outline" onclick="app.showAuthHome()">Cancelar</button><button type="submit" class="btn btn-primary">Siguiente Paso &rarr;</button></div></form></div></div>
+
+    <div id="category-modal" class="modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>¿Qué tipo de negocio tienes?</h2><p style="text-align: center; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 1rem;">Esto nos ayudará a personalizar tu experiencia.</p><div class="category-grid"><div class="category-card" onclick="app.selectCategory('Discoteca / Bar')">Discoteca / Bar</div><div class="category-card" onclick="app.selectCategory('Restaurante / Cafetería')">Restaurante / Cafetería</div><div class="category-card" onclick="app.selectCategory('Tienda / Minimarket')">Tienda / Minimarket</div><div class="category-card" onclick="app.selectCategory('Supermercado')">Supermercado</div><div class="category-card" onclick="app.selectCategory('Bodega / Almacén')">Bodega / Almacén</div><div class="category-card" onclick="app.selectCategory('Otro')">Otro</div></div></div></div>
+
+    <div id="license-modal" class="modal"><div class="modal-content" style="max-width: 420px;"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Último paso: Activar Licencia</h2><p style="text-align: center; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 2rem;">Ingresa tu código de licencia para desbloquear todas las funciones.</p><form id="license-form"><div class="form-group"><label for="license-code">Código de Licencia</label><input type="text" id="license-code" required></div><div class="form-error-msg" id="license-error"></div><button type="submit" class="btn btn-success" style="width: 100%; margin-top: 1rem;">Activar y Empezar</button></form></div></div>
+
     <div id="app-shell">
         <aside id="sidebar">
             <div class="sidebar-header">
-                 <h1 id="sidebar-bar-name">InventaPro</h1>
+                <div id="sidebar-logo-container"></div>
+                <h1 id="sidebar-bar-name">InventaPro</h1>
             </div>
             <nav id="app-nav">
                 <button class="nav-tab" data-tab="turnos"><svg class="icon"><use href="#icon-turnos"></use></svg><span>Turnos</span></button>
@@ -481,31 +559,34 @@
     <div id="toast-container"></div>
 
 <script>
-// El código JavaScript no necesita cambios.
-// Pega tu código JavaScript existente aquí.
 const app = {
-    // --- 1. ESTADO DE LA APLICACIÓN ---
-    state: { 
-        barName: 'InventaPro', 
-        productos: [], 
-        trabajadores: [], 
-        lotes_bodega: [], 
-        turnosActivos: [], 
-        historial: [], 
-        caja: {
-            saldoInicialDia: 0,
-            transacciones: [],
-            fechaActual: null
-        },
-        loggedIn: false, 
-        activeTab: 'turnos', 
-        currentTurnoView: { type: 'dashboard', workerId: null } 
+    // Devuelve la estructura de un estado inicial para una nueva cuenta
+    getInitialState() {
+        return {
+            user: null,
+            business: null,
+            productos: [],
+            trabajadores: [],
+            lotes_bodega: [],
+            turnosActivos: [],
+            historial: [],
+            caja: {
+                saldoInicialDia: 0,
+                transacciones: [],
+                fechaActual: null
+            },
+            loggedIn: false,
+            activeTab: 'turnos',
+            currentTurnoView: { type: 'dashboard', workerId: null }
+        };
     },
+
+    state: null,
     _tempData: {},
     currentReportData: null,
 
-    // --- 2. INICIALIZACIÓN Y CICLO DE VIDA ---
     init() {
+        this.state = this.getInitialState();
         this.initTheme();
         this.attachAuthEventListeners();
         this.handlePreloader();
@@ -520,24 +601,23 @@ const app = {
         document.getElementById('report-start-date').value = toLocalISOString(todayStart);
         document.getElementById('report-end-date').value = toLocalISOString(todayEnd);
     },
-    saveState() { localStorage.setItem('InventaProState', JSON.stringify(this.state)); },
-    loadState() {
-        const savedState = localStorage.getItem('InventaProState');
-        const user = JSON.parse(localStorage.getItem('InventaProUser'));
 
-        if (savedState) { 
-            this.state = JSON.parse(savedState); 
-            if (!this.state.currentTurnoView) this.state.currentTurnoView = { type: 'dashboard', workerId: null };
-            if (!this.state.historial) this.state.historial = [];
-            if (!this.state.caja) this.state.caja = { saldoInicialDia: 0, transacciones: [], fechaActual: null };
+    saveState() {
+        if (!this.state.loggedIn || !this.state.user) return;
+        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        const accountIndex = accounts.findIndex(acc => acc.user.email === this.state.user.email);
+        
+        if (accountIndex > -1) {
+            accounts[accountIndex] = this.state;
+        } else {
+            accounts.push(this.state);
         }
-        if (user) {
-            this.state.barName = user.barName;
-        }
+        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
     },
+
+    loadState() { /* Deprecado */ },
     uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
 
-    // --- 3. GESTIÓN DEL TEMA (MODO OSCURO) ---
     initTheme() {
         const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
         const themeToggleMobile = document.getElementById('theme-toggle-mobile');
@@ -556,13 +636,9 @@ const app = {
             }
         };
 
-        if (savedTheme) {
-            applyTheme(savedTheme);
-        } else if (systemPrefersDark) {
-            applyTheme('dark');
-        } else {
-            applyTheme('light');
-        }
+        if (savedTheme) { applyTheme(savedTheme); }
+        else if (systemPrefersDark) { applyTheme('dark'); }
+        else { applyTheme('light'); }
 
         const toggleTheme = () => {
             const currentTheme = document.documentElement.hasAttribute('data-theme') ? 'dark' : 'light';
@@ -575,31 +651,178 @@ const app = {
         themeToggleMobile.addEventListener('change', toggleTheme);
     },
 
-    // --- 4. AUTENTICACIÓN Y NAVEGACIÓN ---
-    handlePreloader() { setTimeout(() => { this.loadState(); if (this.state.loggedIn) { this.transitionToApp(); } else { document.body.classList.add('auth-visible'); document.getElementById('auth-container').style.display = 'flex'; } }, 2800); },
-    attachAuthEventListeners() { document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); document.getElementById('show-register-btn').addEventListener('click', () => this.showRegisterModal()); document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); this.login(); }); document.getElementById('register-form').addEventListener('submit', (e) => { e.preventDefault(); this.registerUser(); }); },
-    showAuthHome() { document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'none'; document.getElementById('auth-container').style.display = 'flex'; },
-    showLoginModal() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('login-modal').style.display = 'flex'; document.getElementById('login-error').textContent = ''; },
-    showRegisterModal() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('register-modal').style.display = 'flex'; document.getElementById('register-error').textContent = ''; },
+    handlePreloader() {
+        setTimeout(() => {
+            document.body.classList.add('auth-visible');
+            document.getElementById('auth-container').style.display = 'flex';
+        }, 2800);
+    },
+
+    attachAuthEventListeners() { 
+        document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); 
+        document.getElementById('show-register-btn').addEventListener('click', () => this.showRegisterModal()); 
+        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); this.login(); }); 
+        document.getElementById('register-form').addEventListener('submit', (e) => { e.preventDefault(); this.registerUser(); });
+        document.getElementById('reg-logo').addEventListener('change', (e) => this.handleLogoUpload(e));
+        document.getElementById('license-form').addEventListener('submit', (e) => { e.preventDefault(); this.verifyLicense(); });
+    },
+
+    showAuthHome() { 
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        document.getElementById('auth-container').style.display = 'flex'; 
+    },
+    
+    showLoginModal() { 
+        document.getElementById('auth-container').style.display = 'none'; 
+        document.getElementById('login-modal').style.display = 'flex'; 
+        document.getElementById('login-error').textContent = ''; 
+    },
+    
+    showRegisterModal() { 
+        document.getElementById('auth-container').style.display = 'none'; 
+        document.getElementById('register-modal').style.display = 'flex'; 
+        document.getElementById('register-error').textContent = ''; 
+    },
+
+    handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (!file || !file.type.startsWith('image/')) {
+            this.showToast('Por favor, selecciona un archivo de imagen.', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('logo-preview').src = e.target.result;
+            document.querySelector('.logo-uploader').classList.add('has-logo');
+            this._tempData.logoDataUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    },
+
     registerUser() {
-        const username = document.getElementById('reg-username').value.trim(); const barName = document.getElementById('reg-barname').value.trim(); const password = document.getElementById('reg-password').value; const passwordConfirm = document.getElementById('reg-password-confirm').value; const errorEl = document.getElementById('register-error');
-        if (!username || !barName || !password) { errorEl.textContent = 'Todos los campos son obligatorios.'; return; } if (password !== passwordConfirm) { errorEl.textContent = 'Las contraseñas no coinciden.'; return; }
-        if (localStorage.getItem('InventaProUser')) { errorEl.textContent = 'Ya existe un usuario registrado.'; this.showToast('Solo se permite un usuario en esta versión.', 'error'); return; }
-        const user = { username, barName, password: btoa(password) }; localStorage.setItem('InventaProUser', JSON.stringify(user)); this.showToast('¡Registro exitoso! Bienvenido.');
-        this.state.loggedIn = true; this.state.barName = barName; this.saveState(); this.transitionToApp();
+        const fullname = document.getElementById('reg-fullname').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const barname = document.getElementById('reg-barname').value.trim();
+        const role = document.getElementById('reg-role').value;
+        const errorEl = document.getElementById('register-error');
+        
+        if (!fullname || !email || !password || !barname || !role) {
+            errorEl.textContent = 'Por favor, completa todos los campos obligatorios.';
+            return;
+        }
+        
+        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        if (accounts.some(acc => acc.user.email === email)) {
+            errorEl.textContent = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+            return;
+        }
+
+        this._tempData.newAccount = this.getInitialState();
+        this._tempData.newAccount.user = {
+            id: this.uid(),
+            fullname,
+            phone: document.getElementById('reg-phone').value.trim(),
+            email,
+            password: btoa(password),
+            role,
+        };
+        this._tempData.newAccount.business = {
+            id: this.uid(),
+            name: barname,
+            logoDataUrl: this._tempData.logoDataUrl || null,
+            category: null
+        };
+
+        document.getElementById('register-modal').style.display = 'none';
+        this.showCategoryModal();
     },
+    
+    showCategoryModal() {
+        document.getElementById('category-modal').style.display = 'flex';
+    },
+
+    selectCategory(category) {
+        this._tempData.newAccount.business.category = category;
+        document.getElementById('category-modal').style.display = 'none';
+        this.showLicenseModal();
+    },
+
+    showLicenseModal() {
+        document.getElementById('license-modal').style.display = 'flex';
+        document.getElementById('license-error').textContent = '';
+    },
+
+    verifyLicense() {
+        const code = document.getElementById('license-code').value.trim();
+        const errorEl = document.getElementById('license-error');
+        const correctCode = 'm12d09a1995';
+
+        if (code.toLowerCase() !== correctCode.toLowerCase()) {
+            errorEl.textContent = 'El código de licencia no es válido.';
+            return;
+        }
+        
+        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        accounts.push(this._tempData.newAccount);
+        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
+        
+        this.state = this._tempData.newAccount;
+        this.state.loggedIn = true;
+        this._tempData = {};
+        
+        this.showToast('¡Bienvenido! Tu cuenta ha sido activada.', 'success');
+        this.transitionToApp();
+    },
+    
     login() {
-        const username = document.getElementById('username').value; const password = document.getElementById('password').value; const errorEl = document.getElementById('login-error'); const user = JSON.parse(localStorage.getItem('InventaProUser'));
-        if (!user) { errorEl.textContent = 'No hay ningún usuario registrado. Por favor, regístrate.'; return; }
-        if (user.username === username && user.password === btoa(password)) { this.state.loggedIn = true; this.state.barName = user.barName; this.saveState(); this.transitionToApp(); } else { errorEl.textContent = 'Usuario o contraseña incorrectos.'; }
+        const email = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorEl = document.getElementById('login-error');
+
+        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        const foundAccount = accounts.find(acc => acc.user.email === email);
+
+        if (!foundAccount) {
+            errorEl.textContent = 'No se encontró ninguna cuenta con ese correo.';
+            return;
+        }
+        
+        if (foundAccount.user.password === btoa(password)) {
+            this.state = foundAccount;
+            this.state.loggedIn = true;
+            this.transitionToApp();
+        } else {
+            errorEl.textContent = 'Correo o contraseña incorrectos.';
+        }
     },
-    logout() { this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => { this.state.loggedIn = false; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.saveState(); window.location.reload(); }); },
-    transitionToApp() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'none'; document.body.classList.add('app-loaded'); document.body.classList.remove('auth-visible'); this.renderAppUI(); },
+
+    logout() {
+        this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => {
+            this.state = this.getInitialState();
+            window.location.reload();
+        });
+    },
+    
+    transitionToApp() { 
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        document.getElementById('auth-container').style.display = 'none';
+        document.body.classList.add('app-loaded'); 
+        document.body.classList.remove('auth-visible'); 
+        this.renderAppUI(); 
+    },
+    
     changeTab(tabId) { this.state.activeTab = tabId; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.renderAppUI(); },
 
-    // --- 5. RENDERIZADO DE LA APP ---
     renderAppUI() {
-        document.getElementById('sidebar-bar-name').textContent = this.state.barName;
+        document.getElementById('sidebar-bar-name').textContent = this.state.business.name;
+        const logoContainer = document.getElementById('sidebar-logo-container');
+        if (this.state.business.logoDataUrl) {
+            logoContainer.innerHTML = `<img src="${this.state.business.logoDataUrl}" alt="Logo del negocio" class="sidebar-logo">`;
+        } else {
+            logoContainer.innerHTML = `<svg class="sidebar-logo-placeholder"><use href="#icon-logo"></use></svg>`;
+        }
+
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll(`.nav-tab[data-tab="${this.state.activeTab}"]`).forEach(t => t.classList.add('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === this.state.activeTab));
@@ -618,73 +841,19 @@ const app = {
         }
     },
     
-    // --- 6. SECCIÓN: FLUJO DE CAJA ---
     getTodayDateString() { return new Date().toISOString().split('T')[0]; },
     isCajaAbierta() { return this.state.caja.fechaActual === this.getTodayDateString(); },
     renderCajaTab() {
         const container = document.getElementById('caja');
         if (!this.isCajaAbierta()) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <h3>Flujo de Caja del Día</h3>
-                    <p>No se ha iniciado la caja para el día de hoy (${new Date().toLocaleDateString('es-CO')}).</p>
-                    <button class="btn btn-primary" onclick="app.showIniciarDiaModal()">+ Iniciar Caja del Día</button>
-                </div>`;
+            container.innerHTML = `<div class="empty-state"><h3>Flujo de Caja del Día</h3><p>No se ha iniciado la caja para el día de hoy (${new Date().toLocaleDateString('es-CO')}).</p><button class="btn btn-primary" onclick="app.showIniciarDiaModal()">+ Iniciar Caja del Día</button></div>`;
         } else {
             const resumen = this.calcularResumenCaja();
             const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-            
             const transaccionesHTML = this.state.caja.transacciones.length > 0
-                ? `<table class="management-table">
-                    <thead><tr><th>Hora</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th></th></tr></thead>
-                    <tbody>
-                        ${this.state.caja.transacciones.slice().reverse().map(tx => `
-                            <tr>
-                                <td data-label="Hora">${new Date(tx.timestamp).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</td>
-                                <td data-label="Tipo" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}">${tx.tipo.charAt(0).toUpperCase() + tx.tipo.slice(1)}</td>
-                                <td data-label="Descripción">${tx.descripcion}</td>
-                                <td data-label="Monto" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}" style="font-weight: bold;">${currency(tx.monto)}</td>
-                                <td data-label="Acciones">
-                                    <div class="actions">
-                                        <button class="btn btn-icon" onclick="app.deleteTransaccionCaja('${tx.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                   </table>`
+                ? `<table class="management-table"><thead><tr><th>Hora</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th></th></tr></thead><tbody>${this.state.caja.transacciones.slice().reverse().map(tx => `<tr><td data-label="Hora">${new Date(tx.timestamp).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</td><td data-label="Tipo" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}">${tx.tipo.charAt(0).toUpperCase() + tx.tipo.slice(1)}</td><td data-label="Descripción">${tx.descripcion}</td><td data-label="Monto" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}" style="font-weight: bold;">${currency(tx.monto)}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.deleteTransaccionCaja('${tx.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join('')}</tbody></table>`
                 : `<div class="empty-state" style="padding: 1.5rem;">No hay movimientos registrados hoy.</div>`;
-
-            container.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Resumen de Caja del Día (${new Date().toLocaleDateString('es-CO')})</h2>
-                    </div>
-                    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                        <div class="stat-card">
-                            <div class="stat-card-content"><h5>Saldo Inicial</h5><p>${currency(resumen.saldoInicial)}</p></div>
-                        </div>
-                        <div class="stat-card success">
-                            <div class="stat-card-content"><h5>Ingresos</h5><p>${currency(resumen.totalIngresos)}</p></div>
-                        </div>
-                        <div class="stat-card danger">
-                            <div class="stat-card-content"><h5>Egresos</h5><p>${currency(resumen.totalEgresos)}</p></div>
-                        </div>
-                        <div class="stat-card" style="background-color: var(--primary-color);">
-                            <div class="stat-card-content"><h5 style="color:white;">Saldo Actual</h5><p style="color:white;">${currency(resumen.saldoActual)}</p></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Movimientos del Día</h2>
-                        <div class="actions" style="gap: 0.5rem;">
-                            <button class="btn btn-success" onclick="app.showTransaccionCajaModal('ingreso')">+ Ingreso</button>
-                            <button class="btn btn-danger" onclick="app.showTransaccionCajaModal('egreso')">- Egreso</button>
-                        </div>
-                    </div>
-                    ${transaccionesHTML}
-                </div>`;
+            container.innerHTML = `<div class="card"><div class="card-header"><h2>Resumen de Caja del Día (${new Date().toLocaleDateString('es-CO')})</h2></div><div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));"><div class="stat-card"><div class="stat-card-content"><h5>Saldo Inicial</h5><p>${currency(resumen.saldoInicial)}</p></div></div><div class="stat-card success"><div class="stat-card-content"><h5>Ingresos</h5><p>${currency(resumen.totalIngresos)}</p></div></div><div class="stat-card danger"><div class="stat-card-content"><h5>Egresos</h5><p>${currency(resumen.totalEgresos)}</p></div></div><div class="stat-card" style="background-color: var(--primary-color);"><div class="stat-card-content"><h5 style="color:white;">Saldo Actual</h5><p style="color:white;">${currency(resumen.saldoActual)}</p></div></div></div></div><div class="card"><div class="card-header"><h2>Movimientos del Día</h2><div class="actions" style="gap: 0.5rem;"><button class="btn btn-success" onclick="app.showTransaccionCajaModal('ingreso')">+ Ingreso</button><button class="btn btn-danger" onclick="app.showTransaccionCajaModal('egreso')">- Egreso</button></div></div>${transaccionesHTML}</div>`;
         }
     },
     calcularResumenCaja() {
@@ -692,30 +861,14 @@ const app = {
         let totalIngresos = 0;
         let totalEgresos = 0;
         this.state.caja.transacciones.forEach(tx => {
-            if (tx.tipo === 'ingreso') {
-                totalIngresos += tx.monto;
-            } else {
-                totalEgresos += tx.monto;
-            }
+            if (tx.tipo === 'ingreso') totalIngresos += tx.monto;
+            else totalEgresos += tx.monto;
         });
         const saldoActual = saldoInicial + totalIngresos - totalEgresos;
         return { saldoInicial, totalIngresos, totalEgresos, saldoActual };
     },
     showIniciarDiaModal() {
-        this.showModal(`
-            <h2>Iniciar Flujo de Caja</h2>
-            <p>Ingresa el monto de dinero con el que inicias el día.</p>
-            <form id="iniciar-dia-form">
-                <div class="form-group">
-                    <label for="saldo-inicial">Dinero en Caja</label>
-                    <input type="number" id="saldo-inicial" min="0" step="1000" required>
-                </div>
-                <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Iniciar Día</button>
-                </div>
-            </form>
-        `);
+        this.showModal(`<h2>Iniciar Flujo de Caja</h2><p>Ingresa el monto de dinero con el que inicias el día.</p><form id="iniciar-dia-form"><div class="form-group"><label for="saldo-inicial">Dinero en Caja</label><input type="number" id="saldo-inicial" min="0" step="1000" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Iniciar Día</button></div></form>`);
         document.getElementById('iniciar-dia-form').onsubmit = (e) => {
             e.preventDefault();
             const saldo = parseFloat(document.getElementById('saldo-inicial').value);
@@ -740,23 +893,7 @@ const app = {
         }
         const title = tipo === 'ingreso' ? 'Registrar Ingreso' : 'Registrar Egreso';
         const btnClass = tipo === 'ingreso' ? 'btn-success' : 'btn-danger';
-        this.showModal(`
-            <h2>${title}</h2>
-            <form id="transaccion-caja-form">
-                <div class="form-group">
-                    <label for="tx-monto">Monto</label>
-                    <input type="number" id="tx-monto" min="1" required>
-                </div>
-                <div class="form-group">
-                    <label for="tx-descripcion">Descripción</label>
-                    <textarea id="tx-descripcion" rows="3" required></textarea>
-                </div>
-                <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
-                    <button type="submit" class="btn ${btnClass}">Guardar</button>
-                </div>
-            </form>
-        `);
+        this.showModal(`<h2>${title}</h2><form id="transaccion-caja-form"><div class="form-group"><label for="tx-monto">Monto</label><input type="number" id="tx-monto" min="1" required></div><div class="form-group"><label for="tx-descripcion">Descripción</label><textarea id="tx-descripcion" rows="3" required></textarea></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn ${btnClass}">Guardar</button></div></form>`);
         document.getElementById('transaccion-caja-form').onsubmit = (e) => {
             e.preventDefault();
             const monto = parseFloat(document.getElementById('tx-monto').value);
@@ -793,7 +930,6 @@ const app = {
         });
     },
 
-    // --- 7. SECCIÓN: TURNOS (CON INTEGRACIÓN DE CAJA) ---
     renderTurnosTab() { const c = document.getElementById('turnos-view-container'); if (this.state.currentTurnoView.type === 'dashboard') { c.innerHTML = this.renderTurnoDashboard(); } else { c.innerHTML = this.renderTurnoDetail(this.state.currentTurnoView.workerId); } },
     renderTurnoDashboard() {
         if (this.state.trabajadores.length === 0) return `<div class="empty-state">No hay trabajadores registrados. Añada uno en Configuración.</div>`;
@@ -806,10 +942,7 @@ const app = {
                 statusClass = 'status-active';
                 statusText = turno.liquidado ? 'Liquidado' : 'Activo';
                 if(turno.liquidado) statusClass = 'status-liquidado';
-                summaryHTML = `<div class="worker-card-summary">
-                    <p>Ventas: <span>${currency(r.total_ingresos)}</span></p>
-                    <p>Pago Final: <span style="font-weight:bold; color: var(--success-color);">${currency(r.pago_final_al_trabajador)}</span></p>
-                </div>`;
+                summaryHTML = `<div class="worker-card-summary"><p>Ventas: <span>${currency(r.total_ingresos)}</span></p><p>Pago Final: <span style="font-weight:bold; color: var(--success-color);">${currency(r.pago_final_al_trabajador)}</span></p></div>`;
             }
             return `<div class="worker-card" onclick="app.viewWorkerDetail('${w.id}')"><div class="worker-card-header"><h3>${w.nombre}</h3><span class="status-badge ${statusClass}">${statusText}</span></div>${summaryHTML}</div>`;
         }).join('')}</div>`;
@@ -821,35 +954,7 @@ const app = {
             const r = this.calculateSummary(turno); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
             let dispatchHTML = this.state.productos.map(p => `<button class="btn btn-primary" onclick="app.showQuantityModal('${turno.id}', '${p.id}')" ${turno.liquidado ? 'disabled' : ''}>${p.nombre} <span style="opacity:0.7;font-size:0.8em;">(${p.stock_actual})</span></button>`).join('');
             if (!this.state.productos.length) dispatchHTML = `<p style="color:var(--secondary-color);">Añada productos en Configuración y traslade stock desde Inventario.</p>`;
-            return `${backButton}
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Gestionando Turno de: ${worker.nombre}</h3>
-                        ${turno.liquidado ? '<span class="status-badge status-liquidado">LIQUIDADO</span>':''}
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <svg class="icon"><use href="#icon-dollar"></use></svg>
-                            <div class="stat-card-content"><h3>Ventas Generadas</h3><p>${cur(r.total_ingresos)}</p></div>
-                        </div>
-                        <div class="stat-card">
-                             <svg class="icon"><use href="#icon-clipboard"></use></svg>
-                             <div class="stat-card-content"><h3>Fichas Ganadas</h3><p>${cur(r.total_fichas)}</p></div>
-                        </div>
-                        <div class="stat-card success">
-                            <svg class="icon"><use href="#icon-check"></use></svg>
-                             <div class="stat-card-content"><h3>Pago Final</h3><p>${cur(r.pago_final_al_trabajador)}</p></div>
-                        </div>
-                    </div>
-                    <h4 style="margin-top:2rem;">Despacho Rápido</h4>
-                    <div class="dispatch-grid">${dispatchHTML}</div>
-                    <div class="actions" style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
-                        <button class="btn btn-secondary" onclick="app.showLoanModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}>+ Préstamo</button>
-                        <button class="btn btn-success" onclick="app.showLiquidarModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}><svg class="icon"><use href="#icon-check"></use></svg>Liquidar Turno</button>
-                        <button class="btn btn-outline" onclick="app.showBreakdownModal('${turno.id}')">Ver Desglose</button>
-                        <button class="btn btn-danger" onclick="app.endShift('${turno.id}')">Finalizar Turno</button>
-                    </div>
-                </div>`;
+            return `${backButton}<div class="card"><div class="card-header"><h3>Gestionando Turno de: ${worker.nombre}</h3>${turno.liquidado ? '<span class="status-badge status-liquidado">LIQUIDADO</span>':''}</div><div class="stats-grid"><div class="stat-card"><svg class="icon"><use href="#icon-dollar"></use></svg><div class="stat-card-content"><h3>Ventas Generadas</h3><p>${cur(r.total_ingresos)}</p></div></div><div class="stat-card"><svg class="icon"><use href="#icon-clipboard"></use></svg><div class="stat-card-content"><h3>Fichas Ganadas</h3><p>${cur(r.total_fichas)}</p></div></div><div class="stat-card success"><svg class="icon"><use href="#icon-check"></use></svg><div class="stat-card-content"><h3>Pago Final</h3><p>${cur(r.pago_final_al_trabajador)}</p></div></div></div><h4 style="margin-top:2rem;">Despacho Rápido</h4><div class="dispatch-grid">${dispatchHTML}</div><div class="actions" style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;"><button class="btn btn-secondary" onclick="app.showLoanModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}>+ Préstamo</button><button class="btn btn-success" onclick="app.showLiquidarModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}><svg class="icon"><use href="#icon-check"></use></svg>Liquidar Turno</button><button class="btn btn-outline" onclick="app.showBreakdownModal('${turno.id}')">Ver Desglose</button><button class="btn btn-danger" onclick="app.endShift('${turno.id}')">Finalizar Turno</button></div></div>`;
         } else { return `${backButton}<div class="empty-state"><h3>${worker.nombre} está inactivo.</h3><button class="btn btn-primary" onclick="app.startShift('${worker.id}')">+ Iniciar Turno para ${worker.nombre}</button></div>`; }
     },
     viewWorkerDetail(workerId) { this.state.currentTurnoView = { type: 'detail', workerId }; this.renderAppUI(); },
@@ -857,13 +962,8 @@ const app = {
     calculateSummary(turno) {
         let total_ingresos = 0, total_fichas = 0, total_prestamos = 0;
         turno.transacciones.forEach(t => {
-            switch (t.tipo) {
-                case 'DESPACHO':
-                    const p = this.state.productos.find(prod => prod.id === t.productoId);
-                    if (p) { total_ingresos += p.precio_venta * t.cantidad; total_fichas += p.valor_ficha * t.cantidad; }
-                    break;
-                case 'PRESTAMO': total_prestamos += t.monto; break;
-            }
+            if (t.tipo === 'DESPACHO') { const p = this.state.productos.find(prod => prod.id === t.productoId); if (p) { total_ingresos += p.precio_venta * t.cantidad; total_fichas += p.valor_ficha * t.cantidad; } }
+            else if (t.tipo === 'PRESTAMO') { total_prestamos += t.monto; }
         });
         const pago_base_turno = turno.pago_base_turno || 0;
         const pago_final_al_trabajador = total_fichas + pago_base_turno - total_prestamos;
@@ -891,22 +991,11 @@ const app = {
         const monto = parseFloat(document.getElementById('input-pago-base').value);
         if (isNaN(monto) || monto < 0) { this.showToast("Debe ingresar un pago base válido (puede ser 0).", 'error'); return; }
         const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId);
-        
-        // --- INTEGRACIÓN CON CAJA ---
         const summary = this.calculateSummary(turno);
-        summary.pago_base_turno = monto; // Recalcular con el pago base final
+        summary.pago_base_turno = monto;
         const pagoFinal = summary.total_fichas + summary.pago_base_turno - summary.total_prestamos;
-
-        // Registrar Ingreso por ventas
-        if (summary.total_ingresos > 0) {
-            this.addTransaccionCaja('ingreso', summary.total_ingresos, `Ventas del turno de ${turno.trabajador.nombre}`);
-        }
-        // Registrar Egreso por pago
-        if (pagoFinal > 0) {
-            this.addTransaccionCaja('egreso', pagoFinal, `Pago liquidación a ${turno.trabajador.nombre}`);
-        }
-        // --- FIN DE INTEGRACIÓN ---
-
+        if (summary.total_ingresos > 0) { this.addTransaccionCaja('ingreso', summary.total_ingresos, `Ventas del turno de ${turno.trabajador.nombre}`); }
+        if (pagoFinal > 0) { this.addTransaccionCaja('egreso', pagoFinal, `Pago liquidación a ${turno.trabajador.nombre}`); }
         turno.pago_base_turno = monto;
         turno.liquidado = true;
         this.closeModal();
@@ -914,92 +1003,109 @@ const app = {
         this.renderAppUI();
         this.showToast('Turno liquidado y movimientos registrados en caja.');
     },
-    
-    // --- 8. SECCIÓN: INVENTARIO (CON INTEGRACIÓN DE CAJA) ---
     renderInventario() { this.renderBodega(); this.renderBarra(); },
-    renderBodega() { const c = document.getElementById('bodega-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.lotes_bodega.length === 0) { c.innerHTML = `<div class="empty-state">No hay compras registradas en la bodega.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Lote</th><th>P. Compra</th><th>Unidades</th><th>Producto Asociado</th><th></th></tr></thead><tbody>`; this.state.lotes_bodega.forEach(l => { const p = this.state.productos.find(prod => prod.id === l.id_producto_asociado); tbl += `<tr><td data-label="Lote">${l.nombre}</td><td data-label="P. Compra">${cur(l.precio_compra)}</td><td data-label="Unidades">${l.unidades_por_lote}</td><td data-label="Asociado">${p ? p.nombre : '<span style="color:var(--danger-color)">ELIMINADO</span>'}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showLoteModal('${l.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-primary" onclick="app.showDescomponerModal('${l.id}')">Trasladar</button><button class="btn btn-icon" onclick="app.deleteLote('${l.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
+    renderBodega() { const c = document.getElementById('bodega-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.lotes_bodega.length === 0) { c.innerHTML = `<div class="empty-state">No hay compras registradas en la bodega.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Lote</th><th>Producto</th><th>Stock en Bodega</th><th>Costo Unit.</th><th></th></tr></thead><tbody>`; this.state.lotes_bodega.forEach(l => { const p = this.state.productos.find(prod => prod.id === l.id_producto_asociado); const stockEmbalado = Math.floor(l.unidades_disponibles / l.unidades_por_empaque); const stockSuelto = l.unidades_disponibles % l.unidades_por_empaque; let stockLabel = `${l.unidades_disponibles} Unidades`; if(l.unidades_por_empaque > 1) { stockLabel = `${stockEmbalado} ${l.tipo_empaque}s y ${stockSuelto} uds. (${l.unidades_disponibles} total)`; } tbl += `<tr><td data-label="Lote">${l.nombre}</td><td data-label="Producto">${p ? p.nombre : 'ELIMINADO'}</td><td data-label="Stock">${stockLabel}</td><td data-label="Costo Unit.">${cur(l.precio_compra_total / (l.cantidad_empaques * l.unidades_por_empaque))}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-primary" onclick="app.showTrasladoModal('${l.id}')">Trasladar</button><button class="btn btn-icon" onclick="app.deleteLote('${l.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
     renderBarra() { const c = document.getElementById('barra-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.productos.length === 0) { c.innerHTML = `<div class="empty-state">No hay productos definidos para la venta.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Producto en Barra</th><th>Stock Actual</th><th>P. Venta</th><th>P. Costo Unit.</th><th>Valor Inventario</th></tr></thead><tbody>`; this.state.productos.forEach(p => { const v = p.stock_actual * p.precio_costo_unitario; tbl += `<tr><td data-label="Producto">${p.nombre}</td><td data-label="Stock" style="font-weight:bold;">${p.stock_actual}</td><td data-label="P. Venta">${cur(p.precio_venta)}</td><td data-label="P. Costo">${cur(p.precio_costo_unitario)}</td><td data-label="Valor">${cur(v)}</td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
-    saveLote(id) {
-        const n = document.getElementById('lote-nombre').value.trim(), c = parseFloat(document.getElementById('lote-compra').value), u = parseInt(document.getElementById('lote-unidades').value), p = document.getElementById('lote-producto').value; 
-        if (!n || isNaN(c) || c <= 0 || isNaN(u) || u <= 0 || !p) { this.showToast('Todos los campos son obligatorios y los números deben ser positivos.', 'error'); return; } 
-        const data = { nombre: n, precio_compra: c, unidades_por_lote: u, id_producto_asociado: p }; 
-        if(id) { 
-            Object.assign(this.state.lotes_bodega.find(l => l.id === id), data); 
-            this.showToast('Lote editado con éxito'); 
-        } else { 
-            this.state.lotes_bodega.push({ ...data, id: this.uid(), timestamp: new Date().toISOString() }); 
-            this.showToast('Nueva compra registrada en bodega.'); 
-        } 
+    saveLote() {
+        const idProd = document.getElementById('lote-producto').value;
+        const nombre = document.getElementById('lote-nombre').value.trim();
+        const tipoEmpaque = document.getElementById('lote-empaque-tipo').value;
+        const unidadesPorEmpaque = parseInt(document.getElementById('lote-unidades-empaque').value);
+        const cantidadEmpaques = parseInt(document.getElementById('lote-cantidad-empaques').value);
+        const precioTotal = parseFloat(document.getElementById('lote-precio-total').value);
+
+        if(!idProd || !nombre || !tipoEmpaque || isNaN(unidadesPorEmpaque) || isNaN(cantidadEmpaques) || isNaN(precioTotal) || unidadesPorEmpaque <= 0 || cantidadEmpaques <= 0 || precioTotal < 0) {
+            this.showToast('Todos los campos son obligatorios y los valores deben ser positivos.', 'error'); return;
+        }
+
+        const nuevoLote = {
+            id: this.uid(),
+            nombre,
+            id_producto_asociado: idProd,
+            tipo_empaque: tipoEmpaque,
+            unidades_por_empaque: unidadesPorEmpaque,
+            cantidad_empaques: cantidadEmpaques,
+            unidades_disponibles: unidadesPorEmpaque * cantidadEmpaques,
+            precio_compra_total: precioTotal,
+            timestamp: new Date().toISOString()
+        };
+
+        this.state.lotes_bodega.push(nuevoLote);
         this.saveState(); 
         this.renderInventario(); 
-        this.closeModal(); 
+        this.closeModal();
+        this.showToast('Nueva compra registrada en bodega.');
     },
     deleteLote(id) { this.showConfirmationModal('¿Eliminar este lote de la bodega? Esta acción es irreversible.', () => { this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id); this.saveState(); this.renderInventario(); this.showToast('Lote eliminado', 'error'); }); },
-    showDescomponerModal(loteId) {
+    showTrasladoModal(loteId) {
         const lote = this.state.lotes_bodega.find(l => l.id === loteId);
-        if (!lote) { this.showToast('Error: No se encontró el lote.', 'error'); return; }
         const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
-        if (!producto) { this.showToast('Error: El producto asociado a este lote ya no existe. No se puede trasladar.', 'error'); return; }
+        if (!lote || !producto) { this.showToast('Error: No se encontró el lote o producto asociado.', 'error'); return; }
         
         this._tempData.loteId = loteId;
-
-        const contentHTML = `
-            <h2>Trasladar Stock a Barra</h2>
-            <p>Desde el lote: <strong>${lote.nombre}</strong></p>
-            <p>Hacia el producto: <strong>${producto.nombre}</strong></p>
-            <form id="traslado-form">
-                <div class="form-group">
-                    <label for="traslado-cantidad">Unidades a trasladar (Disponibles: ${lote.unidades_por_lote})</label>
-                    <div class="quantity-control">
-                        <button type="button" class="btn btn-secondary" id="btn-traslado-minus">-</button>
-                        <input type="number" id="traslado-cantidad" value="1" min="1" max="${lote.unidades_por_lote}" class="form-group" style="margin:0; flex-grow:1;">
-                        <button type="button" class="btn btn-secondary" id="btn-traslado-plus">+</button>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-outline" style="width:100%; margin-bottom: 1.5rem;" onclick="document.getElementById('traslado-cantidad').value = ${lote.unidades_por_lote}">Trasladar Lote Completo (${lote.unidades_por_lote} uds.)</button>
-                <div class="actions" style="justify-content:flex-end; gap:0.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Confirmar Traslado</button>
-                </div>
-            </form>
-        `;
+        const stockEmbalado = Math.floor(lote.unidades_disponibles / lote.unidades_por_empaque);
+        const stockSuelto = lote.unidades_disponibles % lote.unidades_por_empaque;
+        
+        const contentHTML = `<h2>Trasladar Stock a Barra</h2>
+            <p>Desde el lote: <strong>${lote.nombre}</strong> para <strong>${producto.nombre}</strong></p>
+            <div class="form-summary">Stock disponible: <strong>${stockEmbalado} ${lote.tipo_empaque}s y ${stockSuelto} unidades</strong> (${lote.unidades_disponibles} total)</div>
+            <form id="traslado-form" style="margin-top: 1.5rem;">
+                <div class="form-group"><label for="traslado-empaques">Cantidad de ${lote.tipo_empaque}s a trasladar (c/u tiene ${lote.unidades_por_empaque} uds.)</label><input type="number" id="traslado-empaques" min="0" max="${stockEmbalado}" placeholder="0"></div>
+                <div class="form-group"><label for="traslado-unidades">Cantidad de Unidades adicionales a trasladar</label><input type="number" id="traslado-unidades" min="0" max="${lote.unidades_disponibles}" placeholder="0"></div>
+                <div class="form-summary" id="traslado-summary" style="display:none;"></div>
+                <button type="button" class="btn btn-outline" style="width:100%; margin: 1rem 0;" onclick="app.trasladarLoteCompleto()">Trasladar Lote Completo (${lote.unidades_disponibles} uds.)</button>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar Traslado</button></div>
+            </form>`;
         this.showModal(contentHTML);
 
-        const input = document.getElementById('traslado-cantidad');
-        const max = lote.unidades_por_lote;
-        document.getElementById('btn-traslado-minus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal > 1) input.value = currentVal - 1; });
-        document.getElementById('btn-traslado-plus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal < max) input.value = currentVal + 1; });
+        const empaquesInput = document.getElementById('traslado-empaques');
+        const unidadesInput = document.getElementById('traslado-unidades');
+        const summaryEl = document.getElementById('traslado-summary');
+        
+        const updateTotal = () => {
+            const numEmpaques = parseInt(empaquesInput.value) || 0;
+            const numUnidades = parseInt(unidadesInput.value) || 0;
+            const total = (numEmpaques * lote.unidades_por_empaque) + numUnidades;
+            if (total > 0) {
+                summaryEl.style.display = 'block';
+                summaryEl.innerHTML = `Total a trasladar: <strong>${total} unidades</strong>`;
+            } else {
+                summaryEl.style.display = 'none';
+            }
+        };
+        empaquesInput.oninput = updateTotal;
+        unidadesInput.oninput = updateTotal;
+        
         document.getElementById('traslado-form').onsubmit = (e) => { e.preventDefault(); this.confirmTraslado(); };
-        input.focus();
+    },
+    trasladarLoteCompleto() {
+        const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
+        if(!lote) return;
+        document.getElementById('traslado-empaques').value = 0;
+        document.getElementById('traslado-unidades').value = lote.unidades_disponibles;
+        document.getElementById('traslado-empaques').dispatchEvent(new Event('input')); // Para actualizar el resumen
     },
     confirmTraslado() {
         const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
-        const cantidadInput = document.getElementById('traslado-cantidad');
-        const cantidad = parseInt(cantidadInput.value);
-
-        if (!lote) { this.showToast('Error: Lote no encontrado.', 'error'); this.closeModal(); return; }
-        if (isNaN(cantidad) || cantidad <= 0) { this.showToast('La cantidad debe ser un número positivo.', 'error'); return; }
-        if (cantidad > lote.unidades_por_lote) { this.showToast(`No puedes trasladar más de las ${lote.unidades_por_lote} unidades disponibles.`, 'error'); return; }
-
         const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
-        if (!producto) { this.showToast('Error: El producto asociado ya no existe.', 'error'); this.closeModal(); return; }
+        const numEmpaques = parseInt(document.getElementById('traslado-empaques').value) || 0;
+        const numUnidades = parseInt(document.getElementById('traslado-unidades').value) || 0;
+        const totalATrasladar = (numEmpaques * lote.unidades_por_empaque) + numUnidades;
 
-        producto.stock_actual += cantidad;
-        lote.unidades_por_lote -= cantidad;
+        if (totalATrasladar <= 0) { this.showToast('Debes ingresar una cantidad a trasladar.', 'error'); return; }
+        if (totalATrasladar > lote.unidades_disponibles) { this.showToast(`No puedes trasladar más de las ${lote.unidades_disponibles} unidades disponibles.`, 'error'); return; }
 
-        if (lote.unidades_por_lote === 0) {
+        producto.stock_actual += totalATrasladar;
+        lote.unidades_disponibles -= totalATrasladar;
+
+        if (lote.unidades_disponibles === 0) {
             this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== this._tempData.loteId);
-            this.showToast(`Lote completo (${cantidad} uds.) trasladado a la barra.`);
+            this.showToast(`Lote completo (${totalATrasladar} uds.) trasladado.`);
         } else {
-            this.showToast(`${cantidad} unidades trasladadas a la barra.`);
+            this.showToast(`${totalATrasladar} unidades trasladadas a la barra.`);
         }
-
-        this.saveState();
-        this.renderInventario();
-        this.closeModal();
+        this.saveState(); this.renderInventario(); this.closeModal();
     },
-    
-    // --- 9. SECCIÓN: HISTORIAL Y REPORTES ---
     renderHistorialTab() {
         const container = document.getElementById('historial-container'); if (!this.state.historial || this.state.historial.length === 0) { container.innerHTML = `<div class="empty-state">No hay turnos finalizados en el historial.</div>`; return; }
         const sortedHistory = [...this.state.historial].sort((a, b) => new Date(b.fecha_fin) - new Date(a.fecha_fin));
@@ -1059,17 +1165,43 @@ const app = {
         }
         this.showModal(`<h2>${title}</h2><div>${contentHTML}</div><div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`);
     },
-    
-    // --- 10. MODALES Y UTILIDADES ---
     showModal(contentHTML) { document.getElementById('modal-content').innerHTML = contentHTML; document.getElementById('modal-container').style.display = 'flex'; },
     closeModal() { document.getElementById('modal-container').style.display = 'none'; this._tempData = {}; },
     showConfirmationModal(message, onConfirm) { this._tempData.onConfirm = onConfirm; this.showModal(`<h2>Confirmación</h2><p>${message}</p><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="button" class="btn btn-danger" onclick="app.executeConfirmation()">Confirmar</button></div>`); },
     executeConfirmation() { if(this._tempData.onConfirm) this._tempData.onConfirm(); this.closeModal(); },
     showToast(message, type = 'success') { const tc = document.getElementById('toast-container'); const t = document.createElement('div'); const icon = type === 'success' ? '#icon-check' : '#icon-alert'; t.className = `toast ${type}`; t.innerHTML = `<svg class="icon"><use href="${icon}"></use></svg><span>${message}</span>`; tc.appendChild(t); setTimeout(() => t.remove(), 4000); },
-    showLoteModal(id = null) {
-        const lote = id ? this.state.lotes_bodega.find(l => l.id === id) : null; const title = lote ? 'Editar Lote de Compra' : 'Añadir Nueva Compra'; const productOptions = this.state.productos.map(p => `<option value="${p.id}" ${lote && lote.id_producto_asociado === p.id ? 'selected' : ''}>${p.nombre}</option>`).join('');
-        this.showModal(`<h2>${title}</h2><form id="lote-form"><div class="form-group"><label for="lote-nombre">Nombre del Lote</label><input type="text" id="lote-nombre" value="${lote ? lote.nombre : ''}" required></div><div class="form-group"><label for="lote-compra">Precio Total de Compra</label><input type="number" id="lote-compra" value="${lote ? lote.precio_compra : ''}" min="0" required></div><div class="form-group"><label for="lote-unidades">Unidades por Lote</label><input type="number" id="lote-unidades" value="${lote ? lote.unidades_por_lote : ''}" min="1" required></div><div class="form-group"><label for="lote-producto">Producto Asociado</label><select id="lote-producto" required><option value="">Seleccione...</option>${productOptions}</select></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form>`);
-        document.getElementById('lote-form').onsubmit = (e) => { e.preventDefault(); this.saveLote(id); }; document.getElementById('lote-nombre').focus();
+    showLoteModal() {
+        const productOptions = this.state.productos.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+        this.showModal(`<h2>Añadir Nueva Compra a Bodega</h2>
+        <form id="lote-form"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group" style="grid-column: 1 / -1;"><label for="lote-producto">Producto Asociado</label><select id="lote-producto" required><option value="" disabled selected>Seleccione...</option>${productOptions}</select></div>
+        <div class="form-group" style="grid-column: 1 / -1;"><label for="lote-nombre">Nombre o Descripción de la Compra (Ej: Factura #123)</label><input type="text" id="lote-nombre" required></div>
+        <div class="form-group"><label for="lote-empaque-tipo">Tipo de Empaque</label><select id="lote-empaque-tipo"><option>Caja</option><option>Paca</option><option>Canasta</option><option>Unidad</option></select></div>
+        <div class="form-group"><label for="lote-unidades-empaque">Unidades por Empaque</label><input type="number" id="lote-unidades-empaque" value="1" min="1" required></div>
+        <div class="form-group"><label for="lote-cantidad-empaques">Cantidad de Empaques</label><input type="number" id="lote-cantidad-empaques" value="1" min="1" required></div>
+        <div class="form-group"><label for="lote-precio-total">Precio Total de la Compra</label><input type="number" id="lote-precio-total" min="0" required></div>
+        </div><div class="form-summary" id="lote-summary"></div>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Compra</button></div></form>`);
+        
+        const inputs = ['lote-unidades-empaque', 'lote-cantidad-empaques', 'lote-precio-total'];
+        inputs.forEach(id => document.getElementById(id).addEventListener('input', this.updateLoteSummary));
+        document.getElementById('lote-empaque-tipo').addEventListener('change', (e) => {
+            if (e.target.value === 'Unidad') { document.getElementById('lote-unidades-empaque').value = 1; document.getElementById('lote-unidades-empaque').disabled = true; } 
+            else { document.getElementById('lote-unidades-empaque').disabled = false; }
+            this.updateLoteSummary();
+        });
+        
+        this.updateLoteSummary();
+        document.getElementById('lote-form').onsubmit = (e) => { e.preventDefault(); this.saveLote(); };
+    },
+    updateLoteSummary() {
+        const unidadesPorEmpaque = parseInt(document.getElementById('lote-unidades-empaque').value) || 0;
+        const cantidadEmpaques = parseInt(document.getElementById('lote-cantidad-empaques').value) || 0;
+        const precioTotal = parseFloat(document.getElementById('lote-precio-total').value) || 0;
+        const totalUnidades = unidadesPorEmpaque * cantidadEmpaques;
+        const costoUnitario = totalUnidades > 0 ? precioTotal / totalUnidades : 0;
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        document.getElementById('lote-summary').innerHTML = `Total a ingresar: <strong>${totalUnidades} unidades</strong>. Costo unitario aprox: <strong>${currency(costoUnitario)}</strong>`;
     },
     _getTurnoBreakdownHTML(turno) {
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); const fichas = {}; let prestamosHTML = '';
@@ -1080,10 +1212,7 @@ const app = {
     showBreakdownModal(turnoId) { const turno = this.state.turnosActivos.find(t => t.id === turnoId); const { fichasHTML, prestamosHTML } = this._getTurnoBreakdownHTML(turno); this.showModal(`<h2>Desglose: ${turno.trabajador.nombre}</h2>${fichasHTML}${prestamosHTML}<div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`); },
     showHistoryBreakdownModal(turnoId) { const turno = this.state.historial.find(t => t.id === turnoId); const { fichasHTML, prestamosHTML } = this._getTurnoBreakdownHTML(turno); this.showModal(`<h2>Desglose Histórico: ${turno.trabajador.nombre}</h2><p>Turno del ${new Date(turno.fecha_inicio).toLocaleDateString('es-CO')}</p>${fichasHTML}${prestamosHTML}<div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`); },
     showLiquidarModal(turnoId) {
-        if (!this.isCajaAbierta()) {
-            this.showToast('Debes iniciar la caja del día para poder liquidar un turno.', 'error');
-            return;
-        }
+        if (!this.isCajaAbierta()) { this.showToast('Debes iniciar la caja del día para poder liquidar un turno.', 'error'); return; }
         this._tempData.turnoId = turnoId; const turno = this.state.turnosActivos.find(t => t.id === turnoId); const summary = this.calculateSummary(turno); const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         this.showModal(`<h2>Liquidar Turno de ${turno.trabajador.nombre}</h2><div class="form-group"><label for="input-pago-base">Pago Base del Turno (Sueldo Fijo)</label><input type="number" id="input-pago-base" value="${turno.pago_base_turno || 0}" required></div><div class="liquidacion-summary"><p>Fichas Ganadas (Comisión): <span>${currency(summary.total_fichas)}</span></p><p>(+) Pago Base del Turno: <span id="pago-base-display">${currency(turno.pago_base_turno || 0)}</span></p><p>(-) Préstamos: <span style="color:var(--danger-color)">${currency(summary.total_prestamos)}</span></p><hr><p><strong>Total a Pagar al Trabajador:</strong> <strong><span id="total-pagar-display">${currency(summary.pago_final_al_trabajador)}</span></strong></p></div><form id="liquidacion-form" style="margin-top:1.5rem;"><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-success">Confirmar Liquidación</button></div></form>`);
         const pagoBaseInput = document.getElementById('input-pago-base');
@@ -1107,6 +1236,7 @@ const app = {
     saveProduct(id) { const n=document.getElementById('p-name').value.trim(), v=parseFloat(document.getElementById('p-venta').value), c=parseFloat(document.getElementById('p-costo').value), f=parseFloat(document.getElementById('p-ficha').value); if(!n || isNaN(v) || isNaN(c) || isNaN(f)) { this.showToast("Datos inválidos. Todos los campos son obligatorios.", "error"); return; } const data = {nombre:n, precio_venta:v, precio_costo_unitario:c, valor_ficha:f}; if (id) { Object.assign(this.state.productos.find(p=>p.id===id), data); this.showToast('Producto actualizado'); } else { this.state.productos.push({...data, id: this.uid(), stock_actual: 0}); this.showToast('Producto creado con éxito'); } this.saveState(); this.showProductManagementModal(); },
     deleteProduct(id) { this.showConfirmationModal('¿Eliminar esta plantilla de producto? Esto podría afectar lotes y reportes antiguos.', () => { this.state.productos = this.state.productos.filter(p => p.id !== id); this.saveState(); this.showProductManagementModal(); this.showToast('Producto eliminado', 'error'); }); },
     showLoanModal: function(turnoId) { this._tempData = { turnoId }; this.showModal(`<h2>Registrar Préstamo</h2><form id="loan-form"><div class="form-group"><label>Monto</label><input type="number" id="input-monto" min="1" required></div><div class="form-group"><label>Descripción</label><textarea id="input-descripcion" rows="3" required></textarea></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar</button></div></form>`); document.getElementById('loan-form').onsubmit = (e) => { e.preventDefault(); this.confirmLoan(); }; document.getElementById('input-monto').focus(); },
+
 };
 
 document.addEventListener('DOMContentLoaded', () => {
