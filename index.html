@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InventaPro - Control de Inventario Profesional</title>
+    <title>InventaPro - Control de Inventario</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -62,7 +62,7 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* --- INICIO: Preloader Profesional Fragmentado --- */
+        /* --- PRELOADER Y ANIMACIÓN DE TRANSICIÓN --- */
         #preloader {
             position: fixed;
             top: 0;
@@ -71,101 +71,88 @@
             height: 100%;
             z-index: 9999;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             background-color: var(--bg-color);
-            transition: opacity 0.6s ease-in-out;
+            transition: all 0.6s ease-in-out;
         }
 
-        body.auth-visible #preloader,
+        /* --- INICIO: NUEVA ANIMACIÓN DE CUBO CONSTRUIDO --- */
+        .preloader-logo-container {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            z-index: 2;
+        }
+        .constructing-logo {
+            width: 100%;
+            height: 100%;
+        }
+        .constructing-logo .logo-line {
+            stroke: var(--primary-color);
+            stroke-width: 1.5;
+            fill: none;
+            stroke-dasharray: 70;
+            stroke-dashoffset: 70;
+            animation: draw-line 1s ease-out forwards;
+        }
+        /* Orden de dibujado de las líneas */
+        .constructing-logo .logo-line:nth-of-type(4) { animation-delay: 0s; }    /* Contorno */
+        .constructing-logo .logo-line:nth-of-type(5) { animation-delay: 0.6s; }  /* 'Y' superior */
+        .constructing-logo .logo-line:nth-of-type(6) { animation-delay: 0.8s; }  /* Línea vertical */
+
+        @keyframes draw-line {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .constructing-logo .logo-face {
+            fill: var(--primary-color);
+            stroke: none;
+            opacity: 0;
+            transform-origin: center center;
+            animation: fill-face 0.7s ease-out forwards;
+        }
+        /* Orden de rellenado de las caras */
+        .constructing-logo .face-top { animation-delay: 1.2s; }
+        .constructing-logo .face-left { animation-delay: 1.4s; }
+        .constructing-logo .face-right { animation-delay: 1.4s; }
+
+        @keyframes fill-face {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 0.15; transform: scale(1); }
+        }
+        [data-theme="dark"] .constructing-logo .logo-face {
+            animation-name: fill-face-dark;
+        }
+        @keyframes fill-face-dark {
+             from { opacity: 0; transform: scale(0.95); }
+             to { opacity: 0.25; transform: scale(1); }
+        }
+        /* --- FIN: NUEVA ANIMACIÓN --- */
+        
         body.app-loaded #preloader {
+            top: 24px;
+            left: 24px;
+            width: 50px;
+            height: 50px;
+            transform: translate(0, 0);
+            pointer-events: none;
+            background-color: transparent;
+        }
+        body.app-loaded #preloader .preloader-logo-container {
+             display: none; /* Oculta la animación grande */
+        }
+        #static-preloader-logo { display: none; }
+        body.app-loaded #static-preloader-logo {
+            display: block;
+            width: 50px;
+            height: 50px;
+            color: var(--primary-color);
+        }
+        body.auth-visible #preloader {
             opacity: 0;
             pointer-events: none;
         }
-
-        .scene {
-            width: 100px;
-            height: 100px;
-            perspective: 800px;
-            margin-bottom: 2rem;
-        }
-
-        .cube {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(-35deg) rotateY(45deg);
-            animation: cube-rotation 3.5s ease-in-out forwards;
-        }
-
-        .particle {
-            position: absolute;
-            width: 25px;
-            height: 25px;
-            background: var(--primary-color);
-            transform-style: preserve-3d;
-            opacity: 0;
-            animation: 
-                assemble 3s ease-in-out forwards,
-                color-flash 3.5s ease-in-out infinite;
-            animation-delay: var(--delay);
-            box-shadow: 0 0 5px var(--primary-color), inset 0 0 5px rgba(255, 255, 255, 0.3);
-        }
-
-        @keyframes cube-rotation {
-            0% { transform: rotateX(-35deg) rotateY(45deg) scale(0.5); }
-            100% { transform: rotateX(-35deg) rotateY(45deg) scale(1); }
-        }
-
-        @keyframes assemble {
-            0% {
-                transform: var(--transform-initial);
-                opacity: 0;
-            }
-            30% {
-                opacity: 1;
-            }
-            100% {
-                transform: var(--transform-final);
-                opacity: 1;
-            }
-        }
-
-        @keyframes color-flash {
-            0%, 100% { 
-                background-color: var(--primary-color); 
-                box-shadow: 0 0 5px var(--primary-color);
-            }
-            25% { 
-                background-color: var(--success-color); 
-                box-shadow: 0 0 15px var(--success-color), 0 0 25px var(--success-color);
-            }
-            50% { 
-                background-color: var(--primary-light); 
-                box-shadow: 0 0 20px var(--primary-light), 0 0 30px var(--primary-light);
-            }
-            75% { 
-                background-color: var(--warning-color); 
-                box-shadow: 0 0 15px var(--warning-color), 0 0 25px var(--warning-color);
-            }
-        }
-
-        #preloader-text {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            opacity: 0;
-            animation: fade-in-text 1.2s ease-in-out 1.5s forwards;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        @keyframes fade-in-text {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* --- FIN: Preloader Profesional Fragmentado --- */
 
         /* --- CONTENEDOR DE AUTENTICACIÓN --- */
         #auth-container { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 1.5rem; animation: fadeInAuth 0.8s ease; }
@@ -187,33 +174,8 @@
             transition: width 0.3s ease, background-color 0.3s ease; z-index: 900;
         }
 
-        .sidebar-header {
-            height: 50px;
-            margin-bottom: 2rem;
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .sidebar-header .static-logo {
-            width: 50px;
-            height: 50px;
-            color: var(--primary-color);
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            animation: fadeIn 0.5s ease 0.6s forwards;
-        }
-        #sidebar-bar-name {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 0 0 0 65px;
-            line-height: 50px;
-            color: var(--text-color);
-            opacity: 0;
-            animation: fadeIn 0.5s ease 0.8s forwards;
-            white-space: nowrap;
-        }
+        .sidebar-header { height: 50px; margin-bottom: 2rem; position: relative; display: flex; align-items: center; }
+        #sidebar-bar-name { font-size: 1.5rem; font-weight: 700; margin: 0 0 0 65px; line-height: 50px; color: var(--text-color); opacity: 0; animation: fadeIn 0.5s ease 0.6s forwards; white-space: nowrap; }
         
         #app-nav { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
         .nav-tab {
@@ -330,6 +292,7 @@
         .quantity-control input::-webkit-outer-spin-button, .quantity-control input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .quantity-control input[type=number] { -moz-appearance: textfield; }
         .actions { display: flex; flex-wrap: wrap; }
+        /* Estilo para transacción de caja */
         .caja-tx-ingreso { color: var(--success-color); }
         .caja-tx-egreso { color: var(--danger-color); }
 
@@ -340,32 +303,65 @@
 
         /* --- INICIO: Nuevo Diseño Móvil con Barra de Navegación Inferior --- */
         @media (max-width: 768px) {
-            body.app-loaded #preloader { display: none; }
-            .sidebar-header .static-logo { display: none; }
+            body.app-loaded #preloader { display: none; } /* Oculta el logo estático en móvil */
+
             #sidebar {
-                flex-direction: row; width: 100%; height: var(--bottom-nav-height); padding: 0 0.5rem;
-                top: auto; bottom: 0; border-right: none; border-top: 1px solid var(--border-color);
+                flex-direction: row;
+                width: 100%;
+                height: var(--bottom-nav-height);
+                padding: 0 0.5rem;
+                top: auto;
+                bottom: 0;
+                border-right: none;
+                border-top: 1px solid var(--border-color);
                 box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
             }
             [data-theme="dark"] #sidebar { box-shadow: 0 -2px 5px rgba(0,0,0,0.2); }
             .sidebar-header, .sidebar-footer { display: none; }
-            #app-nav { flex-direction: row; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
+
+            #app-nav {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+                width: 100%;
+                height: 100%;
+            }
             .nav-tab {
-                flex-direction: column; justify-content: center; align-items: center; flex: 1; height: 100%;
-                padding: 0.25rem 0; gap: 4px; border-radius: 6px; background: none !important;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                flex: 1;
+                height: 100%;
+                padding: 0.25rem 0;
+                gap: 4px;
+                border-radius: 6px;
+                background: none !important; /* Anula el fondo del estado activo */
             }
             .nav-tab .icon { width: 22px; height: 22px; }
             .nav-tab span { font-size: 0.7rem; font-weight: 500; }
             .nav-tab.active { color: var(--primary-color); font-weight: 600; }
-            .nav-tab::before { display: none; }
+            
+            /* Indicador activo como una línea superior */
+            .nav-tab::before { display: none; } /* Oculta el indicador lateral */
             .nav-tab.active::after {
-                content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 3px;
-                background-color: var(--primary-color); border-radius: 0 0 3px 3px;
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 20%;
+                right: 20%;
+                height: 3px;
+                background-color: var(--primary-color);
+                border-radius: 0 0 3px 3px;
             }
+
             main {
-                margin-left: 0; width: 100%; padding: 1.5rem 1rem;
-                padding-bottom: calc(var(--bottom-nav-height) + 1.5rem);
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem 1rem;
+                padding-bottom: calc(var(--bottom-nav-height) + 1.5rem); /* Espacio para no ser tapado por la nav */
             }
+
+            /* Estilos de tablas responsivas */
             .management-table thead { display: none; }
             .management-table, .management-table tbody, .management-table tr, .management-table td { display: block; width: 100%; }
             .management-table tr { margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; }
@@ -379,43 +375,48 @@
 </head>
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-        <symbol id="icon-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
-        <symbol id="icon-turnos" viewBox="0 0 24 24" fill="currentColor"><path d="M16 17a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4v-1a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1zm-8-9a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0 2a6 6 0 0 0-6 6v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a6 6 0 0 0-6-6H8z"/><path d="M20 14a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2h-1a1 1 0 0 1 0-2h1v-1a1 1 0 0 1 1-1zm-4.34-6.34a1 1 0 1 1 1.41-1.41 4 4 0 0 1 2.83 7.07 1 1 0 0 1-1.41-1.41 2 2 0 0 0-1.42-3.26z"/></symbol>
-        <symbol id="icon-inventario" viewBox="0 0 24 24" fill="currentColor"><path d="M1.5 6.375a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3-3h-15a3 3 0 0 1-3-3V6.375zM3 9.375v8.25a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5V9.375h-18zM4.5 4.875a1.5 1.5 0 0 0-1.5 1.5v1.5h18V6.375a1.5 1.5 0 0 0-1.5-1.5h-15z"/></symbol>
-        <symbol id="icon-caja" viewBox="0 0 24 24" fill="currentColor"><path d="M15 7.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm-2 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0z"/><path fill-rule="evenodd" d="M1 5.5A2.5 2.5 0 0 1 3.5 3h17A2.5 2.5 0 0 1 23 5.5v13A2.5 2.5 0 0 1 20.5 21h-17A2.5 2.5 0 0 1 1 18.5v-13zM3.5 4a1.5 1.5 0 0 0-1.5 1.5v13a1.5 1.5 0 0 0 1.5 1.5h17a1.5 1.5 0 0 0 1.5-1.5v-13a1.5 1.5 0 0 0-1.5-1.5h-17z"/></symbol>
-        <symbol id="icon-historial" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
-        <symbol id="icon-reportes" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12v7.5a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5V12h-18zm15-1.5a.75.75 0 0 1-.75-.75V4.54L13 8.79a.75.75 0 0 1-1 0L8.5 6.04 4.75 9.79a.75.75 0 0 1-1.06-1.06L7.44 5 12 2.44l4.25 3.54V4.5a.75.75 0 0 1 1.5 0v6a.75.75 0 0 1-.75.75z"/></symbol>
-        <symbol id="icon-configuracion" viewBox="0 0 24 24" fill="currentColor"><path d="m13.41 2.03 3.55 2.14a1 1 0 0 1 .59.91v4.24a1 1 0 0 0 .59.91l3.55 2.14a1 1 0 0 1 0 1.73l-3.55 2.14a1 1 0 0 0-.59.91v4.24a1 1 0 0 1-.59.91l-3.55 2.14a1 1 0 0 1-1 0l-3.55-2.14a1 1 0 0 1-.59-.91v-4.24a1 1 0 0 0-.59-.91L2.03 13a1 1 0 0 1 0-1.73l3.55-2.14a1 1 0 0 0 .59-.91V3.97a1 1 0 0 1 .59-.91L10.32 2a1 1 0 0 1 1 0l2.09.03zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></symbol>
-        <symbol id="icon-logout" viewBox="0 0 24 24" fill="currentColor"><path d="M10 2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1z"/><path d="M3.75 6a.75.75 0 0 0-.75.75v10.5c0 .414.336.75.75.75h6.5a.75.75 0 0 0 .75-.75V16a.5.5 0 0 1 1 0v1.25c0 1.24-1.01 2.25-2.25 2.25h-6.5A2.25 2.25 0 0 1 2 17.25V6.75A2.25 2.25 0 0 1 4.25 4.5h6.5A2.25 2.25 0 0 1 13 6.75V8a.5.5 0 0 1-1 0V6.75A1.25 1.25 0 0 0 10.75 5.5h-6.5A1.25 1.25 0 0 0 3 6.75v.25z"/><path d="M15.53 9.47a.75.75 0 0 1 0 1.06l-2.25 2.25h8.47a.75.75 0 0 1 0 1.5h-8.47l2.25 2.25a.75.75 0 1 1-1.06 1.06l-3.75-3.75a.75.75 0 0 1 0-1.06l3.75-3.75a.75.75 0 0 1 1.06 0z"/></symbol>
-        <symbol id="icon-plus" viewBox="0 0 24 24" fill="currentColor"><path d="M11.75 4.5a.75.75 0 0 1 .75.75v6.5h6.5a.75.75 0 0 1 0 1.5h-6.5v6.5a.75.75 0 0 1-1.5 0v-6.5h-6.5a.75.75 0 0 1 0-1.5h6.5v-6.5a.75.75 0 0 1 .75-.75z"/></symbol>
-        <symbol id="icon-edit" viewBox="0 0 24 24" fill="currentColor"><path d="M19.435 2.565a1.5 1.5 0 0 1 2.121 2.121l-9.899 9.899a1.5 1.5 0 0 1-.724.41l-4.5 1.5a.5.5 0 0 1-.613-.613l1.5-4.5a1.5 1.5 0 0 1 .41-.724l9.899-9.899zM18 5.686l-8.5 8.5-1 3 3-1 8.5-8.5-2-2z"/><path d="M3.75 4.5A1.75 1.75 0 0 0 2 6.25v13A1.75 1.75 0 0 0 3.75 21h13A1.75 1.75 0 0 0 18.5 19.25V14a.75.75 0 0 1 1.5 0v5.25A3.25 3.25 0 0 1 16.75 22.5h-13A3.25 3.25 0 0 1 .5 19.25v-13A3.25 3.25 0 0 1 3.75 3h5.25a.75.75 0 0 1 0 1.5H3.75z"/></symbol>
-        <symbol id="icon-trash" viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h16v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8zm3-3.5a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 15 4.5V5h-1V4.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0-.5.5V5h-1V4.5zm8.5 2.5a.5.5 0 0 0-1 0v10a.5.5 0 0 0 1 0V8zM8 8a.5.5 0 0 0-1 0v10a.5.5 0 0 0 1 0V8zm4 0a.5.5 0 0 0-1 0v10a.5.5 0 0 0 1 0V8z"/></symbol>
-        <symbol id="icon-check" viewBox="0 0 24 24" fill="currentColor"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></symbol>
-        <symbol id="icon-alert" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1s1 .45 1 1v4c0 .55-.45 1-1 1zm1-8h-2V7h2v2z"/></symbol>
-        <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="currentColor"><path d="M10.828 12l4.95 4.95-1.414 1.414L8 12l6.364-6.364 1.414 1.414z"/></symbol>
-        <symbol id="icon-users" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-turnos"/></symbol>
-        <symbol id="icon-package" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-logo"/></symbol>
-        <symbol id="icon-dollar" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-caja"/></symbol>
-        <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></symbol>
+        <symbol id="icon-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></symbol>
+        <symbol id="icon-turnos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></symbol>
+        <symbol id="icon-inventario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></symbol>
+        <symbol id="icon-caja" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></symbol>
+        <symbol id="icon-historial" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></symbol>
+        <symbol id="icon-reportes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></symbol>
+        <symbol id="icon-configuracion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+        <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></symbol>
+        <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></symbol>
+        <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></symbol>
+        <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+        <symbol id="icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></symbol>
+        <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></symbol>
+        <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></symbol>
+        <symbol id="icon-package" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></symbol>
+        <symbol id="icon-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></symbol>
+        <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></symbol>
     </svg>
     
     <div id="preloader">
-        <div class="scene">
-            <div class="cube" id="cube-particles">
-                </div>
+        <div class="preloader-logo-container">
+            <svg class="constructing-logo" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <polygon class="logo-face face-top" points="12 2.27 4 6.96 12 12.01 20.73 6.96" />
+                <polygon class="logo-face face-left" points="3.27 6.96 12 12.01 12 22.08 4 17.39" />
+                <polygon class="logo-face face-right" points="20.73 6.96 12 12.01 12 22.08 20 17.39" />
+                <path class="logo-line" d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline class="logo-line" points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line class="logo-line" x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
         </div>
-        <div id="preloader-text">InventaPro</div>
+        <svg id="static-preloader-logo"><use href="#icon-logo"></use></svg>
     </div>
 
-    <div id="auth-container"><div class="auth-box"><svg class="static-logo"><use href="#icon-logo"></use></svg><h2>Bienvenido a InventaPro</h2><p>La solución definitiva para gestionar tu negocio.</p><div class="auth-buttons"><button id="show-login-btn" class="btn btn-primary">Iniciar Sesión</button><button id="show-register-btn" class="btn btn-outline">Registrarse</button></div></div></div>
+    <div id="auth-container"><div class="auth-box"><svg class="static-logo"><use href="#icon-logo"></use></svg><h2>InventaPro</h2><p>La solución definitiva para gestionar tu negocio.</p><div class="auth-buttons"><button id="show-login-btn" class="btn btn-primary">Iniciar Sesión</button><button id="show-register-btn" class="btn btn-outline">Registrarse</button></div></div></div>
     <div id="login-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Iniciar Sesión</h2><form id="login-form"><div class="form-group"><label for="username">Usuario</label><input type="text" id="username" required></div><div class="form-group"><label for="password">Contraseña</label><input type="password" id="password" required></div><div class="form-error-msg" id="login-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
     <div id="register-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Crear Cuenta</h2><form id="register-form"><div class="form-group"><label for="reg-username">Usuario</label><input type="text" id="reg-username" required></div><div class="form-group"><label for="reg-barname">Nombre del Negocio</label><input type="text" id="reg-barname" required></div><div class="form-group"><label for="reg-password">Crear Contraseña</label><input type="password" id="reg-password" required></div><div class="form-group"><label for="reg-password-confirm">Confirmar Contraseña</label><input type="password" id="reg-password-confirm" required></div><div class="form-error-msg" id="register-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Registrarse</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
     
     <div id="app-shell">
         <aside id="sidebar">
             <div class="sidebar-header">
-                <svg class="static-logo"><use href="#icon-logo"></use></svg>
-                <h1 id="sidebar-bar-name">InventaPro</h1>
+                 <h1 id="sidebar-bar-name">InventaPro</h1>
             </div>
             <nav id="app-nav">
                 <button class="nav-tab" data-tab="turnos"><svg class="icon"><use href="#icon-turnos"></use></svg><span>Turnos</span></button>
@@ -480,6 +481,8 @@
     <div id="toast-container"></div>
 
 <script>
+// El código JavaScript no necesita cambios.
+// Pega tu código JavaScript existente aquí.
 const app = {
     // --- 1. ESTADO DE LA APLICACIÓN ---
     state: { 
@@ -503,7 +506,6 @@ const app = {
 
     // --- 2. INICIALIZACIÓN Y CICLO DE VIDA ---
     init() {
-        this.generateCubeParticles();
         this.initTheme();
         this.attachAuthEventListeners();
         this.handlePreloader();
@@ -574,43 +576,7 @@ const app = {
     },
 
     // --- 4. AUTENTICACIÓN Y NAVEGACIÓN ---
-    generateCubeParticles() {
-        const container = document.getElementById('cube-particles');
-        const particleSize = 25;
-        const cubeSize = 4;
-        const offset = (cubeSize - 1) * particleSize / 2;
-
-        for (let i = 0; i < cubeSize; i++) {
-            for (let j = 0; j < cubeSize; j++) {
-                for (let k = 0; k < cubeSize; k++) {
-                    // Only draw the outer shell of the cube
-                    if (i > 0 && i < cubeSize - 1 && j > 0 && j < cubeSize - 1 && k > 0 && k < cubeSize - 1) {
-                        continue;
-                    }
-
-                    const particle = document.createElement('div');
-                    particle.classList.add('particle');
-                    
-                    const tx = (i * particleSize) - offset;
-                    const ty = (j * particleSize) - offset;
-                    const tz = (k * particleSize) - offset;
-                    
-                    const randX = (Math.random() * 400 - 200);
-                    const randY = (Math.random() * 400 - 200);
-                    const randZ = (Math.random() * 400 - 200);
-                    const randRotX = (Math.random() * 360);
-                    const randRotY = (Math.random() * 360);
-
-                    particle.style.setProperty('--transform-initial', `translate3d(${randX}px, ${randY}px, ${randZ}px) rotateX(${randRotX}deg) rotateY(${randRotY}deg)`);
-                    particle.style.setProperty('--transform-final', `translate3d(${tx}px, ${ty}px, ${tz}px)`);
-                    particle.style.setProperty('--delay', `${Math.random() * 1}s`);
-
-                    container.appendChild(particle);
-                }
-            }
-        }
-    },
-    handlePreloader() { setTimeout(() => { this.loadState(); if (this.state.loggedIn) { this.transitionToApp(); } else { document.body.classList.add('auth-visible'); document.getElementById('auth-container').style.display = 'flex'; } }, 3500); },
+    handlePreloader() { setTimeout(() => { this.loadState(); if (this.state.loggedIn) { this.transitionToApp(); } else { document.body.classList.add('auth-visible'); document.getElementById('auth-container').style.display = 'flex'; } }, 2800); },
     attachAuthEventListeners() { document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); document.getElementById('show-register-btn').addEventListener('click', () => this.showRegisterModal()); document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); this.login(); }); document.getElementById('register-form').addEventListener('submit', (e) => { e.preventDefault(); this.registerUser(); }); },
     showAuthHome() { document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'none'; document.getElementById('auth-container').style.display = 'flex'; },
     showLoginModal() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('login-modal').style.display = 'flex'; document.getElementById('login-error').textContent = ''; },
