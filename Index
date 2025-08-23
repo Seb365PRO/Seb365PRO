@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Inventario Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- INICIO: Sistema de Temas y Modo Oscuro --- */
+        :root {
+            --primary-color: #3B82F6;
+            --primary-dark: #2563EB;
+            --primary-light: #EFF6FF;
+            --secondary-color: #6B7280;
+            --success-color: #10B981;
+            --danger-color: #EF4444;
+            --warning-color: #F59E0B;
+            --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --border-radius: 8px;
+            --sidebar-width: 260px;
+            --bottom-nav-height: 65px;
+            
+            /* Variables para Tema Claro (por defecto) */
+            --surface-color: #ffffff;
+            --bg-color: #F9FAFB;
+            --sidebar-bg: #FFFFFF;
+            --text-color: #1F2937;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        [data-theme="dark"] {
+            /* Variables para Tema Oscuro */
+            --surface-color: #1F2937;
+            --bg-color: #111827;
+            --sidebar-bg: #1F2937;
+            --text-color: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --border-color: #374151;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+        }
+        /* --- FIN: Sistema de Temas y Modo Oscuro --- */
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            font-size: 16px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- PRELOADER Y ANIMACIÃN DE TRANSICIÃN --- */
+        #preloader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 150px;
+            height: 150px;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            transition: all 0.6s ease-in-out;
+        }
+        .animated-logo { width: 100%; height: 100%; }
+        .animated-logo .glass-outline { stroke: var(--primary-color); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; fill: none; stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2s ease-in-out forwards; }
+        .animated-logo .liquid-fill { fill: var(--primary-color); animation: fill-up 1.5s ease-in-out 1.5s forwards; transform: translateY(100%); }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        @keyframes fill-up { to { transform: translateY(0%); } }
+
+        body.app-loaded #preloader {
+            top: 24px; left: 24px; width: 50px; height: 50px;
+            transform: translate(0, 0); pointer-events: none;
+        }
+        body.auth-visible #preloader { opacity: 0; pointer-events: none; }
+
+        /* --- CONTENEDOR DE AUTENTICACIÃN --- */
+        #auth-container { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 1.5rem; animation: fadeInAuth 0.8s ease; }
+        @keyframes fadeInAuth { from { opacity: 0; } to { opacity: 1; } }
+        .auth-box { background-color: var(--surface-color); padding: 2.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); border: 1px solid var(--border-color); max-width: 420px; width: 100%; }
+        .auth-box .static-logo { color: var(--primary-color); width: 60px; height: 60px; margin-bottom: 1rem; }
+        .auth-box h2 { font-size: 1.8rem; margin-top: 0; margin-bottom: 0.5rem; }
+        .auth-box p { color: var(--text-muted); margin-top: 0; margin-bottom: 2rem; }
+        .auth-buttons { display: flex; flex-direction: column; gap: 1rem; }
+
+        /* --- ESTRUCTURA PRINCIPAL DE LA APP --- */
+        #app-shell { display: flex; opacity: 0; transition: opacity 0.5s ease 0.4s; }
+        body.app-loaded #app-shell { opacity: 1; }
+
+        #sidebar {
+            width: var(--sidebar-width); height: 100vh; position: fixed; top: 0; left: 0;
+            background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; padding: 1.5rem; box-shadow: var(--shadow-sm);
+            transition: width 0.3s ease, background-color 0.3s ease; z-index: 900;
+        }
+
+        .sidebar-header { height: 50px; margin-bottom: 2rem; position: relative; display: flex; align-items: center; }
+        #sidebar-bar-name { font-size: 1.5rem; font-weight: 700; margin: 0 0 0 65px; line-height: 50px; color: var(--text-color); opacity: 0; animation: fadeIn 0.5s ease 0.6s forwards; white-space: nowrap; }
+        
+        #app-nav { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
+        .nav-tab {
+            display: flex; align-items: center; gap: 0.75rem; text-align: left; padding: 0.75rem 1rem;
+            border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-muted);
+            border: none; background: none; font-size: 1rem; position: relative;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+        .nav-tab .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-tab span { white-space: nowrap; }
+        .nav-tab:hover { color: var(--primary-color); background-color: var(--primary-light); }
+        .nav-tab.active { color: var(--primary-dark); background-color: var(--primary-light); font-weight: 700; }
+        .nav-tab.active::before {
+            content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            width: 4px; height: 24px; background-color: var(--primary-color); border-radius: 0 4px 4px 0;
+        }
+        
+        .sidebar-footer { margin-top: auto; }
+
+        main {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 2rem; overflow-y: auto;
+            transition: margin-left 0.3s ease, width 0.3s ease, padding-bottom 0.3s ease;
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Estilos del Interruptor de Tema --- */
+        .theme-switch-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem; border-radius: 6px; margin-top: 1rem; }
+        .theme-switch-wrapper span { font-weight: 600; font-size: 0.9rem; }
+        .theme-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* --- ESTILOS DE COMPONENTES --- */
+        .card { background-color: var(--surface-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1.5rem; padding: 1.5rem; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap:1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+        .card-header h2 { margin: 0; font-size: 1.25rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .stat-card { display: flex; align-items: center; gap: 1rem; background-color: var(--primary-light); padding: 1.5rem; border-radius: var(--border-radius); }
+        [data-theme="dark"] .stat-card { background-color: #2b3a54; }
+        [data-theme="dark"] .stat-card.success { background-color: #064E3B; }
+        [data-theme="dark"] .stat-card.danger { background-color: #7f1d1d; }
+        .stat-card .icon { width: 32px; height: 32px; color: var(--primary-color); }
+        .stat-card-content h3, .stat-card-content h5 { margin: 0 0 0.25rem 0; color: var(--primary-dark); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
+        .stat-card-content p { margin: 0; font-size: 1.75rem; font-weight: 700; color: var(--primary-dark); }
+        [data-theme="dark"] .stat-card-content h3, [data-theme="dark"] .stat-card-content h5, [data-theme="dark"] .stat-card-content p { color: var(--primary-light); }
+        .stat-card.success { background-color: #ECFDF5; } .stat-card.success .icon, .stat-card.success h3, .stat-card.success p { color: #059669; }
+        [data-theme="dark"] .stat-card.success .icon, [data-theme="dark"] .stat-card.success h3, [data-theme="dark"] .stat-card.success p { color: #34D399; }
+        .stat-card.danger { background-color: #FEF2F2; } .stat-card.danger .icon, .stat-card.danger h3, .stat-card.danger p { color: #DC2626; }
+        [data-theme="dark"] .stat-card.danger .icon, [data-theme="dark"] .stat-card.danger h3, [data-theme="dark"] .stat-card.danger p { color: #F87171; }
+        .clickable-stat-card:hover { cursor: pointer; transform: scale(1.03); box-shadow: var(--shadow-md); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem; border-radius: 6px; cursor: pointer; text-align: center; font-size: 0.95rem; font-weight: 600; transition: all 0.2s ease; border: 1px solid transparent; text-decoration: none; white-space: nowrap; }
+        .btn .icon { width: 20px; height: 20px; }
+        .btn:disabled { background-color: var(--secondary-color); border-color: var(--secondary-color); cursor: not-allowed; opacity: 0.6; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .btn-primary { background-color: var(--primary-color); color: white; border-color: var(--primary-color); } .btn-primary:hover:not(:disabled) { background-color: var(--primary-dark); border-color: var(--primary-dark); }
+        .btn-success { background-color: var(--success-color); color: white; border-color: var(--success-color); } .btn-success:hover:not(:disabled) { background-color: #059669; }
+        .btn-danger { background-color: var(--danger-color); color: white; border-color: var(--danger-color); } .btn-danger:hover:not(:disabled) { background-color: #DC2626; }
+        .btn-secondary { background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); } .btn-secondary:hover:not(:disabled) { background-color: #4B5563; }
+        .btn-outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); } .btn-outline:hover:not(:disabled) { background-color: var(--primary-light); }
+        [data-theme="dark"] .btn-outline:hover:not(:disabled) { background-color: rgba(59, 130, 246, 0.1); }
+        .btn-icon { padding: 0.5rem; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(17, 24, 39, 0.6); align-items: center; justify-content: center; padding: 1rem; overflow-y: auto; backdrop-filter: blur(4px); }
+        .modal-content { background-color: var(--surface-color); padding: 2rem; border-radius: var(--border-radius); width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); animation: slide-up 0.3s ease-out; }
+        .modal-content h2 { margin-top: 0; }
+        .auth-modal .modal-content { max-width: 400px; }
+        @keyframes slide-up { from { transform: translateY(20px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .form-group { margin-bottom: 1.25rem; text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { font-size: 1rem; padding: 0.75rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; transition: border-color 0.2s, box-shadow 0.2s; background-color: var(--surface-color); color: var(--text-color); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px var(--primary-light); }
+        [data-theme="dark"] .form-group input:focus, [data-theme="dark"] .form-group select:focus, [data-theme="dark"] .form-group textarea:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .form-error-msg { color: var(--danger-color); font-size: 0.9rem; min-height: 1.2em; text-align: center; margin-bottom: 1rem;}
+        .management-table { width: 100%; border-collapse: collapse; }
+        .management-table th { text-align: left; padding: 0.75rem 1rem; border-bottom: 2px solid var(--border-color); font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .management-table td { text-align: left; padding: 1rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        .management-table tbody tr:hover { background-color: var(--bg-color); }
+        .management-table .actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--secondary-color); background-color: var(--surface-color); border-radius: var(--border-radius); border: 2px dashed var(--border-color); }
+        .worker-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .worker-card { background-color: var(--surface-color); border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); padding: 1.5rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .worker-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+        .worker-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .worker-card-header h3 { margin: 0; font-size: 1.2rem; }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; color: white; }
+        .status-active { background-color: var(--primary-color); } .status-liquidado { background-color: var(--success-color); } .status-inactive { background-color: var(--secondary-color); }
+        .worker-card-summary p { margin: 0.5rem 0 0 0; display: flex; justify-content: space-between; font-size: 0.95rem; }
+        .worker-card-summary span { font-weight: 600; }
+        .dispatch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin: 1.5rem 0; }
+        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 2000; display: flex; flex-direction: column; gap: 0.75rem; }
+        .toast { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; border-radius: 6px; color: white; font-weight: 600; box-shadow: var(--shadow-lg); animation: toast-fade 4s ease-in-out forwards; }
+        .toast .icon { width: 24px; height: 24px; }
+        .toast.success { background-color: var(--success-color); } .toast.error { background-color: var(--danger-color); }
+        @keyframes toast-fade { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+        .history-details, .report-details { border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 1rem; background-color: var(--surface-color); }
+        .history-details summary, .report-details summary { cursor: pointer; padding: 1rem 1.5rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .history-details summary::-webkit-details-marker, .report-details summary::-webkit-details-marker { display: none; }
+        .history-details summary::after, .report-details summary::after { content: 'â¼'; font-size: 0.8em; transition: transform 0.2s; }
+        .history-details[open] summary::after, .report-details[open] summary::after { transform: rotate(180deg); }
+        .history-details-content, .report-details-content { padding: 0 1.5rem 1.5rem 1.5rem; }
+        .liquidacion-summary { border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background-color: var(--bg-color); }
+        .liquidacion-summary p { display: flex; justify-content: space-between; margin: 0.5rem 0; }
+        .liquidacion-summary hr { border: none; border-top: 1px solid var(--border-color); }
+        .quantity-control { display: flex; align-items: center; gap: 0.5rem; }
+        .quantity-control .btn { padding: 0.5rem; line-height: 1; min-width: 44px; }
+        .quantity-control input { text-align: center; font-weight: bold; }
+        .quantity-control input::-webkit-outer-spin-button, .quantity-control input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .quantity-control input[type=number] { -moz-appearance: textfield; }
+        .actions { display: flex; flex-wrap: wrap; }
+        /* Estilo para transacciÃ³n de caja */
+        .caja-tx-ingreso { color: var(--success-color); }
+        .caja-tx-egreso { color: var(--danger-color); }
+
+        @media (max-width: 992px) {
+            :root { --sidebar-width: 220px; }
+            main { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        }
+
+        /* --- INICIO: Nuevo DiseÃ±o MÃ³vil con Barra de NavegaciÃ³n Inferior --- */
+        @media (max-width: 768px) {
+            body.app-loaded #preloader { display: none; } /* Oculta el logo estÃ¡tico en mÃ³vil */
+
+            #sidebar {
+                flex-direction: row;
+                width: 100%;
+                height: var(--bottom-nav-height);
+                padding: 0 0.5rem;
+                top: auto;
+                bottom: 0;
+                border-right: none;
+                border-top: 1px solid var(--border-color);
+                box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            }
+            [data-theme="dark"] #sidebar { box-shadow: 0 -2px 5px rgba(0,0,0,0.2); }
+            .sidebar-header, .sidebar-footer { display: none; }
+
+            #app-nav {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+                width: 100%;
+                height: 100%;
+            }
+            .nav-tab {
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                flex: 1;
+                height: 100%;
+                padding: 0.25rem 0;
+                gap: 4px;
+                border-radius: 6px;
+                background: none !important; /* Anula el fondo del estado activo */
+            }
+            .nav-tab .icon { width: 22px; height: 22px; }
+            .nav-tab span { font-size: 0.7rem; font-weight: 500; }
+            .nav-tab.active { color: var(--primary-color); font-weight: 600; }
+            
+            /* Indicador activo como una lÃ­nea superior */
+            .nav-tab::before { display: none; } /* Oculta el indicador lateral */
+            .nav-tab.active::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 20%;
+                right: 20%;
+                height: 3px;
+                background-color: var(--primary-color);
+                border-radius: 0 0 3px 3px;
+            }
+
+            main {
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem 1rem;
+                padding-bottom: calc(var(--bottom-nav-height) + 1.5rem); /* Espacio para no ser tapado por la nav */
+            }
+
+            /* Estilos de tablas responsivas */
+            .management-table thead { display: none; }
+            .management-table, .management-table tbody, .management-table tr, .management-table td { display: block; width: 100%; }
+            .management-table tr { margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; }
+            .management-table td { text-align: right; position: relative; padding: 0.75rem 0.5rem; padding-left: 50%; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: flex-end; }
+            .management-table tr td:last-child { border-bottom: 0; }
+            .management-table td::before { content: attr(data-label); position: absolute; left: 0.75rem; width: calc(50% - 1.5rem); text-align: left; font-weight: bold; color: var(--text-muted); }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+        /* --- FIN: Nuevo DiseÃ±o MÃ³vil --- */
+    </style>
+</head>
+<body>
+    <!-- Contenedor de Iconos SVG -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="icon-logo-cocktail" viewBox="0 0 100 100"><path d="M20 40 L50 70 L80 40 L20 40 Z" /><line x1="50" y1="70" x2="50" y2="90" /><line x1="30" y1="90" x2="70" y2="90" /></symbol>
+        <symbol id="icon-turnos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+        <symbol id="icon-inventario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+        <symbol id="icon-caja" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></symbol>
+        <symbol id="icon-historial" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/><path d="M12 2a10 10 0 1 0 10 10H12V2z"/></symbol>
+        <symbol id="icon-reportes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8a6 6 0 0 0-8.4 0L3 15.6V18h2.4l7.3-7.3a6 6 0 0 0 6-2.3z"/></symbol>
+        <symbol id="icon-configuracion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+        <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+        <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+        <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+        <symbol id="icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+        <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></symbol>
+        <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+        <symbol id="icon-package" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+        <symbol id="icon-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+        <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></symbol>
+    </svg>
+    
+    <!-- Preloader y AutenticaciÃ³n (sin cambios) -->
+    <div id="preloader">
+        <svg class="animated-logo" viewBox="0 0 100 100">
+            <defs><clipPath id="liquid-clip"><path d="M20 40 L50 70 L80 40 Z" /></clipPath></defs>
+            <path class="glass-outline" d="M20 40 L50 70 L80 40 L20 40 M50 70 L50 90 M30 90 L70 90" />
+            <g clip-path="url(#liquid-clip)"><rect class="liquid-fill" x="0" y="0" width="100" height="100" /></g>
+        </svg>
+    </div>
+    <div id="auth-container"><div class="auth-box"><svg class="static-logo"><use href="#icon-logo-cocktail"></use></svg><h2>Control Inventario Pro</h2><p>La soluciÃ³n definitiva para gestionar tu negocio.</p><div class="auth-buttons"><button id="show-login-btn" class="btn btn-primary">Iniciar SesiÃ³n</button><button id="show-register-btn" class="btn btn-outline">Registrarse</button></div></div></div>
+    <div id="login-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo-cocktail"></use></svg><h2>Iniciar SesiÃ³n</h2><form id="login-form"><div class="form-group"><label for="username">Usuario</label><input type="text" id="username" required></div><div class="form-group"><label for="password">ContraseÃ±a</label><input type="password" id="password" required></div><div class="form-error-msg" id="login-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
+    <div id="register-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo-cocktail"></use></svg><h2>Crear Cuenta</h2><form id="register-form"><div class="form-group"><label for="reg-username">Usuario</label><input type="text" id="reg-username" required></div><div class="form-group"><label for="reg-barname">Nombre del Bar o Discoteca</label><input type="text" id="reg-barname" required></div><div class="form-group"><label for="reg-password">Crear ContraseÃ±a</label><input type="password" id="reg-password" required></div><div class="form-group"><label for="reg-password-confirm">Confirmar ContraseÃ±a</label><input type="password" id="reg-password-confirm" required></div><div class="form-error-msg" id="register-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Registrarse</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
+    
+    <!-- Estructura de la App -->
+    <div id="app-shell">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                 <h1 id="sidebar-bar-name">Control Pro</h1>
+            </div>
+            <nav id="app-nav">
+                <button class="nav-tab" data-tab="turnos"><svg class="icon"><use href="#icon-turnos"></use></svg><span>Turnos</span></button>
+                <button class="nav-tab" data-tab="caja"><svg class="icon"><use href="#icon-caja"></use></svg><span>Flujo de Caja</span></button>
+                <button class="nav-tab" data-tab="inventario"><svg class="icon"><use href="#icon-inventario"></use></svg><span>Inventario</span></button>
+                <button class="nav-tab" data-tab="historial"><svg class="icon"><use href="#icon-historial"></use></svg><span>Historial</span></button>
+                <button class="nav-tab" data-tab="reportes"><svg class="icon"><use href="#icon-reportes"></use></svg><span>Reportes</span></button>
+                <button class="nav-tab" data-tab="configuracion"><svg class="icon"><use href="#icon-configuracion"></use></svg><span>ConfiguraciÃ³n</span></button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="theme-switch-wrapper">
+                    <span>Modo Oscuro</span>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-toggle-desktop">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button class="btn btn-secondary" onclick="app.logout()" style="width:100%; margin-top: 1rem;">
+                    <svg class="icon"><use href="#icon-logout"></use></svg>
+                    <span>Cerrar SesiÃ³n</span>
+                </button>
+            </div>
+        </aside>
+        <main>
+            <div id="turnos" class="tab-content"><div id="turnos-view-container"></div></div>
+            <div id="caja" class="tab-content"></div>
+            <div id="inventario" class="tab-content">
+                <div class="card"><div class="card-header"><h2>Bodega (Lotes Comprados)</h2><button class="btn btn-primary" onclick="app.showLoteModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>AÃ±adir Compra</span></button></div><div id="bodega-table-container"></div></div>
+                <div class="card"><div class="card-header"><h2>Barra (Productos para la Venta)</h2></div><div id="barra-table-container"></div></div>
+            </div>
+            <div id="historial" class="tab-content"><div class="card"><div class="card-header"><h2>Historial de Turnos Finalizados</h2></div><div id="historial-container"></div></div></div>
+            <div id="reportes" class="tab-content"><div class="card"><div class="card-header"><h2>Reportes Financieros y de Ventas</h2></div><div class="form-group" style="display:flex; gap:1rem; flex-wrap:wrap;"><div><label for="report-start-date">Fecha y Hora de Inicio</label><input type="datetime-local" id="report-start-date"></div><div><label for="report-end-date">Fecha y Hora de Fin</label><input type="datetime-local" id="report-end-date"></div><div style="align-self: flex-end;"><button class="btn btn-primary" onclick="app.generateReport()">Generar Reporte</button></div></div><div id="report-container" style="margin-top: 2rem;"></div></div></div>
+            <div id="configuracion" class="tab-content">
+                <div class="card">
+                    <div class="card-header"><h2>ConfiguraciÃ³n General</h2></div>
+                    <p>AquÃ­ defines las plantillas de productos vendibles y gestionas el personal.</p>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1rem; margin-top:1.5rem;">
+                        <button class="btn btn-outline" onclick="app.showWorkerManagementModal()"><svg class="icon"><use href="#icon-users"></use></svg><span>Gestionar Trabajadores</span></button>
+                        <button class="btn btn-outline" onclick="app.showProductManagementModal()"><svg class="icon"><use href="#icon-package"></use></svg><span>Gestionar Plantillas de Productos</span></button>
+                    </div>
+                </div>
+                <div class="card" id="mobile-options-card">
+                    <div class="card-header"><h2>Opciones de la App</h2></div>
+                    <div class="theme-switch-wrapper" style="padding: 0; margin: 0;">
+                        <span>Modo Oscuro</span>
+                        <label class="theme-switch">
+                            <input type="checkbox" id="theme-toggle-mobile">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+                    <button class="btn btn-danger" onclick="app.logout()" style="width:100%;">
+                        <svg class="icon"><use href="#icon-logout"></use></svg>
+                        <span>Cerrar SesiÃ³n</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div id="modal-container" class="modal"><div id="modal-content" class="modal-content"></div></div>
+    <div id="toast-container"></div>
+
+<script>
+const app = {
+    // --- 1. ESTADO DE LA APLICACIÃN ---
+    state: { 
+        barName: 'Control Inventario Pro', 
+        productos: [], 
+        trabajadores: [], 
+        lotes_bodega: [], 
+        turnosActivos: [], 
+        historial: [], 
+        caja: {
+            saldoInicialDia: 0,
+            transacciones: [],
+            fechaActual: null
+        },
+        loggedIn: false, 
+        activeTab: 'turnos', 
+        currentTurnoView: { type: 'dashboard', workerId: null } 
+    },
+    _tempData: {},
+    currentReportData: null,
+
+    // --- 2. INICIALIZACIÃN Y CICLO DE VIDA ---
+    init() {
+        this.initTheme();
+        this.attachAuthEventListeners();
+        this.handlePreloader();
+        
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        const toLocalISOString = date => {
+            const pad = num => num.toString().padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        };
+        document.getElementById('report-start-date').value = toLocalISOString(todayStart);
+        document.getElementById('report-end-date').value = toLocalISOString(todayEnd);
+    },
+    saveState() { localStorage.setItem('controlInventarioState', JSON.stringify(this.state)); },
+    loadState() {
+        const savedState = localStorage.getItem('controlInventarioState');
+        const user = JSON.parse(localStorage.getItem('controlInventarioUser'));
+
+        if (savedState) { 
+            this.state = JSON.parse(savedState); 
+            if (!this.state.currentTurnoView) this.state.currentTurnoView = { type: 'dashboard', workerId: null };
+            if (!this.state.historial) this.state.historial = [];
+            if (!this.state.caja) this.state.caja = { saldoInicialDia: 0, transacciones: [], fechaActual: null };
+        }
+        if (user) {
+            this.state.barName = user.barName;
+        }
+    },
+    uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
+
+    // --- 3. GESTIÃN DEL TEMA (MODO OSCURO) ---
+    initTheme() {
+        const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
+        const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+        const savedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggleDesktop.checked = true;
+                themeToggleMobile.checked = true;
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeToggleDesktop.checked = false;
+                themeToggleMobile.checked = false;
+            }
+        };
+
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else if (systemPrefersDark) {
+            applyTheme('dark');
+        } else {
+            applyTheme('light');
+        }
+
+        const toggleTheme = () => {
+            const currentTheme = document.documentElement.hasAttribute('data-theme') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        };
+        
+        themeToggleDesktop.addEventListener('change', toggleTheme);
+        themeToggleMobile.addEventListener('change', toggleTheme);
+    },
+
+    // --- 4. AUTENTICACIÃN Y NAVEGACIÃN ---
+    handlePreloader() { setTimeout(() => { this.loadState(); if (this.state.loggedIn) { this.transitionToApp(); } else { document.body.classList.add('auth-visible'); document.getElementById('auth-container').style.display = 'flex'; } }, 2800); },
+    attachAuthEventListeners() { document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); document.getElementById('show-register-btn').addEventListener('click', () => this.showRegisterModal()); document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); this.login(); }); document.getElementById('register-form').addEventListener('submit', (e) => { e.preventDefault(); this.registerUser(); }); },
+    showAuthHome() { document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'none'; document.getElementById('auth-container').style.display = 'flex'; },
+    showLoginModal() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('login-modal').style.display = 'flex'; document.getElementById('login-error').textContent = ''; },
+    showRegisterModal() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('register-modal').style.display = 'flex'; document.getElementById('register-error').textContent = ''; },
+    registerUser() {
+        const username = document.getElementById('reg-username').value.trim(); const barName = document.getElementById('reg-barname').value.trim(); const password = document.getElementById('reg-password').value; const passwordConfirm = document.getElementById('reg-password-confirm').value; const errorEl = document.getElementById('register-error');
+        if (!username || !barName || !password) { errorEl.textContent = 'Todos los campos son obligatorios.'; return; } if (password !== passwordConfirm) { errorEl.textContent = 'Las contraseÃ±as no coinciden.'; return; }
+        if (localStorage.getItem('controlInventarioUser')) { errorEl.textContent = 'Ya existe un usuario registrado.'; this.showToast('Solo se permite un usuario en esta versiÃ³n.', 'error'); return; }
+        const user = { username, barName, password: btoa(password) }; localStorage.setItem('controlInventarioUser', JSON.stringify(user)); this.showToast('Â¡Registro exitoso! Bienvenido.');
+        this.state.loggedIn = true; this.state.barName = barName; this.saveState(); this.transitionToApp();
+    },
+    login() {
+        const username = document.getElementById('username').value; const password = document.getElementById('password').value; const errorEl = document.getElementById('login-error'); const user = JSON.parse(localStorage.getItem('controlInventarioUser'));
+        if (!user) { errorEl.textContent = 'No hay ningÃºn usuario registrado. Por favor, regÃ­strate.'; return; }
+        if (user.username === username && user.password === btoa(password)) { this.state.loggedIn = true; this.state.barName = user.barName; this.saveState(); this.transitionToApp(); } else { errorEl.textContent = 'Usuario o contraseÃ±a incorrectos.'; }
+    },
+    logout() { this.showConfirmationModal("Â¿EstÃ¡ seguro que desea cerrar sesiÃ³n?", () => { this.state.loggedIn = false; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.saveState(); window.location.reload(); }); },
+    transitionToApp() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'none'; document.body.classList.add('app-loaded'); document.body.classList.remove('auth-visible'); this.renderAppUI(); },
+    changeTab(tabId) { this.state.activeTab = tabId; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.renderAppUI(); },
+
+    // --- 5. RENDERIZADO DE LA APP ---
+    renderAppUI() {
+        document.getElementById('sidebar-bar-name').textContent = this.state.barName;
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll(`.nav-tab[data-tab="${this.state.activeTab}"]`).forEach(t => t.classList.add('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === this.state.activeTab));
+        
+        document.getElementById('app-nav').onclick = (e) => { 
+            const tab = e.target.closest('.nav-tab');
+            if (tab) this.changeTab(tab.dataset.tab); 
+        };
+
+        switch (this.state.activeTab) {
+            case 'turnos': this.renderTurnosTab(); break;
+            case 'caja': this.renderCajaTab(); break;
+            case 'inventario': this.renderInventario(); break;
+            case 'historial': this.renderHistorialTab(); break;
+            case 'reportes': this.renderReportUI(); break;
+        }
+    },
+    
+    // --- 6. SECCIÃN: FLUJO DE CAJA ---
+    getTodayDateString() { return new Date().toISOString().split('T')[0]; },
+    isCajaAbierta() { return this.state.caja.fechaActual === this.getTodayDateString(); },
+    renderCajaTab() {
+        const container = document.getElementById('caja');
+        if (!this.isCajaAbierta()) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>Flujo de Caja del DÃ­a</h3>
+                    <p>No se ha iniciado la caja para el dÃ­a de hoy (${new Date().toLocaleDateString('es-CO')}).</p>
+                    <button class="btn btn-primary" onclick="app.showIniciarDiaModal()">+ Iniciar Caja del DÃ­a</button>
+                </div>`;
+        } else {
+            const resumen = this.calcularResumenCaja();
+            const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+            
+            const transaccionesHTML = this.state.caja.transacciones.length > 0
+                ? `<table class="management-table">
+                    <thead><tr><th>Hora</th><th>Tipo</th><th>DescripciÃ³n</th><th>Monto</th><th></th></tr></thead>
+                    <tbody>
+                        ${this.state.caja.transacciones.slice().reverse().map(tx => `
+                            <tr>
+                                <td data-label="Hora">${new Date(tx.timestamp).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</td>
+                                <td data-label="Tipo" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}">${tx.tipo.charAt(0).toUpperCase() + tx.tipo.slice(1)}</td>
+                                <td data-label="DescripciÃ³n">${tx.descripcion}</td>
+                                <td data-label="Monto" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}" style="font-weight: bold;">${currency(tx.monto)}</td>
+                                <td data-label="Acciones">
+                                    <div class="actions">
+                                        <button class="btn btn-icon" onclick="app.deleteTransaccionCaja('${tx.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                   </table>`
+                : `<div class="empty-state" style="padding: 1.5rem;">No hay movimientos registrados hoy.</div>`;
+
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Resumen de Caja del DÃ­a (${new Date().toLocaleDateString('es-CO')})</h2>
+                    </div>
+                    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                        <div class="stat-card">
+                            <div class="stat-card-content"><h5>Saldo Inicial</h5><p>${currency(resumen.saldoInicial)}</p></div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-card-content"><h5>Ingresos</h5><p>${currency(resumen.totalIngresos)}</p></div>
+                        </div>
+                        <div class="stat-card danger">
+                            <div class="stat-card-content"><h5>Egresos</h5><p>${currency(resumen.totalEgresos)}</p></div>
+                        </div>
+                        <div class="stat-card" style="background-color: var(--primary-color);">
+                            <div class="stat-card-content"><h5 style="color:white;">Saldo Actual</h5><p style="color:white;">${currency(resumen.saldoActual)}</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Movimientos del DÃ­a</h2>
+                        <div class="actions" style="gap: 0.5rem;">
+                            <button class="btn btn-success" onclick="app.showTransaccionCajaModal('ingreso')">+ Ingreso</button>
+                            <button class="btn btn-danger" onclick="app.showTransaccionCajaModal('egreso')">- Egreso</button>
+                        </div>
+                    </div>
+                    ${transaccionesHTML}
+                </div>`;
+        }
+    },
+    calcularResumenCaja() {
+        const saldoInicial = this.state.caja.saldoInicialDia;
+        let totalIngresos = 0;
+        let totalEgresos = 0;
+        this.state.caja.transacciones.forEach(tx => {
+            if (tx.tipo === 'ingreso') {
+                totalIngresos += tx.monto;
+            } else {
+                totalEgresos += tx.monto;
+            }
+        });
+        const saldoActual = saldoInicial + totalIngresos - totalEgresos;
+        return { saldoInicial, totalIngresos, totalEgresos, saldoActual };
+    },
+    showIniciarDiaModal() {
+        this.showModal(`
+            <h2>Iniciar Flujo de Caja</h2>
+            <p>Ingresa el monto de dinero con el que inicias el dÃ­a.</p>
+            <form id="iniciar-dia-form">
+                <div class="form-group">
+                    <label for="saldo-inicial">Dinero en Caja</label>
+                    <input type="number" id="saldo-inicial" min="0" step="1000" required>
+                </div>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Iniciar DÃ­a</button>
+                </div>
+            </form>
+        `);
+        document.getElementById('iniciar-dia-form').onsubmit = (e) => {
+            e.preventDefault();
+            const saldo = parseFloat(document.getElementById('saldo-inicial').value);
+            if (isNaN(saldo) || saldo < 0) {
+                this.showToast('Por favor, ingresa un monto vÃ¡lido.', 'error');
+                return;
+            }
+            this.state.caja.saldoInicialDia = saldo;
+            this.state.caja.transacciones = [];
+            this.state.caja.fechaActual = this.getTodayDateString();
+            this.saveState();
+            this.renderCajaTab();
+            this.closeModal();
+            this.showToast('Caja iniciada con Ã©xito.');
+        };
+        document.getElementById('saldo-inicial').focus();
+    },
+    showTransaccionCajaModal(tipo) {
+        if (!this.isCajaAbierta()) {
+            this.showToast('Debes iniciar la caja del dÃ­a para registrar movimientos.', 'error');
+            return;
+        }
+        const title = tipo === 'ingreso' ? 'Registrar Ingreso' : 'Registrar Egreso';
+        const btnClass = tipo === 'ingreso' ? 'btn-success' : 'btn-danger';
+        this.showModal(`
+            <h2>${title}</h2>
+            <form id="transaccion-caja-form">
+                <div class="form-group">
+                    <label for="tx-monto">Monto</label>
+                    <input type="number" id="tx-monto" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="tx-descripcion">DescripciÃ³n</label>
+                    <textarea id="tx-descripcion" rows="3" required></textarea>
+                </div>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn ${btnClass}">Guardar</button>
+                </div>
+            </form>
+        `);
+        document.getElementById('transaccion-caja-form').onsubmit = (e) => {
+            e.preventDefault();
+            const monto = parseFloat(document.getElementById('tx-monto').value);
+            const descripcion = document.getElementById('tx-descripcion').value.trim();
+            if (isNaN(monto) || monto <= 0 || !descripcion) {
+                this.showToast('Todos los campos son obligatorios.', 'error');
+                return;
+            }
+            this.addTransaccionCaja(tipo, monto, descripcion);
+            this.closeModal();
+            this.showToast('Movimiento registrado.');
+        };
+        document.getElementById('tx-monto').focus();
+    },
+    addTransaccionCaja(tipo, monto, descripcion) {
+        this.state.caja.transacciones.push({
+            id: this.uid(),
+            tipo: tipo,
+            monto: monto,
+            descripcion: descripcion,
+            timestamp: new Date().toISOString()
+        });
+        this.saveState();
+        if (this.state.activeTab === 'caja') {
+            this.renderCajaTab();
+        }
+    },
+    deleteTransaccionCaja(txId) {
+        this.showConfirmationModal('Â¿Eliminar este movimiento de la caja?', () => {
+            this.state.caja.transacciones = this.state.caja.transacciones.filter(tx => tx.id !== txId);
+            this.saveState();
+            this.renderCajaTab();
+            this.showToast('Movimiento eliminado.', 'error');
+        });
+    },
+
+    // --- 7. SECCIÃN: TURNOS (CON INTEGRACIÃN DE CAJA) ---
+    renderTurnosTab() { const c = document.getElementById('turnos-view-container'); if (this.state.currentTurnoView.type === 'dashboard') { c.innerHTML = this.renderTurnoDashboard(); } else { c.innerHTML = this.renderTurnoDetail(this.state.currentTurnoView.workerId); } },
+    renderTurnoDashboard() {
+        if (this.state.trabajadores.length === 0) return `<div class="empty-state">No hay trabajadores registrados. AÃ±ada uno en ConfiguraciÃ³n.</div>`;
+        return `<div class="worker-dashboard-grid">${this.state.trabajadores.map(w => {
+            const turno = this.state.turnosActivos.find(t => t.trabajador.id === w.id);
+            const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+            let summaryHTML = '', statusClass = 'status-inactive', statusText = 'Inactivo';
+            if (turno) {
+                const r = this.calculateSummary(turno);
+                statusClass = 'status-active';
+                statusText = turno.liquidado ? 'Liquidado' : 'Activo';
+                if(turno.liquidado) statusClass = 'status-liquidado';
+                summaryHTML = `<div class="worker-card-summary">
+                    <p>Ventas: <span>${currency(r.total_ingresos)}</span></p>
+                    <p>Pago Final: <span style="font-weight:bold; color: var(--success-color);">${currency(r.pago_final_al_trabajador)}</span></p>
+                </div>`;
+            }
+            return `<div class="worker-card" onclick="app.viewWorkerDetail('${w.id}')"><div class="worker-card-header"><h3>${w.nombre}</h3><span class="status-badge ${statusClass}">${statusText}</span></div>${summaryHTML}</div>`;
+        }).join('')}</div>`;
+    },
+    renderTurnoDetail(workerId) {
+        const worker = this.state.trabajadores.find(t => t.id === workerId); const turno = this.state.turnosActivos.find(t => t.trabajador.id === workerId);
+        const backButton = `<button class="btn btn-outline" style="margin-bottom: 1rem;" onclick="app.viewTurnoDashboard()"><svg class="icon"><use href="#icon-arrow-left"></use></svg> Volver al Panel</button>`;
+        if (turno) {
+            const r = this.calculateSummary(turno); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+            let dispatchHTML = this.state.productos.map(p => `<button class="btn btn-primary" onclick="app.showQuantityModal('${turno.id}', '${p.id}')" ${turno.liquidado ? 'disabled' : ''}>${p.nombre} <span style="opacity:0.7;font-size:0.8em;">(${p.stock_actual})</span></button>`).join('');
+            if (!this.state.productos.length) dispatchHTML = `<p style="color:var(--secondary-color);">AÃ±ada productos en ConfiguraciÃ³n y traslade stock desde Inventario.</p>`;
+            return `${backButton}
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Gestionando Turno de: ${worker.nombre}</h3>
+                        ${turno.liquidado ? '<span class="status-badge status-liquidado">LIQUIDADO</span>':''}
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <svg class="icon"><use href="#icon-dollar"></use></svg>
+                            <div class="stat-card-content"><h3>Ventas Generadas</h3><p>${cur(r.total_ingresos)}</p></div>
+                        </div>
+                        <div class="stat-card">
+                             <svg class="icon"><use href="#icon-clipboard"></use></svg>
+                             <div class="stat-card-content"><h3>Fichas Ganadas</h3><p>${cur(r.total_fichas)}</p></div>
+                        </div>
+                        <div class="stat-card success">
+                            <svg class="icon"><use href="#icon-check"></use></svg>
+                             <div class="stat-card-content"><h3>Pago Final</h3><p>${cur(r.pago_final_al_trabajador)}</p></div>
+                        </div>
+                    </div>
+                    <h4 style="margin-top:2rem;">Despacho RÃ¡pido</h4>
+                    <div class="dispatch-grid">${dispatchHTML}</div>
+                    <div class="actions" style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" onclick="app.showLoanModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}>+ PrÃ©stamo</button>
+                        <button class="btn btn-success" onclick="app.showLiquidarModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}><svg class="icon"><use href="#icon-check"></use></svg>Liquidar Turno</button>
+                        <button class="btn btn-outline" onclick="app.showBreakdownModal('${turno.id}')">Ver Desglose</button>
+                        <button class="btn btn-danger" onclick="app.endShift('${turno.id}')">Finalizar Turno</button>
+                    </div>
+                </div>`;
+        } else { return `${backButton}<div class="empty-state"><h3>${worker.nombre} estÃ¡ inactivo.</h3><button class="btn btn-primary" onclick="app.startShift('${worker.id}')">+ Iniciar Turno para ${worker.nombre}</button></div>`; }
+    },
+    viewWorkerDetail(workerId) { this.state.currentTurnoView = { type: 'detail', workerId }; this.renderAppUI(); },
+    viewTurnoDashboard() { this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.renderAppUI(); },
+    calculateSummary(turno) {
+        let total_ingresos = 0, total_fichas = 0, total_prestamos = 0;
+        turno.transacciones.forEach(t => {
+            switch (t.tipo) {
+                case 'DESPACHO':
+                    const p = this.state.productos.find(prod => prod.id === t.productoId);
+                    if (p) { total_ingresos += p.precio_venta * t.cantidad; total_fichas += p.valor_ficha * t.cantidad; }
+                    break;
+                case 'PRESTAMO': total_prestamos += t.monto; break;
+            }
+        });
+        const pago_base_turno = turno.pago_base_turno || 0;
+        const pago_final_al_trabajador = total_fichas + pago_base_turno - total_prestamos;
+        return { total_ingresos, total_fichas, total_prestamos, pago_base_turno, pago_final_al_trabajador };
+    },
+    startShift(workerId) { if(this.state.trabajadores.length === 0){ this.showToast('Primero debe registrar trabajadores en ConfiguraciÃ³n.', 'error'); return; } const trab = this.state.trabajadores.find(t => t.id === workerId); if(this.state.turnosActivos.some(t => t.trabajador.id === workerId)) { this.showToast('Este trabajador ya tiene un turno activo.', 'error'); return; } this.state.turnosActivos.push({ id: this.uid(), trabajador: trab, fecha_inicio: new Date().toISOString(), transacciones: [], liquidado: false, pago_base_turno: 0 }); this.saveState(); this.viewWorkerDetail(workerId); },
+    endShift(turnoId) {
+        const turno = this.state.turnosActivos.find(t => t.id === turnoId);
+        if (!turno.liquidado) { this.showToast('Debe liquidar el turno antes de finalizarlo.', 'error'); return; }
+        this.showConfirmationModal("Â¿Finalizar y archivar este turno liquidado?", () => {
+            const idx = this.state.turnosActivos.findIndex(t => t.id === turnoId);
+            const turnoFinalizado = this.state.turnosActivos[idx];
+            turnoFinalizado.fecha_fin = new Date().toISOString();
+            turnoFinalizado.summary = this.calculateSummary(turnoFinalizado);
+            this.state.historial.push(turnoFinalizado);
+            this.state.turnosActivos.splice(idx, 1);
+            this.saveState();
+            this.viewTurnoDashboard();
+            this.showToast('Turno archivado con Ã©xito');
+        });
+    },
+    confirmDispatch() { const cant = parseInt(document.getElementById('input-cantidad').value); const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId); const prod = this.state.productos.find(p => p.id === this._tempData.productoId); if (!cant || cant <= 0) { this.showToast("Cantidad invÃ¡lida.", 'error'); return; } if (prod.stock_actual < cant) { this.showToast(`Error de Stock: Solo quedan ${prod.stock_actual} unidades.`, 'error'); return; } prod.stock_actual -= cant; turno.transacciones.push({ tipo: 'DESPACHO', productoId: this._tempData.productoId, cantidad: cant, timestamp: new Date().toISOString() }); this.closeModal(); this.saveState(); this.renderAppUI(); },
+    confirmLoan() { const monto = parseFloat(document.getElementById('input-monto').value); const desc = document.getElementById('input-descripcion').value.trim(); if (!monto || monto <= 0 || !desc) { this.showToast("Todos los campos son obligatorios.", 'error'); return; } const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId); turno.transacciones.push({ tipo: 'PRESTAMO', monto: monto, descripcion: desc, timestamp: new Date().toISOString() }); this.closeModal(); this.saveState(); this.renderAppUI(); },
+    confirmLiquidacion() {
+        const monto = parseFloat(document.getElementById('input-pago-base').value);
+        if (isNaN(monto) || monto < 0) { this.showToast("Debe ingresar un pago base vÃ¡lido (puede ser 0).", 'error'); return; }
+        const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId);
+        
+        // --- INTEGRACIÃN CON CAJA ---
+        const summary = this.calculateSummary(turno);
+        summary.pago_base_turno = monto; // Recalcular con el pago base final
+        const pagoFinal = summary.total_fichas + summary.pago_base_turno - summary.total_prestamos;
+
+        // Registrar Ingreso por ventas
+        if (summary.total_ingresos > 0) {
+            this.addTransaccionCaja('ingreso', summary.total_ingresos, `Ventas del turno de ${turno.trabajador.nombre}`);
+        }
+        // Registrar Egreso por pago
+        if (pagoFinal > 0) {
+            this.addTransaccionCaja('egreso', pagoFinal, `Pago liquidaciÃ³n a ${turno.trabajador.nombre}`);
+        }
+        // --- FIN DE INTEGRACIÃN ---
+
+        turno.pago_base_turno = monto;
+        turno.liquidado = true;
+        this.closeModal();
+        this.saveState();
+        this.renderAppUI();
+        this.showToast('Turno liquidado y movimientos registrados en caja.');
+    },
+    
+    // --- 8. SECCIÃN: INVENTARIO (CON INTEGRACIÃN DE CAJA) ---
+    renderInventario() { this.renderBodega(); this.renderBarra(); },
+    renderBodega() { const c = document.getElementById('bodega-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.lotes_bodega.length === 0) { c.innerHTML = `<div class="empty-state">No hay compras registradas en la bodega.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Lote</th><th>P. Compra</th><th>Unidades</th><th>Producto Asociado</th><th></th></tr></thead><tbody>`; this.state.lotes_bodega.forEach(l => { const p = this.state.productos.find(prod => prod.id === l.id_producto_asociado); tbl += `<tr><td data-label="Lote">${l.nombre}</td><td data-label="P. Compra">${cur(l.precio_compra)}</td><td data-label="Unidades">${l.unidades_por_lote}</td><td data-label="Asociado">${p ? p.nombre : '<span style="color:var(--danger-color)">ELIMINADO</span>'}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showLoteModal('${l.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-primary" onclick="app.showDescomponerModal('${l.id}')">Trasladar</button><button class="btn btn-icon" onclick="app.deleteLote('${l.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
+    renderBarra() { const c = document.getElementById('barra-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.productos.length === 0) { c.innerHTML = `<div class="empty-state">No hay productos definidos para la venta.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Producto en Barra</th><th>Stock Actual</th><th>P. Venta</th><th>P. Costo Unit.</th><th>Valor Inventario</th></tr></thead><tbody>`; this.state.productos.forEach(p => { const v = p.stock_actual * p.precio_costo_unitario; tbl += `<tr><td data-label="Producto">${p.nombre}</td><td data-label="Stock" style="font-weight:bold;">${p.stock_actual}</td><td data-label="P. Venta">${cur(p.precio_venta)}</td><td data-label="P. Costo">${cur(p.precio_costo_unitario)}</td><td data-label="Valor">${cur(v)}</td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
+    saveLote(id) {
+        const n = document.getElementById('lote-nombre').value.trim(), c = parseFloat(document.getElementById('lote-compra').value), u = parseInt(document.getElementById('lote-unidades').value), p = document.getElementById('lote-producto').value; 
+        if (!n || isNaN(c) || c <= 0 || isNaN(u) || u <= 0 || !p) { this.showToast('Todos los campos son obligatorios y los nÃºmeros deben ser positivos.', 'error'); return; } 
+        const data = { nombre: n, precio_compra: c, unidades_por_lote: u, id_producto_asociado: p }; 
+        if(id) { 
+            Object.assign(this.state.lotes_bodega.find(l => l.id === id), data); 
+            this.showToast('Lote editado con Ã©xito'); 
+        } else { 
+            this.state.lotes_bodega.push({ ...data, id: this.uid(), timestamp: new Date().toISOString() }); 
+            this.showToast('Nueva compra registrada en bodega.'); 
+        } 
+        this.saveState(); 
+        this.renderInventario(); 
+        this.closeModal(); 
+    },
+    deleteLote(id) { this.showConfirmationModal('Â¿Eliminar este lote de la bodega? Esta acciÃ³n es irreversible.', () => { this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id); this.saveState(); this.renderInventario(); this.showToast('Lote eliminado', 'error'); }); },
+    showDescomponerModal(loteId) {
+        const lote = this.state.lotes_bodega.find(l => l.id === loteId);
+        if (!lote) { this.showToast('Error: No se encontrÃ³ el lote.', 'error'); return; }
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
+        if (!producto) { this.showToast('Error: El producto asociado a este lote ya no existe. No se puede trasladar.', 'error'); return; }
+        
+        this._tempData.loteId = loteId;
+
+        const contentHTML = `
+            <h2>Trasladar Stock a Barra</h2>
+            <p>Desde el lote: <strong>${lote.nombre}</strong></p>
+            <p>Hacia el producto: <strong>${producto.nombre}</strong></p>
+            <form id="traslado-form">
+                <div class="form-group">
+                    <label for="traslado-cantidad">Unidades a trasladar (Disponibles: ${lote.unidades_por_lote})</label>
+                    <div class="quantity-control">
+                        <button type="button" class="btn btn-secondary" id="btn-traslado-minus">-</button>
+                        <input type="number" id="traslado-cantidad" value="1" min="1" max="${lote.unidades_por_lote}" class="form-group" style="margin:0; flex-grow:1;">
+                        <button type="button" class="btn btn-secondary" id="btn-traslado-plus">+</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline" style="width:100%; margin-bottom: 1.5rem;" onclick="document.getElementById('traslado-cantidad').value = ${lote.unidades_por_lote}">Trasladar Lote Completo (${lote.unidades_por_lote} uds.)</button>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar Traslado</button>
+                </div>
+            </form>
+        `;
+        this.showModal(contentHTML);
+
+        const input = document.getElementById('traslado-cantidad');
+        const max = lote.unidades_por_lote;
+        document.getElementById('btn-traslado-minus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal > 1) input.value = currentVal - 1; });
+        document.getElementById('btn-traslado-plus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal < max) input.value = currentVal + 1; });
+        document.getElementById('traslado-form').onsubmit = (e) => { e.preventDefault(); this.confirmTraslado(); };
+        input.focus();
+    },
+    confirmTraslado() {
+        const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
+        const cantidadInput = document.getElementById('traslado-cantidad');
+        const cantidad = parseInt(cantidadInput.value);
+
+        if (!lote) { this.showToast('Error: Lote no encontrado.', 'error'); this.closeModal(); return; }
+        if (isNaN(cantidad) || cantidad <= 0) { this.showToast('La cantidad debe ser un nÃºmero positivo.', 'error'); return; }
+        if (cantidad > lote.unidades_por_lote) { this.showToast(`No puedes trasladar mÃ¡s de las ${lote.unidades_por_lote} unidades disponibles.`, 'error'); return; }
+
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
+        if (!producto) { this.showToast('Error: El producto asociado ya no existe.', 'error'); this.closeModal(); return; }
+
+        producto.stock_actual += cantidad;
+        lote.unidades_por_lote -= cantidad;
+
+        if (lote.unidades_por_lote === 0) {
+            this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== this._tempData.loteId);
+            this.showToast(`Lote completo (${cantidad} uds.) trasladado a la barra.`);
+        } else {
+            this.showToast(`${cantidad} unidades trasladadas a la barra.`);
+        }
+
+        this.saveState();
+        this.renderInventario();
+        this.closeModal();
+    },
+    
+    // --- 9. SECCIÃN: HISTORIAL Y REPORTES ---
+    renderHistorialTab() {
+        const container = document.getElementById('historial-container'); if (!this.state.historial || this.state.historial.length === 0) { container.innerHTML = `<div class="empty-state">No hay turnos finalizados en el historial.</div>`; return; }
+        const sortedHistory = [...this.state.historial].sort((a, b) => new Date(b.fecha_fin) - new Date(a.fecha_fin));
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        container.innerHTML = sortedHistory.map(turno => {
+            const summary = turno.summary || this.calculateSummary(turno);
+            return `<details class="history-details"><summary><div><strong>${turno.trabajador.nombre}</strong><br><small>${new Date(turno.fecha_inicio).toLocaleDateString('es-CO')} | ${new Date(turno.fecha_inicio).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})} - ${new Date(turno.fecha_fin).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</small></div><span style="font-weight: normal; font-size: 0.9em; color: var(--success-color)">${currency(summary.pago_final_al_trabajador)}</span></summary><div class="history-details-content"><h4 style="margin-top:1.5rem">Resumen Financiero del Turno</h4><div class="stats-grid"><div class="stat-card"><div class="stat-card-content"><h5>Ventas</h5><p style="font-size:1.5rem">${currency(summary.total_ingresos)}</p></div></div><div class="stat-card"><div class="stat-card-content"><h5>Fichas</h5><p style="font-size:1.5rem">${currency(summary.total_fichas)}</p></div></div><div class="stat-card"><div class="stat-card-content"><h5>Pago Base</h5><p style="font-size:1.5rem">${currency(summary.pago_base_turno)}</p></div></div><div class="stat-card danger"><div class="stat-card-content"><h5>PrÃ©stamos</h5><p style="font-size:1.5rem;">${currency(summary.total_prestamos)}</p></div></div></div><div class="actions" style="justify-content:flex-end; margin-top:1rem; gap: 0.5rem;"><button class="btn btn-outline" onclick="app.showHistoryBreakdownModal('${turno.id}')">Ver Desglose</button><button class="btn btn-danger" onclick="app.deleteHistoryEntry('${turno.id}')"><svg class="icon"><use href="#icon-trash"></use></svg>Eliminar</button></div></div></details>`;
+        }).join('');
+    },
+    deleteHistoryEntry(turnoId) { this.showConfirmationModal('Â¿EstÃ¡ seguro de que desea eliminar este turno del historial? Esta acciÃ³n es permanente y no se puede deshacer.', () => { const index = this.state.historial.findIndex(t => t.id === turnoId); if (index > -1) { this.state.historial.splice(index, 1); this.saveState(); this.renderHistorialTab(); this.showToast('Turno eliminado del historial.', 'error'); } }); },
+    renderReportUI() { document.getElementById('report-container').innerHTML = '<p style="color:var(--secondary-color)">Seleccione un rango de fechas y horas y presione "Generar Reporte".</p>'; },
+    generateReport() {
+        const startInput = document.getElementById('report-start-date').value, endInput = document.getElementById('report-end-date').value; if (!startInput || !endInput) { this.showToast('Debe seleccionar una fecha y hora de inicio y fin.', 'error'); return; }
+        const start = new Date(startInput), end = new Date(endInput); const turnos = this.state.historial.filter(t => { const d = new Date(t.fecha_fin); return d >= start && d <= end; });
+        const container = document.getElementById('report-container'); if (turnos.length === 0) { container.innerHTML = `<div class="empty-state">No hay turnos finalizados en el rango de fechas y horas seleccionado.</div>`; return; }
+        let totalIngresos = 0, totalCostos = 0; const ventasProductos = {}, analisisTrabajador = {}, transaccionesLog = []; this.currentReportData = { ingresosItems: [], costosItems: [], pagosItems: [] };
+        this.state.trabajadores.forEach(t => { analisisTrabajador[t.nombre] = { turnos: 0, ingresos: 0, costos: 0, gananciaBruta: 0, comisiones: 0, pagoBase: 0, prestamos: 0, pagoNeto: 0 }; });
+        turnos.forEach(turno => {
+            const trabNombre = turno.trabajador.nombre, summary = turno.summary; if (!summary) return;
+            analisisTrabajador[trabNombre].turnos++; analisisTrabajador[trabNombre].pagoBase += summary.pago_base_turno || 0; analisisTrabajador[trabNombre].prestamos += summary.total_prestamos || 0; analisisTrabajador[trabNombre].pagoNeto += summary.pago_final_al_trabajador || 0;
+            turno.transacciones.forEach(tx => {
+                const txDate = new Date(tx.timestamp); if (tx.tipo === 'DESPACHO') {
+                    const p = this.state.productos.find(prod => prod.id === tx.productoId); if (!p) return; const ingresos = p.precio_venta * tx.cantidad, costos = p.precio_costo_unitario * tx.cantidad;
+                    totalIngresos += ingresos; totalCostos += costos; this.currentReportData.ingresosItems.push({ detalle: `${tx.cantidad} x ${p.nombre}`, valor: ingresos }); this.currentReportData.costosItems.push({ detalle: `Costo de ${tx.cantidad} x ${p.nombre}`, valor: costos });
+                    if (!ventasProductos[p.nombre]) { ventasProductos[p.nombre] = { cantidad: 0, ingresos: 0, costos: 0, gananciaBruta: 0 }; }
+                    ventasProductos[p.nombre].cantidad += tx.cantidad; ventasProductos[p.nombre].ingresos += ingresos; ventasProductos[p.nombre].costos += costos; ventasProductos[p.nombre].gananciaBruta += (ingresos - costos);
+                    analisisTrabajador[trabNombre].ingresos += ingresos; analisisTrabajador[trabNombre].costos += costos; analisisTrabajador[trabNombre].gananciaBruta += (ingresos - costos); analisisTrabajador[trabNombre].comisiones += p.valor_ficha * tx.cantidad; transaccionesLog.push({ fecha: txDate, trabajador: trabNombre, tipo: 'Venta', detalle: `${tx.cantidad} x ${p.nombre}`, monto: ingresos });
+                } else if (tx.tipo === 'PRESTAMO') { transaccionesLog.push({ fecha: txDate, trabajador: trabNombre, tipo: 'PrÃ©stamo', detalle: tx.descripcion, monto: -tx.monto }); }
+            });
+        });
+        Object.entries(analisisTrabajador).forEach(([nombre, data]) => { if (data.pagoNeto !== 0) { this.currentReportData.pagosItems.push({ detalle: `Pago Neto a ${nombre}`, valor: data.pagoNeto }); } });
+        const totalPagosNeto = this.currentReportData.pagosItems.reduce((sum, item) => sum + item.valor, 0); const gananciaBrutaTotal = totalIngresos - totalCostos, gastosOperativos = totalCostos + totalPagosNeto, gananciaNeta = totalIngresos - gastosOperativos;
+        const margenNeto = totalIngresos > 0 ? (gananciaNeta / totalIngresos) * 100 : 0; const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        const ventasData = Object.entries(ventasProductos).map(([k, v]) => ({ 'Producto': k, 'Uds.': v.cantidad, 'Ingresos': v.ingresos, 'Costo Total': v.costos, 'Ganancia Bruta': v.gananciaBruta, 'Margen (%)': v.ingresos > 0 ? ((v.gananciaBruta / v.ingresos) * 100).toFixed(1) + '%' : 'N/A' })).sort((a, b) => b['Ganancia Bruta'] - a['Ganancia Bruta']);
+        const trabajadorData = Object.entries(analisisTrabajador).filter(([k,v]) => v.turnos > 0).map(([k, v]) => ({ 'Trabajador': k, 'Turnos': v.turnos, 'Ingresos Gen.': v.ingresos, 'Ganancia Bruta Gen.': v.gananciaBruta, 'Comisiones': v.comisiones, 'Pago Base': v.pagoBase, 'PrÃ©stamos': v.prestamos, 'Pago Neto': v.pagoNeto }));
+        const txLogData = transaccionesLog.sort((a,b) => a.fecha - b.fecha).map(log => ({ 'Fecha y Hora': log.fecha.toLocaleString('es-CO'), 'Trabajador': log.trabajador, 'Tipo': log.tipo, 'Detalle': log.detalle, 'Monto': log.monto }));
+        const currencyCols = ['Ingresos', 'Costo Total', 'Ganancia Bruta', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'PrÃ©stamos', 'Pago Neto', 'Monto'];
+        container.innerHTML = `<div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Resumen Financiero General</h3><div class="stats-grid"><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('ingresos')"><div class="stat-card-content"><h5>Ingresos por Ventas</h5><p>${currency(totalIngresos)}</p></div></div><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('bruta')"><div class="stat-card-content"><h5>Ganancia Bruta</h5><p>${currency(gananciaBrutaTotal)}</p></div></div><div class="stat-card danger clickable-stat-card" onclick="app.showReportBreakdownModal('gastos')"><div class="stat-card-content"><h5>Gastos Operativos</h5><p>${currency(gastosOperativos)}</p></div></div><div class="stat-card success clickable-stat-card" onclick="app.showReportBreakdownModal('neta')"><div class="stat-card-content"><h5>Ganancia Neta</h5><p>${currency(gananciaNeta)}</p></div></div></div><div class="stat-card" style="margin-top: 1rem;"><div class="stat-card-content" style="width:100%; text-align:center;"><h5>Margen de Beneficio Neto</h5><p>${margenNeto.toFixed(1)}%</p></div></div></div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">AnÃ¡lisis de Ventas por Producto</h3>${this.generateTableHTML(ventasData, ['Producto', 'Uds.', 'Ingresos', 'Costo Total', 'Ganancia Bruta', 'Margen (%)'], currencyCols)}</div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">AnÃ¡lisis de DesempeÃ±o por Trabajador</h3>${this.generateTableHTML(trabajadorData, ['Trabajador', 'Turnos', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'PrÃ©stamos', 'Pago Neto'], currencyCols)}</div><details class="report-details"><summary>Ver Registro Detallado de Transacciones (${txLogData.length} eventos)</summary><div class="report-details-content" style="padding-top: 1rem;">${this.generateTableHTML(txLogData, ['Fecha y Hora', 'Trabajador', 'Tipo', 'Detalle', 'Monto'], currencyCols)}</div></details>`;
+    },
+    generateTableHTML(data, headers, currencyColumns = []) {
+        if (data.length === 0) return '<div class="empty-state" style="padding: 1.5rem 1rem;">No hay datos para esta secciÃ³n.</div>';
+        let head = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
+        let body = `<tbody>${data.map(row => { const cells = headers.map(h => { const val = row[h]; const formattedVal = currencyColumns.includes(h) && typeof val === 'number' ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val) : (val === undefined ? '' : val); return `<td data-label="${h}">${formattedVal}</td>`; }).join(''); return `<tr>${cells}</tr>`; }).join('')}</tbody>`;
+        return `<div style="overflow-x:auto;"><table class="management-table">${head}${body}</table></div>`;
+    },
+    showReportBreakdownModal(metricKey) {
+        if (!this.currentReportData) return; const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        const { ingresosItems, costosItems, pagosItems } = this.currentReportData;
+        const totalIngresos = ingresosItems.reduce((sum, item) => sum + item.valor, 0), totalCostos = costosItems.reduce((sum, item) => sum + item.valor, 0), totalPagos = pagosItems.reduce((sum, item) => sum + item.valor, 0);
+        let title = '', contentHTML = '';
+        const buildListHTML = (title, items, total) => { let listHTML = `<h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">${title}</h4>`; if (items.length === 0) { listHTML += '<p style="color:var(--text-muted);">No hay datos para esta secciÃ³n.</p>'; } else { listHTML += items.map(item => `<p style="display:flex; justify-content:space-between; margin:0.4rem 0; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.4rem;"><span>${item.detalle}</span><strong>${currency(item.valor)}</strong></p>`).join(''); } listHTML += `<p style="display:flex; justify-content:space-between; margin-top:0.8rem; font-size:1.1em;"><strong>Subtotal:</strong><strong>${currency(total)}</strong></p>`; return listHTML; };
+        switch (metricKey) {
+            case 'ingresos': title = 'Desglose de Ingresos por Ventas'; contentHTML = buildListHTML('Ventas Registradas', ingresosItems, totalIngresos); break;
+            case 'gastos': title = 'Desglose de Gastos Operativos'; const totalGastos = totalCostos + totalPagos; contentHTML = `${buildListHTML('Costos de los Productos Vendidos', costosItems, totalCostos)}${buildListHTML('Pagos Netos a Trabajadores', pagosItems, totalPagos)}<hr style="margin: 1.5rem 0;"><div class="liquidacion-summary" style="background-color: transparent; padding: 0;"><p>Total Costos: <span>${currency(totalCostos)}</span></p><p>(+) Total Pagos: <span>${currency(totalPagos)}</span></p><hr><p><strong>Total Gastos Operativos:</strong> <strong><span>${currency(totalGastos)}</span></strong></p></div>`; break;
+            case 'bruta': title = 'CÃ¡lculo de Ganancia Bruta'; const gananciaBruta = totalIngresos - totalCostos; contentHTML = `<div class="liquidacion-summary"><p>Total Ingresos por Ventas: <span>${currency(totalIngresos)}</span></p><p>(-) Costo de Productos Vendidos: <span style="color:var(--danger-color)">${currency(totalCostos)}</span></p><hr><p><strong>Total Ganancia Bruta:</strong> <strong><span>${currency(gananciaBruta)}</span></strong></p></div>`; break;
+            case 'neta': title = 'CÃ¡lculo de Ganancia Neta'; const gananciaNeta = totalIngresos - (totalCostos + totalPagos); contentHTML = `<div class="liquidacion-summary"><p>Total Ingresos por Ventas: <span>${currency(totalIngresos)}</span></p><p>(-) Gastos Operativos: <span style="color:var(--danger-color)">${currency(totalCostos + totalPagos)}</span></p><hr><p><strong>Total Ganancia Neta:</strong> <strong><span>${currency(gananciaNeta)}</span></strong></p></div>`; break;
+        }
+        this.showModal(`<h2>${title}</h2><div>${contentHTML}</div><div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`);
+    },
+    
+    // --- 10. MODALES Y UTILIDADES ---
+    showModal(contentHTML) { document.getElementById('modal-content').innerHTML = contentHTML; document.getElementById('modal-container').style.display = 'flex'; },
+    closeModal() { document.getElementById('modal-container').style.display = 'none'; this._tempData = {}; },
+    showConfirmationModal(message, onConfirm) { this._tempData.onConfirm = onConfirm; this.showModal(`<h2>ConfirmaciÃ³n</h2><p>${message}</p><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="button" class="btn btn-danger" onclick="app.executeConfirmation()">Confirmar</button></div>`); },
+    executeConfirmation() { if(this._tempData.onConfirm) this._tempData.onConfirm(); this.closeModal(); },
+    showToast(message, type = 'success') { const tc = document.getElementById('toast-container'); const t = document.createElement('div'); const icon = type === 'success' ? '#icon-check' : '#icon-alert'; t.className = `toast ${type}`; t.innerHTML = `<svg class="icon"><use href="${icon}"></use></svg><span>${message}</span>`; tc.appendChild(t); setTimeout(() => t.remove(), 4000); },
+    showLoteModal(id = null) {
+        const lote = id ? this.state.lotes_bodega.find(l => l.id === id) : null; const title = lote ? 'Editar Lote de Compra' : 'AÃ±adir Nueva Compra'; const productOptions = this.state.productos.map(p => `<option value="${p.id}" ${lote && lote.id_producto_asociado === p.id ? 'selected' : ''}>${p.nombre}</option>`).join('');
+        this.showModal(`<h2>${title}</h2><form id="lote-form"><div class="form-group"><label for="lote-nombre">Nombre del Lote</label><input type="text" id="lote-nombre" value="${lote ? lote.nombre : ''}" required></div><div class="form-group"><label for="lote-compra">Precio Total de Compra</label><input type="number" id="lote-compra" value="${lote ? lote.precio_compra : ''}" min="0" required></div><div class="form-group"><label for="lote-unidades">Unidades por Lote</label><input type="number" id="lote-unidades" value="${lote ? lote.unidades_por_lote : ''}" min="1" required></div><div class="form-group"><label for="lote-producto">Producto Asociado</label><select id="lote-producto" required><option value="">Seleccione...</option>${productOptions}</select></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form>`);
+        document.getElementById('lote-form').onsubmit = (e) => { e.preventDefault(); this.saveLote(id); }; document.getElementById('lote-nombre').focus();
+    },
+    _getTurnoBreakdownHTML(turno) {
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); const fichas = {}; let prestamosHTML = '';
+        turno.transacciones.forEach(t => { if (t.tipo === 'DESPACHO') { const p = this.state.productos.find(prod => prod.id === t.productoId); if(p) { if (!fichas[p.nombre]) fichas[p.nombre] = { cantidad: 0, total: 0 }; fichas[p.nombre].cantidad += t.cantidad; fichas[p.nombre].total += t.cantidad * p.valor_ficha; } } else if (t.tipo === 'PRESTAMO') { prestamosHTML += `<li><strong>${currency(t.monto)}:</strong> ${t.descripcion} <em>(${new Date(t.timestamp).toLocaleTimeString('es-CO')})</em></li>`; } });
+        let fichasHTML = Object.keys(fichas).length > 0 ? '<h4>Despachos (Fichas)</h4><ul>' + Object.entries(fichas).map(([n, d]) => `<li><strong>${n}:</strong> ${d.cantidad} uds. &rarr; ${currency(d.total)}</li>`).join('') + '</ul>' : '<h4>No hay despachos registrados.</h4>';
+        if(prestamosHTML) prestamosHTML = '<h4>PrÃ©stamos</h4><ul>' + prestamosHTML + '</ul>'; return { fichasHTML, prestamosHTML };
+    },
+    showBreakdownModal(turnoId) { const turno = this.state.turnosActivos.find(t => t.id === turnoId); const { fichasHTML, prestamosHTML } = this._getTurnoBreakdownHTML(turno); this.showModal(`<h2>Desglose: ${turno.trabajador.nombre}</h2>${fichasHTML}${prestamosHTML}<div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`); },
+    showHistoryBreakdownModal(turnoId) { const turno = this.state.historial.find(t => t.id === turnoId); const { fichasHTML, prestamosHTML } = this._getTurnoBreakdownHTML(turno); this.showModal(`<h2>Desglose HistÃ³rico: ${turno.trabajador.nombre}</h2><p>Turno del ${new Date(turno.fecha_inicio).toLocaleDateString('es-CO')}</p>${fichasHTML}${prestamosHTML}<div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`); },
+    showLiquidarModal(turnoId) {
+        if (!this.isCajaAbierta()) {
+            this.showToast('Debes iniciar la caja del dÃ­a para poder liquidar un turno.', 'error');
+            return;
+        }
+        this._tempData.turnoId = turnoId; const turno = this.state.turnosActivos.find(t => t.id === turnoId); const summary = this.calculateSummary(turno); const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        this.showModal(`<h2>Liquidar Turno de ${turno.trabajador.nombre}</h2><div class="form-group"><label for="input-pago-base">Pago Base del Turno (Sueldo Fijo)</label><input type="number" id="input-pago-base" value="${turno.pago_base_turno || 0}" required></div><div class="liquidacion-summary"><p>Fichas Ganadas (ComisiÃ³n): <span>${currency(summary.total_fichas)}</span></p><p>(+) Pago Base del Turno: <span id="pago-base-display">${currency(turno.pago_base_turno || 0)}</span></p><p>(-) PrÃ©stamos: <span style="color:var(--danger-color)">${currency(summary.total_prestamos)}</span></p><hr><p><strong>Total a Pagar al Trabajador:</strong> <strong><span id="total-pagar-display">${currency(summary.pago_final_al_trabajador)}</span></strong></p></div><form id="liquidacion-form" style="margin-top:1.5rem;"><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-success">Confirmar LiquidaciÃ³n</button></div></form>`);
+        const pagoBaseInput = document.getElementById('input-pago-base');
+        pagoBaseInput.addEventListener('input', (e) => { const pagoBase = parseFloat(e.target.value) || 0; const pagoFinal = summary.total_fichas + pagoBase - summary.total_prestamos; document.getElementById('pago-base-display').textContent = currency(pagoBase); document.getElementById('total-pagar-display').textContent = currency(pagoFinal); });
+        document.getElementById('liquidacion-form').onsubmit = (e) => { e.preventDefault(); this.confirmLiquidacion(); }; pagoBaseInput.focus();
+    },
+    showQuantityModal(turnoId, productoId) {
+        this._tempData = { turnoId, productoId }; const p = this.state.productos.find(prod => prod.id === productoId);
+        this.showModal(`<h2>Asignar: ${p.nombre}</h2><form id="dispatch-form"><div class="form-group"><label>Cantidad (Stock Actual: ${p.stock_actual})</label><div class="quantity-control"><button type="button" class="btn btn-secondary" id="btn-qty-minus">-</button><input type="number" id="input-cantidad" value="1" min="1" max="${p.stock_actual}" class="form-group" style="margin:0; flex-grow:1;"><button type="button" class="btn btn-secondary" id="btn-qty-plus">+</button></div></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar</button></div></form>`);
+        const input = document.getElementById('input-cantidad'), stock = p.stock_actual;
+        document.getElementById('btn-qty-minus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal > 1) input.value = currentVal - 1; });
+        document.getElementById('btn-qty-plus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal < stock) input.value = currentVal + 1; });
+        document.getElementById('dispatch-form').onsubmit = (e) => { e.preventDefault(); this.confirmDispatch(); }; input.focus();
+    },
+    showWorkerManagementModal() { let list = this.state.trabajadores.map(t => `<tr><td data-label="Nombre">${t.nombre}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showWorkerModal('${t.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteWorker('${t.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Gestionar Trabajadores</h2><table class="management-table"><tbody>${list}</tbody></table><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showWorkerModal()">+ AÃ±adir Trabajador</button></div>`); },
+    showWorkerModal(id=null) { const w = id ? this.state.trabajadores.find(t=>t.id===id) : null; this.showModal(`<h2>${w ? 'Editar':'AÃ±adir'} Trabajador</h2><form id="w-form"><div class="form-group"><label>Nombre Completo</label><input id="w-name" value="${w ? w.nombre : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showWorkerManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('w-form').onsubmit = (e) => { e.preventDefault(); this.saveWorker(id); }; document.getElementById('w-name').focus(); },
+    saveWorker(id) { const n = document.getElementById('w-name').value.trim(); if(!n) return; if (id) { this.state.trabajadores.find(t=>t.id===id).nombre = n; this.showToast('Trabajador actualizado'); } else { this.state.trabajadores.push({id: this.uid(), nombre: n}); this.showToast('Trabajador creado con Ã©xito'); } this.saveState(); this.showWorkerManagementModal(); },
+    deleteWorker(id) { this.showConfirmationModal('Â¿Eliminar a este trabajador? No se podrÃ¡ deshacer.', () => { this.state.trabajadores = this.state.trabajadores.filter(t => t.id !== id); this.saveState(); this.showWorkerManagementModal(); this.showToast('Trabajador eliminado', 'error'); }); },
+    showProductManagementModal() { const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); let list = this.state.productos.map(p => `<tr><td data-label="Producto">${p.nombre}</td><td data-label="P. Venta">${c(p.precio_venta)}</td><td data-label="P. Costo">${c(p.precio_costo_unitario)}</td><td data-label="Ficha">${c(p.valor_ficha)}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showProductModal('${p.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteProduct('${p.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Plantillas de Productos Vendibles</h2><div style="overflow-x:auto;"><table class="management-table"><thead><tr><th>Producto</th><th>P. Venta</th><th>Costo Unit.</th><th>Valor Ficha</th><th></th></tr></thead><tbody>${list}</tbody></table></div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showProductModal()">+ AÃ±adir Producto</button></div>`); },
+    showProductModal(id=null) { const p = id ? this.state.productos.find(pr=>pr.id===id) : null; this.showModal(`<h2>${p ? 'Editar':'AÃ±adir'} Producto</h2><form id="p-form"><div class="form-group"><label>Nombre</label><input id="p-name" value="${p ? p.nombre : ''}" required></div><div class="form-group"><label>Precio Venta</label><input id="p-venta" type="number" value="${p ? p.precio_venta : ''}" required></div><div class="form-group"><label>Costo Unitario</label><input id="p-costo" type="number" value="${p ? p.precio_costo_unitario : ''}" required></div><div class="form-group"><label>Valor Ficha</label><input id="p-ficha" type="number" value="${p ? p.valor_ficha : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showProductManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('p-form').onsubmit = (e) => { e.preventDefault(); this.saveProduct(id); }; document.getElementById('p-name').focus(); },
+    saveProduct(id) { const n=document.getElementById('p-name').value.trim(), v=parseFloat(document.getElementById('p-venta').value), c=parseFloat(document.getElementById('p-costo').value), f=parseFloat(document.getElementById('p-ficha').value); if(!n || isNaN(v) || isNaN(c) || isNaN(f)) { this.showToast("Datos invÃ¡lidos. Todos los campos son obligatorios.", "error"); return; } const data = {nombre:n, precio_venta:v, precio_costo_unitario:c, valor_ficha:f}; if (id) { Object.assign(this.state.productos.find(p=>p.id===id), data); this.showToast('Producto actualizado'); } else { this.state.productos.push({...data, id: this.uid(), stock_actual: 0}); this.showToast('Producto creado con Ã©xito'); } this.saveState(); this.showProductManagementModal(); },
+    deleteProduct(id) { this.showConfirmationModal('Â¿Eliminar esta plantilla de producto? Esto podrÃ­a afectar lotes y reportes antiguos.', () => { this.state.productos = this.state.productos.filter(p => p.id !== id); this.saveState(); this.showProductManagementModal(); this.showToast('Producto eliminado', 'error'); }); },
+    showLoanModal: function(turnoId) { this._tempData = { turnoId }; this.showModal(`<h2>Registrar PrÃ©stamo</h2><form id="loan-form"><div class="form-group"><label>Monto</label><input type="number" id="input-monto" min="1" required></div><div class="form-group"><label>DescripciÃ³n</label><textarea id="input-descripcion" rows="3" required></textarea></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar</button></div></form>`); document.getElementById('loan-form').onsubmit = (e) => { e.preventDefault(); this.confirmLoan(); }; document.getElementById('input-monto').focus(); },
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
+</script>
+</body>
+</html>
