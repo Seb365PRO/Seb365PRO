@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-CO">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,7 +62,7 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* --- PRELOADER Y ANIMACIÃN DE TRANSICIÃN --- */
+        /* --- PRELOADER Y ANIMACIÓN DE TRANSICIÓN --- */
         #preloader {
             position: fixed;
             top: 50%;
@@ -85,7 +85,7 @@
         }
         body.auth-visible #preloader { opacity: 0; pointer-events: none; }
 
-        /* --- CONTENEDOR DE AUTENTICACIÃN --- */
+        /* --- CONTENEDOR DE AUTENTICACIÓN --- */
         #auth-container { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 1.5rem; animation: fadeInAuth 0.8s ease; }
         @keyframes fadeInAuth { from { opacity: 0; } to { opacity: 1; } }
         .auth-box { background-color: var(--surface-color); padding: 2.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-md); border: 1px solid var(--border-color); max-width: 420px; width: 100%; }
@@ -211,7 +211,7 @@
         .history-details, .report-details { border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 1rem; background-color: var(--surface-color); }
         .history-details summary, .report-details summary { cursor: pointer; padding: 1rem 1.5rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .history-details summary::-webkit-details-marker, .report-details summary::-webkit-details-marker { display: none; }
-        .history-details summary::after, .report-details summary::after { content: 'â¼'; font-size: 0.8em; transition: transform 0.2s; }
+        .history-details summary::after, .report-details summary::after { content: '▼'; font-size: 0.8em; transition: transform 0.2s; }
         .history-details[open] summary::after, .report-details[open] summary::after { transform: rotate(180deg); }
         .history-details-content, .report-details-content { padding: 0 1.5rem 1.5rem 1.5rem; }
         .liquidacion-summary { border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background-color: var(--bg-color); }
@@ -223,7 +223,7 @@
         .quantity-control input::-webkit-outer-spin-button, .quantity-control input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .quantity-control input[type=number] { -moz-appearance: textfield; }
         .actions { display: flex; flex-wrap: wrap; }
-        /* Estilo para transacciÃ³n de caja */
+        /* Estilo para transacción de caja */
         .caja-tx-ingreso { color: var(--success-color); }
         .caja-tx-egreso { color: var(--danger-color); }
 
@@ -232,9 +232,9 @@
             main { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
         }
 
-        /* --- INICIO: Nuevo DiseÃ±o MÃ³vil con Barra de NavegaciÃ³n Inferior --- */
+        /* --- INICIO: Nuevo Diseño Móvil con Barra de Navegación Inferior --- */
         @media (max-width: 768px) {
-            body.app-loaded #preloader { display: none; } /* Oculta el logo estÃ¡tico en mÃ³vil */
+            body.app-loaded #preloader { display: none; } /* Oculta el logo estático en móvil */
 
             #sidebar {
                 flex-direction: row;
@@ -272,7 +272,7 @@
             .nav-tab span { font-size: 0.7rem; font-weight: 500; }
             .nav-tab.active { color: var(--primary-color); font-weight: 600; }
             
-            /* Indicador activo como una lÃ­nea superior */
+            /* Indicador activo como una línea superior */
             .nav-tab::before { display: none; } /* Oculta el indicador lateral */
             .nav-tab.active::after {
                 content: '';
@@ -301,7 +301,7 @@
             .management-table td::before { content: attr(data-label); position: absolute; left: 0.75rem; width: calc(50% - 1.5rem); text-align: left; font-weight: bold; color: var(--text-muted); }
             .stats-grid { grid-template-columns: 1fr; }
         }
-        /* --- FIN: Nuevo DiseÃ±o MÃ³vil --- */
+        /* --- FIN: Nuevo Diseño Móvil --- */
     </style>
 </head>
 <body>
@@ -327,7 +327,7 @@
         <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></symbol>
     </svg>
     
-    <!-- Preloader y AutenticaciÃ³n (sin cambios) -->
+    <!-- Preloader y Autenticación (sin cambios) -->
     <div id="preloader">
         <svg class="animated-logo" viewBox="0 0 100 100">
             <defs><clipPath id="liquid-clip"><path d="M20 40 L50 70 L80 40 Z" /></clipPath></defs>
@@ -335,9 +335,9 @@
             <g clip-path="url(#liquid-clip)"><rect class="liquid-fill" x="0" y="0" width="100" height="100" /></g>
         </svg>
     </div>
-    <div id="auth-container"><div class="auth-box"><svg class="static-logo"><use href="#icon-logo-cocktail"></use></svg><h2>Control Inventario Pro</h2><p>La soluciÃ³n definitiva para gestionar tu negocio.</p><div class="auth-buttons"><button id="show-login-btn" class="btn btn-primary">Iniciar SesiÃ³n</button><button id="show-register-btn" class="btn btn-outline">Registrarse</button></div></div></div>
-    <div id="login-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo-cocktail"></use></svg><h2>Iniciar SesiÃ³n</h2><form id="login-form"><div class="form-group"><label for="username">Usuario</label><input type="text" id="username" required></div><div class="form-group"><label for="password">ContraseÃ±a</label><input type="password" id="password" required></div><div class="form-error-msg" id="login-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
-    <div id="register-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo-cocktail"></use></svg><h2>Crear Cuenta</h2><form id="register-form"><div class="form-group"><label for="reg-username">Usuario</label><input type="text" id="reg-username" required></div><div class="form-group"><label for="reg-barname">Nombre del Bar o Discoteca</label><input type="text" id="reg-barname" required></div><div class="form-group"><label for="reg-password">Crear ContraseÃ±a</label><input type="password" id="reg-password" required></div><div class="form-group"><label for="reg-password-confirm">Confirmar ContraseÃ±a</label><input type="password" id="reg-password-confirm" required></div><div class="form-error-msg" id="register-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Registrarse</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
+    <div id="auth-container"><div class="auth-box"><svg class="static-logo"><use href="#icon-logo-cocktail"></use></svg><h2>Control Inventario Pro</h2><p>La solución definitiva para gestionar tu negocio.</p><div class="auth-buttons"><button id="show-login-btn" class="btn btn-primary">Iniciar Sesión</button><button id="show-register-btn" class="btn btn-outline">Registrarse</button></div></div></div>
+    <div id="login-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo-cocktail"></use></svg><h2>Iniciar Sesión</h2><form id="login-form"><div class="form-group"><label for="username">Usuario</label><input type="text" id="username" required></div><div class="form-group"><label for="password">Contraseña</label><input type="password" id="password" required></div><div class="form-error-msg" id="login-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ingresar</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
+    <div id="register-modal" class="modal auth-modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo-cocktail"></use></svg><h2>Crear Cuenta</h2><form id="register-form"><div class="form-group"><label for="reg-username">Usuario</label><input type="text" id="reg-username" required></div><div class="form-group"><label for="reg-barname">Nombre del Bar o Discoteca</label><input type="text" id="reg-barname" required></div><div class="form-group"><label for="reg-password">Crear Contraseña</label><input type="password" id="reg-password" required></div><div class="form-group"><label for="reg-password-confirm">Confirmar Contraseña</label><input type="password" id="reg-password-confirm" required></div><div class="form-error-msg" id="register-error"></div><button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Registrarse</button><button type="button" class="btn btn-outline" onclick="app.showAuthHome()" style="width: 100%; margin-top: 0.5rem;">Cancelar</button></form></div></div>
     
     <!-- Estructura de la App -->
     <div id="app-shell">
@@ -351,7 +351,7 @@
                 <button class="nav-tab" data-tab="inventario"><svg class="icon"><use href="#icon-inventario"></use></svg><span>Inventario</span></button>
                 <button class="nav-tab" data-tab="historial"><svg class="icon"><use href="#icon-historial"></use></svg><span>Historial</span></button>
                 <button class="nav-tab" data-tab="reportes"><svg class="icon"><use href="#icon-reportes"></use></svg><span>Reportes</span></button>
-                <button class="nav-tab" data-tab="configuracion"><svg class="icon"><use href="#icon-configuracion"></use></svg><span>ConfiguraciÃ³n</span></button>
+                <button class="nav-tab" data-tab="configuracion"><svg class="icon"><use href="#icon-configuracion"></use></svg><span>Configuración</span></button>
             </nav>
             <div class="sidebar-footer">
                 <div class="theme-switch-wrapper">
@@ -363,7 +363,7 @@
                 </div>
                 <button class="btn btn-secondary" onclick="app.logout()" style="width:100%; margin-top: 1rem;">
                     <svg class="icon"><use href="#icon-logout"></use></svg>
-                    <span>Cerrar SesiÃ³n</span>
+                    <span>Cerrar Sesión</span>
                 </button>
             </div>
         </aside>
@@ -371,15 +371,15 @@
             <div id="turnos" class="tab-content"><div id="turnos-view-container"></div></div>
             <div id="caja" class="tab-content"></div>
             <div id="inventario" class="tab-content">
-                <div class="card"><div class="card-header"><h2>Bodega (Lotes Comprados)</h2><button class="btn btn-primary" onclick="app.showLoteModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>AÃ±adir Compra</span></button></div><div id="bodega-table-container"></div></div>
+                <div class="card"><div class="card-header"><h2>Bodega (Lotes Comprados)</h2><button class="btn btn-primary" onclick="app.showLoteModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>Añadir Compra</span></button></div><div id="bodega-table-container"></div></div>
                 <div class="card"><div class="card-header"><h2>Barra (Productos para la Venta)</h2></div><div id="barra-table-container"></div></div>
             </div>
             <div id="historial" class="tab-content"><div class="card"><div class="card-header"><h2>Historial de Turnos Finalizados</h2></div><div id="historial-container"></div></div></div>
             <div id="reportes" class="tab-content"><div class="card"><div class="card-header"><h2>Reportes Financieros y de Ventas</h2></div><div class="form-group" style="display:flex; gap:1rem; flex-wrap:wrap;"><div><label for="report-start-date">Fecha y Hora de Inicio</label><input type="datetime-local" id="report-start-date"></div><div><label for="report-end-date">Fecha y Hora de Fin</label><input type="datetime-local" id="report-end-date"></div><div style="align-self: flex-end;"><button class="btn btn-primary" onclick="app.generateReport()">Generar Reporte</button></div></div><div id="report-container" style="margin-top: 2rem;"></div></div></div>
             <div id="configuracion" class="tab-content">
                 <div class="card">
-                    <div class="card-header"><h2>ConfiguraciÃ³n General</h2></div>
-                    <p>AquÃ­ defines las plantillas de productos vendibles y gestionas el personal.</p>
+                    <div class="card-header"><h2>Configuración General</h2></div>
+                    <p>Aquí defines las plantillas de productos vendibles y gestionas el personal.</p>
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1rem; margin-top:1.5rem;">
                         <button class="btn btn-outline" onclick="app.showWorkerManagementModal()"><svg class="icon"><use href="#icon-users"></use></svg><span>Gestionar Trabajadores</span></button>
                         <button class="btn btn-outline" onclick="app.showProductManagementModal()"><svg class="icon"><use href="#icon-package"></use></svg><span>Gestionar Plantillas de Productos</span></button>
@@ -397,7 +397,7 @@
                     <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
                     <button class="btn btn-danger" onclick="app.logout()" style="width:100%;">
                         <svg class="icon"><use href="#icon-logout"></use></svg>
-                        <span>Cerrar SesiÃ³n</span>
+                        <span>Cerrar Sesión</span>
                     </button>
                 </div>
             </div>
@@ -409,7 +409,7 @@
 
 <script>
 const app = {
-    // --- 1. ESTADO DE LA APLICACIÃN ---
+    // --- 1. ESTADO DE LA APLICACIÓN ---
     state: { 
         barName: 'Control Inventario Pro', 
         productos: [], 
@@ -429,7 +429,7 @@ const app = {
     _tempData: {},
     currentReportData: null,
 
-    // --- 2. INICIALIZACIÃN Y CICLO DE VIDA ---
+    // --- 2. INICIALIZACIÓN Y CICLO DE VIDA ---
     init() {
         this.initTheme();
         this.attachAuthEventListeners();
@@ -462,7 +462,7 @@ const app = {
     },
     uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
 
-    // --- 3. GESTIÃN DEL TEMA (MODO OSCURO) ---
+    // --- 3. GESTIÓN DEL TEMA (MODO OSCURO) ---
     initTheme() {
         const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
         const themeToggleMobile = document.getElementById('theme-toggle-mobile');
@@ -500,7 +500,7 @@ const app = {
         themeToggleMobile.addEventListener('change', toggleTheme);
     },
 
-    // --- 4. AUTENTICACIÃN Y NAVEGACIÃN ---
+    // --- 4. AUTENTICACIÓN Y NAVEGACIÓN ---
     handlePreloader() { setTimeout(() => { this.loadState(); if (this.state.loggedIn) { this.transitionToApp(); } else { document.body.classList.add('auth-visible'); document.getElementById('auth-container').style.display = 'flex'; } }, 2800); },
     attachAuthEventListeners() { document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); document.getElementById('show-register-btn').addEventListener('click', () => this.showRegisterModal()); document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); this.login(); }); document.getElementById('register-form').addEventListener('submit', (e) => { e.preventDefault(); this.registerUser(); }); },
     showAuthHome() { document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'none'; document.getElementById('auth-container').style.display = 'flex'; },
@@ -508,17 +508,17 @@ const app = {
     showRegisterModal() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('register-modal').style.display = 'flex'; document.getElementById('register-error').textContent = ''; },
     registerUser() {
         const username = document.getElementById('reg-username').value.trim(); const barName = document.getElementById('reg-barname').value.trim(); const password = document.getElementById('reg-password').value; const passwordConfirm = document.getElementById('reg-password-confirm').value; const errorEl = document.getElementById('register-error');
-        if (!username || !barName || !password) { errorEl.textContent = 'Todos los campos son obligatorios.'; return; } if (password !== passwordConfirm) { errorEl.textContent = 'Las contraseÃ±as no coinciden.'; return; }
-        if (localStorage.getItem('controlInventarioUser')) { errorEl.textContent = 'Ya existe un usuario registrado.'; this.showToast('Solo se permite un usuario en esta versiÃ³n.', 'error'); return; }
-        const user = { username, barName, password: btoa(password) }; localStorage.setItem('controlInventarioUser', JSON.stringify(user)); this.showToast('Â¡Registro exitoso! Bienvenido.');
+        if (!username || !barName || !password) { errorEl.textContent = 'Todos los campos son obligatorios.'; return; } if (password !== passwordConfirm) { errorEl.textContent = 'Las contraseñas no coinciden.'; return; }
+        if (localStorage.getItem('controlInventarioUser')) { errorEl.textContent = 'Ya existe un usuario registrado.'; this.showToast('Solo se permite un usuario en esta versión.', 'error'); return; }
+        const user = { username, barName, password: btoa(password) }; localStorage.setItem('controlInventarioUser', JSON.stringify(user)); this.showToast('¡Registro exitoso! Bienvenido.');
         this.state.loggedIn = true; this.state.barName = barName; this.saveState(); this.transitionToApp();
     },
     login() {
         const username = document.getElementById('username').value; const password = document.getElementById('password').value; const errorEl = document.getElementById('login-error'); const user = JSON.parse(localStorage.getItem('controlInventarioUser'));
-        if (!user) { errorEl.textContent = 'No hay ningÃºn usuario registrado. Por favor, regÃ­strate.'; return; }
-        if (user.username === username && user.password === btoa(password)) { this.state.loggedIn = true; this.state.barName = user.barName; this.saveState(); this.transitionToApp(); } else { errorEl.textContent = 'Usuario o contraseÃ±a incorrectos.'; }
+        if (!user) { errorEl.textContent = 'No hay ningún usuario registrado. Por favor, regístrate.'; return; }
+        if (user.username === username && user.password === btoa(password)) { this.state.loggedIn = true; this.state.barName = user.barName; this.saveState(); this.transitionToApp(); } else { errorEl.textContent = 'Usuario o contraseña incorrectos.'; }
     },
-    logout() { this.showConfirmationModal("Â¿EstÃ¡ seguro que desea cerrar sesiÃ³n?", () => { this.state.loggedIn = false; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.saveState(); window.location.reload(); }); },
+    logout() { this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => { this.state.loggedIn = false; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.saveState(); window.location.reload(); }); },
     transitionToApp() { document.getElementById('auth-container').style.display = 'none'; document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'none'; document.body.classList.add('app-loaded'); document.body.classList.remove('auth-visible'); this.renderAppUI(); },
     changeTab(tabId) { this.state.activeTab = tabId; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.renderAppUI(); },
 
@@ -543,7 +543,7 @@ const app = {
         }
     },
     
-    // --- 6. SECCIÃN: FLUJO DE CAJA ---
+    // --- 6. SECCIÓN: FLUJO DE CAJA ---
     getTodayDateString() { return new Date().toISOString().split('T')[0]; },
     isCajaAbierta() { return this.state.caja.fechaActual === this.getTodayDateString(); },
     renderCajaTab() {
@@ -551,9 +551,9 @@ const app = {
         if (!this.isCajaAbierta()) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <h3>Flujo de Caja del DÃ­a</h3>
-                    <p>No se ha iniciado la caja para el dÃ­a de hoy (${new Date().toLocaleDateString('es-CO')}).</p>
-                    <button class="btn btn-primary" onclick="app.showIniciarDiaModal()">+ Iniciar Caja del DÃ­a</button>
+                    <h3>Flujo de Caja del Día</h3>
+                    <p>No se ha iniciado la caja para el día de hoy (${new Date().toLocaleDateString('es-CO')}).</p>
+                    <button class="btn btn-primary" onclick="app.showIniciarDiaModal()">+ Iniciar Caja del Día</button>
                 </div>`;
         } else {
             const resumen = this.calcularResumenCaja();
@@ -561,13 +561,13 @@ const app = {
             
             const transaccionesHTML = this.state.caja.transacciones.length > 0
                 ? `<table class="management-table">
-                    <thead><tr><th>Hora</th><th>Tipo</th><th>DescripciÃ³n</th><th>Monto</th><th></th></tr></thead>
+                    <thead><tr><th>Hora</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th></th></tr></thead>
                     <tbody>
                         ${this.state.caja.transacciones.slice().reverse().map(tx => `
                             <tr>
                                 <td data-label="Hora">${new Date(tx.timestamp).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</td>
                                 <td data-label="Tipo" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}">${tx.tipo.charAt(0).toUpperCase() + tx.tipo.slice(1)}</td>
-                                <td data-label="DescripciÃ³n">${tx.descripcion}</td>
+                                <td data-label="Descripción">${tx.descripcion}</td>
                                 <td data-label="Monto" class="${tx.tipo === 'ingreso' ? 'caja-tx-ingreso' : 'caja-tx-egreso'}" style="font-weight: bold;">${currency(tx.monto)}</td>
                                 <td data-label="Acciones">
                                     <div class="actions">
@@ -583,7 +583,7 @@ const app = {
             container.innerHTML = `
                 <div class="card">
                     <div class="card-header">
-                        <h2>Resumen de Caja del DÃ­a (${new Date().toLocaleDateString('es-CO')})</h2>
+                        <h2>Resumen de Caja del Día (${new Date().toLocaleDateString('es-CO')})</h2>
                     </div>
                     <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                         <div class="stat-card">
@@ -602,7 +602,7 @@ const app = {
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <h2>Movimientos del DÃ­a</h2>
+                        <h2>Movimientos del Día</h2>
                         <div class="actions" style="gap: 0.5rem;">
                             <button class="btn btn-success" onclick="app.showTransaccionCajaModal('ingreso')">+ Ingreso</button>
                             <button class="btn btn-danger" onclick="app.showTransaccionCajaModal('egreso')">- Egreso</button>
@@ -629,7 +629,7 @@ const app = {
     showIniciarDiaModal() {
         this.showModal(`
             <h2>Iniciar Flujo de Caja</h2>
-            <p>Ingresa el monto de dinero con el que inicias el dÃ­a.</p>
+            <p>Ingresa el monto de dinero con el que inicias el día.</p>
             <form id="iniciar-dia-form">
                 <div class="form-group">
                     <label for="saldo-inicial">Dinero en Caja</label>
@@ -637,7 +637,7 @@ const app = {
                 </div>
                 <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
                     <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Iniciar DÃ­a</button>
+                    <button type="submit" class="btn btn-primary">Iniciar Día</button>
                 </div>
             </form>
         `);
@@ -645,7 +645,7 @@ const app = {
             e.preventDefault();
             const saldo = parseFloat(document.getElementById('saldo-inicial').value);
             if (isNaN(saldo) || saldo < 0) {
-                this.showToast('Por favor, ingresa un monto vÃ¡lido.', 'error');
+                this.showToast('Por favor, ingresa un monto válido.', 'error');
                 return;
             }
             this.state.caja.saldoInicialDia = saldo;
@@ -654,13 +654,13 @@ const app = {
             this.saveState();
             this.renderCajaTab();
             this.closeModal();
-            this.showToast('Caja iniciada con Ã©xito.');
+            this.showToast('Caja iniciada con éxito.');
         };
         document.getElementById('saldo-inicial').focus();
     },
     showTransaccionCajaModal(tipo) {
         if (!this.isCajaAbierta()) {
-            this.showToast('Debes iniciar la caja del dÃ­a para registrar movimientos.', 'error');
+            this.showToast('Debes iniciar la caja del día para registrar movimientos.', 'error');
             return;
         }
         const title = tipo === 'ingreso' ? 'Registrar Ingreso' : 'Registrar Egreso';
@@ -673,7 +673,7 @@ const app = {
                     <input type="number" id="tx-monto" min="1" required>
                 </div>
                 <div class="form-group">
-                    <label for="tx-descripcion">DescripciÃ³n</label>
+                    <label for="tx-descripcion">Descripción</label>
                     <textarea id="tx-descripcion" rows="3" required></textarea>
                 </div>
                 <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
@@ -710,7 +710,7 @@ const app = {
         }
     },
     deleteTransaccionCaja(txId) {
-        this.showConfirmationModal('Â¿Eliminar este movimiento de la caja?', () => {
+        this.showConfirmationModal('¿Eliminar este movimiento de la caja?', () => {
             this.state.caja.transacciones = this.state.caja.transacciones.filter(tx => tx.id !== txId);
             this.saveState();
             this.renderCajaTab();
@@ -718,10 +718,10 @@ const app = {
         });
     },
 
-    // --- 7. SECCIÃN: TURNOS (CON INTEGRACIÃN DE CAJA) ---
+    // --- 7. SECCIÓN: TURNOS (CON INTEGRACIÓN DE CAJA) ---
     renderTurnosTab() { const c = document.getElementById('turnos-view-container'); if (this.state.currentTurnoView.type === 'dashboard') { c.innerHTML = this.renderTurnoDashboard(); } else { c.innerHTML = this.renderTurnoDetail(this.state.currentTurnoView.workerId); } },
     renderTurnoDashboard() {
-        if (this.state.trabajadores.length === 0) return `<div class="empty-state">No hay trabajadores registrados. AÃ±ada uno en ConfiguraciÃ³n.</div>`;
+        if (this.state.trabajadores.length === 0) return `<div class="empty-state">No hay trabajadores registrados. Añada uno en Configuración.</div>`;
         return `<div class="worker-dashboard-grid">${this.state.trabajadores.map(w => {
             const turno = this.state.turnosActivos.find(t => t.trabajador.id === w.id);
             const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
@@ -745,7 +745,7 @@ const app = {
         if (turno) {
             const r = this.calculateSummary(turno); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
             let dispatchHTML = this.state.productos.map(p => `<button class="btn btn-primary" onclick="app.showQuantityModal('${turno.id}', '${p.id}')" ${turno.liquidado ? 'disabled' : ''}>${p.nombre} <span style="opacity:0.7;font-size:0.8em;">(${p.stock_actual})</span></button>`).join('');
-            if (!this.state.productos.length) dispatchHTML = `<p style="color:var(--secondary-color);">AÃ±ada productos en ConfiguraciÃ³n y traslade stock desde Inventario.</p>`;
+            if (!this.state.productos.length) dispatchHTML = `<p style="color:var(--secondary-color);">Añada productos en Configuración y traslade stock desde Inventario.</p>`;
             return `${backButton}
                 <div class="card">
                     <div class="card-header">
@@ -766,16 +766,16 @@ const app = {
                              <div class="stat-card-content"><h3>Pago Final</h3><p>${cur(r.pago_final_al_trabajador)}</p></div>
                         </div>
                     </div>
-                    <h4 style="margin-top:2rem;">Despacho RÃ¡pido</h4>
+                    <h4 style="margin-top:2rem;">Despacho Rápido</h4>
                     <div class="dispatch-grid">${dispatchHTML}</div>
                     <div class="actions" style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
-                        <button class="btn btn-secondary" onclick="app.showLoanModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}>+ PrÃ©stamo</button>
+                        <button class="btn btn-secondary" onclick="app.showLoanModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}>+ Préstamo</button>
                         <button class="btn btn-success" onclick="app.showLiquidarModal('${turno.id}')" ${turno.liquidado ? 'disabled' : ''}><svg class="icon"><use href="#icon-check"></use></svg>Liquidar Turno</button>
                         <button class="btn btn-outline" onclick="app.showBreakdownModal('${turno.id}')">Ver Desglose</button>
                         <button class="btn btn-danger" onclick="app.endShift('${turno.id}')">Finalizar Turno</button>
                     </div>
                 </div>`;
-        } else { return `${backButton}<div class="empty-state"><h3>${worker.nombre} estÃ¡ inactivo.</h3><button class="btn btn-primary" onclick="app.startShift('${worker.id}')">+ Iniciar Turno para ${worker.nombre}</button></div>`; }
+        } else { return `${backButton}<div class="empty-state"><h3>${worker.nombre} está inactivo.</h3><button class="btn btn-primary" onclick="app.startShift('${worker.id}')">+ Iniciar Turno para ${worker.nombre}</button></div>`; }
     },
     viewWorkerDetail(workerId) { this.state.currentTurnoView = { type: 'detail', workerId }; this.renderAppUI(); },
     viewTurnoDashboard() { this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.renderAppUI(); },
@@ -794,11 +794,11 @@ const app = {
         const pago_final_al_trabajador = total_fichas + pago_base_turno - total_prestamos;
         return { total_ingresos, total_fichas, total_prestamos, pago_base_turno, pago_final_al_trabajador };
     },
-    startShift(workerId) { if(this.state.trabajadores.length === 0){ this.showToast('Primero debe registrar trabajadores en ConfiguraciÃ³n.', 'error'); return; } const trab = this.state.trabajadores.find(t => t.id === workerId); if(this.state.turnosActivos.some(t => t.trabajador.id === workerId)) { this.showToast('Este trabajador ya tiene un turno activo.', 'error'); return; } this.state.turnosActivos.push({ id: this.uid(), trabajador: trab, fecha_inicio: new Date().toISOString(), transacciones: [], liquidado: false, pago_base_turno: 0 }); this.saveState(); this.viewWorkerDetail(workerId); },
+    startShift(workerId) { if(this.state.trabajadores.length === 0){ this.showToast('Primero debe registrar trabajadores en Configuración.', 'error'); return; } const trab = this.state.trabajadores.find(t => t.id === workerId); if(this.state.turnosActivos.some(t => t.trabajador.id === workerId)) { this.showToast('Este trabajador ya tiene un turno activo.', 'error'); return; } this.state.turnosActivos.push({ id: this.uid(), trabajador: trab, fecha_inicio: new Date().toISOString(), transacciones: [], liquidado: false, pago_base_turno: 0 }); this.saveState(); this.viewWorkerDetail(workerId); },
     endShift(turnoId) {
         const turno = this.state.turnosActivos.find(t => t.id === turnoId);
         if (!turno.liquidado) { this.showToast('Debe liquidar el turno antes de finalizarlo.', 'error'); return; }
-        this.showConfirmationModal("Â¿Finalizar y archivar este turno liquidado?", () => {
+        this.showConfirmationModal("¿Finalizar y archivar este turno liquidado?", () => {
             const idx = this.state.turnosActivos.findIndex(t => t.id === turnoId);
             const turnoFinalizado = this.state.turnosActivos[idx];
             turnoFinalizado.fecha_fin = new Date().toISOString();
@@ -807,17 +807,17 @@ const app = {
             this.state.turnosActivos.splice(idx, 1);
             this.saveState();
             this.viewTurnoDashboard();
-            this.showToast('Turno archivado con Ã©xito');
+            this.showToast('Turno archivado con éxito');
         });
     },
-    confirmDispatch() { const cant = parseInt(document.getElementById('input-cantidad').value); const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId); const prod = this.state.productos.find(p => p.id === this._tempData.productoId); if (!cant || cant <= 0) { this.showToast("Cantidad invÃ¡lida.", 'error'); return; } if (prod.stock_actual < cant) { this.showToast(`Error de Stock: Solo quedan ${prod.stock_actual} unidades.`, 'error'); return; } prod.stock_actual -= cant; turno.transacciones.push({ tipo: 'DESPACHO', productoId: this._tempData.productoId, cantidad: cant, timestamp: new Date().toISOString() }); this.closeModal(); this.saveState(); this.renderAppUI(); },
+    confirmDispatch() { const cant = parseInt(document.getElementById('input-cantidad').value); const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId); const prod = this.state.productos.find(p => p.id === this._tempData.productoId); if (!cant || cant <= 0) { this.showToast("Cantidad inválida.", 'error'); return; } if (prod.stock_actual < cant) { this.showToast(`Error de Stock: Solo quedan ${prod.stock_actual} unidades.`, 'error'); return; } prod.stock_actual -= cant; turno.transacciones.push({ tipo: 'DESPACHO', productoId: this._tempData.productoId, cantidad: cant, timestamp: new Date().toISOString() }); this.closeModal(); this.saveState(); this.renderAppUI(); },
     confirmLoan() { const monto = parseFloat(document.getElementById('input-monto').value); const desc = document.getElementById('input-descripcion').value.trim(); if (!monto || monto <= 0 || !desc) { this.showToast("Todos los campos son obligatorios.", 'error'); return; } const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId); turno.transacciones.push({ tipo: 'PRESTAMO', monto: monto, descripcion: desc, timestamp: new Date().toISOString() }); this.closeModal(); this.saveState(); this.renderAppUI(); },
     confirmLiquidacion() {
         const monto = parseFloat(document.getElementById('input-pago-base').value);
-        if (isNaN(monto) || monto < 0) { this.showToast("Debe ingresar un pago base vÃ¡lido (puede ser 0).", 'error'); return; }
+        if (isNaN(monto) || monto < 0) { this.showToast("Debe ingresar un pago base válido (puede ser 0).", 'error'); return; }
         const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId);
         
-        // --- INTEGRACIÃN CON CAJA ---
+        // --- INTEGRACIÓN CON CAJA ---
         const summary = this.calculateSummary(turno);
         summary.pago_base_turno = monto; // Recalcular con el pago base final
         const pagoFinal = summary.total_fichas + summary.pago_base_turno - summary.total_prestamos;
@@ -828,9 +828,9 @@ const app = {
         }
         // Registrar Egreso por pago
         if (pagoFinal > 0) {
-            this.addTransaccionCaja('egreso', pagoFinal, `Pago liquidaciÃ³n a ${turno.trabajador.nombre}`);
+            this.addTransaccionCaja('egreso', pagoFinal, `Pago liquidación a ${turno.trabajador.nombre}`);
         }
-        // --- FIN DE INTEGRACIÃN ---
+        // --- FIN DE INTEGRACIÓN ---
 
         turno.pago_base_turno = monto;
         turno.liquidado = true;
@@ -840,17 +840,17 @@ const app = {
         this.showToast('Turno liquidado y movimientos registrados en caja.');
     },
     
-    // --- 8. SECCIÃN: INVENTARIO (CON INTEGRACIÃN DE CAJA) ---
+    // --- 8. SECCIÓN: INVENTARIO (CON INTEGRACIÓN DE CAJA) ---
     renderInventario() { this.renderBodega(); this.renderBarra(); },
     renderBodega() { const c = document.getElementById('bodega-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.lotes_bodega.length === 0) { c.innerHTML = `<div class="empty-state">No hay compras registradas en la bodega.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Lote</th><th>P. Compra</th><th>Unidades</th><th>Producto Asociado</th><th></th></tr></thead><tbody>`; this.state.lotes_bodega.forEach(l => { const p = this.state.productos.find(prod => prod.id === l.id_producto_asociado); tbl += `<tr><td data-label="Lote">${l.nombre}</td><td data-label="P. Compra">${cur(l.precio_compra)}</td><td data-label="Unidades">${l.unidades_por_lote}</td><td data-label="Asociado">${p ? p.nombre : '<span style="color:var(--danger-color)">ELIMINADO</span>'}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showLoteModal('${l.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-primary" onclick="app.showDescomponerModal('${l.id}')">Trasladar</button><button class="btn btn-icon" onclick="app.deleteLote('${l.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
     renderBarra() { const c = document.getElementById('barra-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.productos.length === 0) { c.innerHTML = `<div class="empty-state">No hay productos definidos para la venta.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Producto en Barra</th><th>Stock Actual</th><th>P. Venta</th><th>P. Costo Unit.</th><th>Valor Inventario</th></tr></thead><tbody>`; this.state.productos.forEach(p => { const v = p.stock_actual * p.precio_costo_unitario; tbl += `<tr><td data-label="Producto">${p.nombre}</td><td data-label="Stock" style="font-weight:bold;">${p.stock_actual}</td><td data-label="P. Venta">${cur(p.precio_venta)}</td><td data-label="P. Costo">${cur(p.precio_costo_unitario)}</td><td data-label="Valor">${cur(v)}</td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
     saveLote(id) {
         const n = document.getElementById('lote-nombre').value.trim(), c = parseFloat(document.getElementById('lote-compra').value), u = parseInt(document.getElementById('lote-unidades').value), p = document.getElementById('lote-producto').value; 
-        if (!n || isNaN(c) || c <= 0 || isNaN(u) || u <= 0 || !p) { this.showToast('Todos los campos son obligatorios y los nÃºmeros deben ser positivos.', 'error'); return; } 
+        if (!n || isNaN(c) || c <= 0 || isNaN(u) || u <= 0 || !p) { this.showToast('Todos los campos son obligatorios y los números deben ser positivos.', 'error'); return; } 
         const data = { nombre: n, precio_compra: c, unidades_por_lote: u, id_producto_asociado: p }; 
         if(id) { 
             Object.assign(this.state.lotes_bodega.find(l => l.id === id), data); 
-            this.showToast('Lote editado con Ã©xito'); 
+            this.showToast('Lote editado con éxito'); 
         } else { 
             this.state.lotes_bodega.push({ ...data, id: this.uid(), timestamp: new Date().toISOString() }); 
             this.showToast('Nueva compra registrada en bodega.'); 
@@ -859,10 +859,10 @@ const app = {
         this.renderInventario(); 
         this.closeModal(); 
     },
-    deleteLote(id) { this.showConfirmationModal('Â¿Eliminar este lote de la bodega? Esta acciÃ³n es irreversible.', () => { this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id); this.saveState(); this.renderInventario(); this.showToast('Lote eliminado', 'error'); }); },
+    deleteLote(id) { this.showConfirmationModal('¿Eliminar este lote de la bodega? Esta acción es irreversible.', () => { this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id); this.saveState(); this.renderInventario(); this.showToast('Lote eliminado', 'error'); }); },
     showDescomponerModal(loteId) {
         const lote = this.state.lotes_bodega.find(l => l.id === loteId);
-        if (!lote) { this.showToast('Error: No se encontrÃ³ el lote.', 'error'); return; }
+        if (!lote) { this.showToast('Error: No se encontró el lote.', 'error'); return; }
         const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
         if (!producto) { this.showToast('Error: El producto asociado a este lote ya no existe. No se puede trasladar.', 'error'); return; }
         
@@ -903,8 +903,8 @@ const app = {
         const cantidad = parseInt(cantidadInput.value);
 
         if (!lote) { this.showToast('Error: Lote no encontrado.', 'error'); this.closeModal(); return; }
-        if (isNaN(cantidad) || cantidad <= 0) { this.showToast('La cantidad debe ser un nÃºmero positivo.', 'error'); return; }
-        if (cantidad > lote.unidades_por_lote) { this.showToast(`No puedes trasladar mÃ¡s de las ${lote.unidades_por_lote} unidades disponibles.`, 'error'); return; }
+        if (isNaN(cantidad) || cantidad <= 0) { this.showToast('La cantidad debe ser un número positivo.', 'error'); return; }
+        if (cantidad > lote.unidades_por_lote) { this.showToast(`No puedes trasladar más de las ${lote.unidades_por_lote} unidades disponibles.`, 'error'); return; }
 
         const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
         if (!producto) { this.showToast('Error: El producto asociado ya no existe.', 'error'); this.closeModal(); return; }
@@ -924,17 +924,17 @@ const app = {
         this.closeModal();
     },
     
-    // --- 9. SECCIÃN: HISTORIAL Y REPORTES ---
+    // --- 9. SECCIÓN: HISTORIAL Y REPORTES ---
     renderHistorialTab() {
         const container = document.getElementById('historial-container'); if (!this.state.historial || this.state.historial.length === 0) { container.innerHTML = `<div class="empty-state">No hay turnos finalizados en el historial.</div>`; return; }
         const sortedHistory = [...this.state.historial].sort((a, b) => new Date(b.fecha_fin) - new Date(a.fecha_fin));
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         container.innerHTML = sortedHistory.map(turno => {
             const summary = turno.summary || this.calculateSummary(turno);
-            return `<details class="history-details"><summary><div><strong>${turno.trabajador.nombre}</strong><br><small>${new Date(turno.fecha_inicio).toLocaleDateString('es-CO')} | ${new Date(turno.fecha_inicio).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})} - ${new Date(turno.fecha_fin).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</small></div><span style="font-weight: normal; font-size: 0.9em; color: var(--success-color)">${currency(summary.pago_final_al_trabajador)}</span></summary><div class="history-details-content"><h4 style="margin-top:1.5rem">Resumen Financiero del Turno</h4><div class="stats-grid"><div class="stat-card"><div class="stat-card-content"><h5>Ventas</h5><p style="font-size:1.5rem">${currency(summary.total_ingresos)}</p></div></div><div class="stat-card"><div class="stat-card-content"><h5>Fichas</h5><p style="font-size:1.5rem">${currency(summary.total_fichas)}</p></div></div><div class="stat-card"><div class="stat-card-content"><h5>Pago Base</h5><p style="font-size:1.5rem">${currency(summary.pago_base_turno)}</p></div></div><div class="stat-card danger"><div class="stat-card-content"><h5>PrÃ©stamos</h5><p style="font-size:1.5rem;">${currency(summary.total_prestamos)}</p></div></div></div><div class="actions" style="justify-content:flex-end; margin-top:1rem; gap: 0.5rem;"><button class="btn btn-outline" onclick="app.showHistoryBreakdownModal('${turno.id}')">Ver Desglose</button><button class="btn btn-danger" onclick="app.deleteHistoryEntry('${turno.id}')"><svg class="icon"><use href="#icon-trash"></use></svg>Eliminar</button></div></div></details>`;
+            return `<details class="history-details"><summary><div><strong>${turno.trabajador.nombre}</strong><br><small>${new Date(turno.fecha_inicio).toLocaleDateString('es-CO')} | ${new Date(turno.fecha_inicio).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})} - ${new Date(turno.fecha_fin).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</small></div><span style="font-weight: normal; font-size: 0.9em; color: var(--success-color)">${currency(summary.pago_final_al_trabajador)}</span></summary><div class="history-details-content"><h4 style="margin-top:1.5rem">Resumen Financiero del Turno</h4><div class="stats-grid"><div class="stat-card"><div class="stat-card-content"><h5>Ventas</h5><p style="font-size:1.5rem">${currency(summary.total_ingresos)}</p></div></div><div class="stat-card"><div class="stat-card-content"><h5>Fichas</h5><p style="font-size:1.5rem">${currency(summary.total_fichas)}</p></div></div><div class="stat-card"><div class="stat-card-content"><h5>Pago Base</h5><p style="font-size:1.5rem">${currency(summary.pago_base_turno)}</p></div></div><div class="stat-card danger"><div class="stat-card-content"><h5>Préstamos</h5><p style="font-size:1.5rem;">${currency(summary.total_prestamos)}</p></div></div></div><div class="actions" style="justify-content:flex-end; margin-top:1rem; gap: 0.5rem;"><button class="btn btn-outline" onclick="app.showHistoryBreakdownModal('${turno.id}')">Ver Desglose</button><button class="btn btn-danger" onclick="app.deleteHistoryEntry('${turno.id}')"><svg class="icon"><use href="#icon-trash"></use></svg>Eliminar</button></div></div></details>`;
         }).join('');
     },
-    deleteHistoryEntry(turnoId) { this.showConfirmationModal('Â¿EstÃ¡ seguro de que desea eliminar este turno del historial? Esta acciÃ³n es permanente y no se puede deshacer.', () => { const index = this.state.historial.findIndex(t => t.id === turnoId); if (index > -1) { this.state.historial.splice(index, 1); this.saveState(); this.renderHistorialTab(); this.showToast('Turno eliminado del historial.', 'error'); } }); },
+    deleteHistoryEntry(turnoId) { this.showConfirmationModal('¿Está seguro de que desea eliminar este turno del historial? Esta acción es permanente y no se puede deshacer.', () => { const index = this.state.historial.findIndex(t => t.id === turnoId); if (index > -1) { this.state.historial.splice(index, 1); this.saveState(); this.renderHistorialTab(); this.showToast('Turno eliminado del historial.', 'error'); } }); },
     renderReportUI() { document.getElementById('report-container').innerHTML = '<p style="color:var(--secondary-color)">Seleccione un rango de fechas y horas y presione "Generar Reporte".</p>'; },
     generateReport() {
         const startInput = document.getElementById('report-start-date').value, endInput = document.getElementById('report-end-date').value; if (!startInput || !endInput) { this.showToast('Debe seleccionar una fecha y hora de inicio y fin.', 'error'); return; }
@@ -952,20 +952,20 @@ const app = {
                     if (!ventasProductos[p.nombre]) { ventasProductos[p.nombre] = { cantidad: 0, ingresos: 0, costos: 0, gananciaBruta: 0 }; }
                     ventasProductos[p.nombre].cantidad += tx.cantidad; ventasProductos[p.nombre].ingresos += ingresos; ventasProductos[p.nombre].costos += costos; ventasProductos[p.nombre].gananciaBruta += (ingresos - costos);
                     analisisTrabajador[trabNombre].ingresos += ingresos; analisisTrabajador[trabNombre].costos += costos; analisisTrabajador[trabNombre].gananciaBruta += (ingresos - costos); analisisTrabajador[trabNombre].comisiones += p.valor_ficha * tx.cantidad; transaccionesLog.push({ fecha: txDate, trabajador: trabNombre, tipo: 'Venta', detalle: `${tx.cantidad} x ${p.nombre}`, monto: ingresos });
-                } else if (tx.tipo === 'PRESTAMO') { transaccionesLog.push({ fecha: txDate, trabajador: trabNombre, tipo: 'PrÃ©stamo', detalle: tx.descripcion, monto: -tx.monto }); }
+                } else if (tx.tipo === 'PRESTAMO') { transaccionesLog.push({ fecha: txDate, trabajador: trabNombre, tipo: 'Préstamo', detalle: tx.descripcion, monto: -tx.monto }); }
             });
         });
         Object.entries(analisisTrabajador).forEach(([nombre, data]) => { if (data.pagoNeto !== 0) { this.currentReportData.pagosItems.push({ detalle: `Pago Neto a ${nombre}`, valor: data.pagoNeto }); } });
         const totalPagosNeto = this.currentReportData.pagosItems.reduce((sum, item) => sum + item.valor, 0); const gananciaBrutaTotal = totalIngresos - totalCostos, gastosOperativos = totalCostos + totalPagosNeto, gananciaNeta = totalIngresos - gastosOperativos;
         const margenNeto = totalIngresos > 0 ? (gananciaNeta / totalIngresos) * 100 : 0; const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         const ventasData = Object.entries(ventasProductos).map(([k, v]) => ({ 'Producto': k, 'Uds.': v.cantidad, 'Ingresos': v.ingresos, 'Costo Total': v.costos, 'Ganancia Bruta': v.gananciaBruta, 'Margen (%)': v.ingresos > 0 ? ((v.gananciaBruta / v.ingresos) * 100).toFixed(1) + '%' : 'N/A' })).sort((a, b) => b['Ganancia Bruta'] - a['Ganancia Bruta']);
-        const trabajadorData = Object.entries(analisisTrabajador).filter(([k,v]) => v.turnos > 0).map(([k, v]) => ({ 'Trabajador': k, 'Turnos': v.turnos, 'Ingresos Gen.': v.ingresos, 'Ganancia Bruta Gen.': v.gananciaBruta, 'Comisiones': v.comisiones, 'Pago Base': v.pagoBase, 'PrÃ©stamos': v.prestamos, 'Pago Neto': v.pagoNeto }));
+        const trabajadorData = Object.entries(analisisTrabajador).filter(([k,v]) => v.turnos > 0).map(([k, v]) => ({ 'Trabajador': k, 'Turnos': v.turnos, 'Ingresos Gen.': v.ingresos, 'Ganancia Bruta Gen.': v.gananciaBruta, 'Comisiones': v.comisiones, 'Pago Base': v.pagoBase, 'Préstamos': v.prestamos, 'Pago Neto': v.pagoNeto }));
         const txLogData = transaccionesLog.sort((a,b) => a.fecha - b.fecha).map(log => ({ 'Fecha y Hora': log.fecha.toLocaleString('es-CO'), 'Trabajador': log.trabajador, 'Tipo': log.tipo, 'Detalle': log.detalle, 'Monto': log.monto }));
-        const currencyCols = ['Ingresos', 'Costo Total', 'Ganancia Bruta', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'PrÃ©stamos', 'Pago Neto', 'Monto'];
-        container.innerHTML = `<div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Resumen Financiero General</h3><div class="stats-grid"><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('ingresos')"><div class="stat-card-content"><h5>Ingresos por Ventas</h5><p>${currency(totalIngresos)}</p></div></div><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('bruta')"><div class="stat-card-content"><h5>Ganancia Bruta</h5><p>${currency(gananciaBrutaTotal)}</p></div></div><div class="stat-card danger clickable-stat-card" onclick="app.showReportBreakdownModal('gastos')"><div class="stat-card-content"><h5>Gastos Operativos</h5><p>${currency(gastosOperativos)}</p></div></div><div class="stat-card success clickable-stat-card" onclick="app.showReportBreakdownModal('neta')"><div class="stat-card-content"><h5>Ganancia Neta</h5><p>${currency(gananciaNeta)}</p></div></div></div><div class="stat-card" style="margin-top: 1rem;"><div class="stat-card-content" style="width:100%; text-align:center;"><h5>Margen de Beneficio Neto</h5><p>${margenNeto.toFixed(1)}%</p></div></div></div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">AnÃ¡lisis de Ventas por Producto</h3>${this.generateTableHTML(ventasData, ['Producto', 'Uds.', 'Ingresos', 'Costo Total', 'Ganancia Bruta', 'Margen (%)'], currencyCols)}</div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">AnÃ¡lisis de DesempeÃ±o por Trabajador</h3>${this.generateTableHTML(trabajadorData, ['Trabajador', 'Turnos', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'PrÃ©stamos', 'Pago Neto'], currencyCols)}</div><details class="report-details"><summary>Ver Registro Detallado de Transacciones (${txLogData.length} eventos)</summary><div class="report-details-content" style="padding-top: 1rem;">${this.generateTableHTML(txLogData, ['Fecha y Hora', 'Trabajador', 'Tipo', 'Detalle', 'Monto'], currencyCols)}</div></details>`;
+        const currencyCols = ['Ingresos', 'Costo Total', 'Ganancia Bruta', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'Préstamos', 'Pago Neto', 'Monto'];
+        container.innerHTML = `<div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Resumen Financiero General</h3><div class="stats-grid"><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('ingresos')"><div class="stat-card-content"><h5>Ingresos por Ventas</h5><p>${currency(totalIngresos)}</p></div></div><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('bruta')"><div class="stat-card-content"><h5>Ganancia Bruta</h5><p>${currency(gananciaBrutaTotal)}</p></div></div><div class="stat-card danger clickable-stat-card" onclick="app.showReportBreakdownModal('gastos')"><div class="stat-card-content"><h5>Gastos Operativos</h5><p>${currency(gastosOperativos)}</p></div></div><div class="stat-card success clickable-stat-card" onclick="app.showReportBreakdownModal('neta')"><div class="stat-card-content"><h5>Ganancia Neta</h5><p>${currency(gananciaNeta)}</p></div></div></div><div class="stat-card" style="margin-top: 1rem;"><div class="stat-card-content" style="width:100%; text-align:center;"><h5>Margen de Beneficio Neto</h5><p>${margenNeto.toFixed(1)}%</p></div></div></div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Análisis de Ventas por Producto</h3>${this.generateTableHTML(ventasData, ['Producto', 'Uds.', 'Ingresos', 'Costo Total', 'Ganancia Bruta', 'Margen (%)'], currencyCols)}</div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Análisis de Desempeño por Trabajador</h3>${this.generateTableHTML(trabajadorData, ['Trabajador', 'Turnos', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'Préstamos', 'Pago Neto'], currencyCols)}</div><details class="report-details"><summary>Ver Registro Detallado de Transacciones (${txLogData.length} eventos)</summary><div class="report-details-content" style="padding-top: 1rem;">${this.generateTableHTML(txLogData, ['Fecha y Hora', 'Trabajador', 'Tipo', 'Detalle', 'Monto'], currencyCols)}</div></details>`;
     },
     generateTableHTML(data, headers, currencyColumns = []) {
-        if (data.length === 0) return '<div class="empty-state" style="padding: 1.5rem 1rem;">No hay datos para esta secciÃ³n.</div>';
+        if (data.length === 0) return '<div class="empty-state" style="padding: 1.5rem 1rem;">No hay datos para esta sección.</div>';
         let head = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
         let body = `<tbody>${data.map(row => { const cells = headers.map(h => { const val = row[h]; const formattedVal = currencyColumns.includes(h) && typeof val === 'number' ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val) : (val === undefined ? '' : val); return `<td data-label="${h}">${formattedVal}</td>`; }).join(''); return `<tr>${cells}</tr>`; }).join('')}</tbody>`;
         return `<div style="overflow-x:auto;"><table class="management-table">${head}${body}</table></div>`;
@@ -975,12 +975,12 @@ const app = {
         const { ingresosItems, costosItems, pagosItems } = this.currentReportData;
         const totalIngresos = ingresosItems.reduce((sum, item) => sum + item.valor, 0), totalCostos = costosItems.reduce((sum, item) => sum + item.valor, 0), totalPagos = pagosItems.reduce((sum, item) => sum + item.valor, 0);
         let title = '', contentHTML = '';
-        const buildListHTML = (title, items, total) => { let listHTML = `<h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">${title}</h4>`; if (items.length === 0) { listHTML += '<p style="color:var(--text-muted);">No hay datos para esta secciÃ³n.</p>'; } else { listHTML += items.map(item => `<p style="display:flex; justify-content:space-between; margin:0.4rem 0; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.4rem;"><span>${item.detalle}</span><strong>${currency(item.valor)}</strong></p>`).join(''); } listHTML += `<p style="display:flex; justify-content:space-between; margin-top:0.8rem; font-size:1.1em;"><strong>Subtotal:</strong><strong>${currency(total)}</strong></p>`; return listHTML; };
+        const buildListHTML = (title, items, total) => { let listHTML = `<h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">${title}</h4>`; if (items.length === 0) { listHTML += '<p style="color:var(--text-muted);">No hay datos para esta sección.</p>'; } else { listHTML += items.map(item => `<p style="display:flex; justify-content:space-between; margin:0.4rem 0; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.4rem;"><span>${item.detalle}</span><strong>${currency(item.valor)}</strong></p>`).join(''); } listHTML += `<p style="display:flex; justify-content:space-between; margin-top:0.8rem; font-size:1.1em;"><strong>Subtotal:</strong><strong>${currency(total)}</strong></p>`; return listHTML; };
         switch (metricKey) {
             case 'ingresos': title = 'Desglose de Ingresos por Ventas'; contentHTML = buildListHTML('Ventas Registradas', ingresosItems, totalIngresos); break;
             case 'gastos': title = 'Desglose de Gastos Operativos'; const totalGastos = totalCostos + totalPagos; contentHTML = `${buildListHTML('Costos de los Productos Vendidos', costosItems, totalCostos)}${buildListHTML('Pagos Netos a Trabajadores', pagosItems, totalPagos)}<hr style="margin: 1.5rem 0;"><div class="liquidacion-summary" style="background-color: transparent; padding: 0;"><p>Total Costos: <span>${currency(totalCostos)}</span></p><p>(+) Total Pagos: <span>${currency(totalPagos)}</span></p><hr><p><strong>Total Gastos Operativos:</strong> <strong><span>${currency(totalGastos)}</span></strong></p></div>`; break;
-            case 'bruta': title = 'CÃ¡lculo de Ganancia Bruta'; const gananciaBruta = totalIngresos - totalCostos; contentHTML = `<div class="liquidacion-summary"><p>Total Ingresos por Ventas: <span>${currency(totalIngresos)}</span></p><p>(-) Costo de Productos Vendidos: <span style="color:var(--danger-color)">${currency(totalCostos)}</span></p><hr><p><strong>Total Ganancia Bruta:</strong> <strong><span>${currency(gananciaBruta)}</span></strong></p></div>`; break;
-            case 'neta': title = 'CÃ¡lculo de Ganancia Neta'; const gananciaNeta = totalIngresos - (totalCostos + totalPagos); contentHTML = `<div class="liquidacion-summary"><p>Total Ingresos por Ventas: <span>${currency(totalIngresos)}</span></p><p>(-) Gastos Operativos: <span style="color:var(--danger-color)">${currency(totalCostos + totalPagos)}</span></p><hr><p><strong>Total Ganancia Neta:</strong> <strong><span>${currency(gananciaNeta)}</span></strong></p></div>`; break;
+            case 'bruta': title = 'Cálculo de Ganancia Bruta'; const gananciaBruta = totalIngresos - totalCostos; contentHTML = `<div class="liquidacion-summary"><p>Total Ingresos por Ventas: <span>${currency(totalIngresos)}</span></p><p>(-) Costo de Productos Vendidos: <span style="color:var(--danger-color)">${currency(totalCostos)}</span></p><hr><p><strong>Total Ganancia Bruta:</strong> <strong><span>${currency(gananciaBruta)}</span></strong></p></div>`; break;
+            case 'neta': title = 'Cálculo de Ganancia Neta'; const gananciaNeta = totalIngresos - (totalCostos + totalPagos); contentHTML = `<div class="liquidacion-summary"><p>Total Ingresos por Ventas: <span>${currency(totalIngresos)}</span></p><p>(-) Gastos Operativos: <span style="color:var(--danger-color)">${currency(totalCostos + totalPagos)}</span></p><hr><p><strong>Total Ganancia Neta:</strong> <strong><span>${currency(gananciaNeta)}</span></strong></p></div>`; break;
         }
         this.showModal(`<h2>${title}</h2><div>${contentHTML}</div><div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`);
     },
@@ -988,11 +988,11 @@ const app = {
     // --- 10. MODALES Y UTILIDADES ---
     showModal(contentHTML) { document.getElementById('modal-content').innerHTML = contentHTML; document.getElementById('modal-container').style.display = 'flex'; },
     closeModal() { document.getElementById('modal-container').style.display = 'none'; this._tempData = {}; },
-    showConfirmationModal(message, onConfirm) { this._tempData.onConfirm = onConfirm; this.showModal(`<h2>ConfirmaciÃ³n</h2><p>${message}</p><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="button" class="btn btn-danger" onclick="app.executeConfirmation()">Confirmar</button></div>`); },
+    showConfirmationModal(message, onConfirm) { this._tempData.onConfirm = onConfirm; this.showModal(`<h2>Confirmación</h2><p>${message}</p><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="button" class="btn btn-danger" onclick="app.executeConfirmation()">Confirmar</button></div>`); },
     executeConfirmation() { if(this._tempData.onConfirm) this._tempData.onConfirm(); this.closeModal(); },
     showToast(message, type = 'success') { const tc = document.getElementById('toast-container'); const t = document.createElement('div'); const icon = type === 'success' ? '#icon-check' : '#icon-alert'; t.className = `toast ${type}`; t.innerHTML = `<svg class="icon"><use href="${icon}"></use></svg><span>${message}</span>`; tc.appendChild(t); setTimeout(() => t.remove(), 4000); },
     showLoteModal(id = null) {
-        const lote = id ? this.state.lotes_bodega.find(l => l.id === id) : null; const title = lote ? 'Editar Lote de Compra' : 'AÃ±adir Nueva Compra'; const productOptions = this.state.productos.map(p => `<option value="${p.id}" ${lote && lote.id_producto_asociado === p.id ? 'selected' : ''}>${p.nombre}</option>`).join('');
+        const lote = id ? this.state.lotes_bodega.find(l => l.id === id) : null; const title = lote ? 'Editar Lote de Compra' : 'Añadir Nueva Compra'; const productOptions = this.state.productos.map(p => `<option value="${p.id}" ${lote && lote.id_producto_asociado === p.id ? 'selected' : ''}>${p.nombre}</option>`).join('');
         this.showModal(`<h2>${title}</h2><form id="lote-form"><div class="form-group"><label for="lote-nombre">Nombre del Lote</label><input type="text" id="lote-nombre" value="${lote ? lote.nombre : ''}" required></div><div class="form-group"><label for="lote-compra">Precio Total de Compra</label><input type="number" id="lote-compra" value="${lote ? lote.precio_compra : ''}" min="0" required></div><div class="form-group"><label for="lote-unidades">Unidades por Lote</label><input type="number" id="lote-unidades" value="${lote ? lote.unidades_por_lote : ''}" min="1" required></div><div class="form-group"><label for="lote-producto">Producto Asociado</label><select id="lote-producto" required><option value="">Seleccione...</option>${productOptions}</select></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form>`);
         document.getElementById('lote-form').onsubmit = (e) => { e.preventDefault(); this.saveLote(id); }; document.getElementById('lote-nombre').focus();
     },
@@ -1000,17 +1000,17 @@ const app = {
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); const fichas = {}; let prestamosHTML = '';
         turno.transacciones.forEach(t => { if (t.tipo === 'DESPACHO') { const p = this.state.productos.find(prod => prod.id === t.productoId); if(p) { if (!fichas[p.nombre]) fichas[p.nombre] = { cantidad: 0, total: 0 }; fichas[p.nombre].cantidad += t.cantidad; fichas[p.nombre].total += t.cantidad * p.valor_ficha; } } else if (t.tipo === 'PRESTAMO') { prestamosHTML += `<li><strong>${currency(t.monto)}:</strong> ${t.descripcion} <em>(${new Date(t.timestamp).toLocaleTimeString('es-CO')})</em></li>`; } });
         let fichasHTML = Object.keys(fichas).length > 0 ? '<h4>Despachos (Fichas)</h4><ul>' + Object.entries(fichas).map(([n, d]) => `<li><strong>${n}:</strong> ${d.cantidad} uds. &rarr; ${currency(d.total)}</li>`).join('') + '</ul>' : '<h4>No hay despachos registrados.</h4>';
-        if(prestamosHTML) prestamosHTML = '<h4>PrÃ©stamos</h4><ul>' + prestamosHTML + '</ul>'; return { fichasHTML, prestamosHTML };
+        if(prestamosHTML) prestamosHTML = '<h4>Préstamos</h4><ul>' + prestamosHTML + '</ul>'; return { fichasHTML, prestamosHTML };
     },
     showBreakdownModal(turnoId) { const turno = this.state.turnosActivos.find(t => t.id === turnoId); const { fichasHTML, prestamosHTML } = this._getTurnoBreakdownHTML(turno); this.showModal(`<h2>Desglose: ${turno.trabajador.nombre}</h2>${fichasHTML}${prestamosHTML}<div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`); },
-    showHistoryBreakdownModal(turnoId) { const turno = this.state.historial.find(t => t.id === turnoId); const { fichasHTML, prestamosHTML } = this._getTurnoBreakdownHTML(turno); this.showModal(`<h2>Desglose HistÃ³rico: ${turno.trabajador.nombre}</h2><p>Turno del ${new Date(turno.fecha_inicio).toLocaleDateString('es-CO')}</p>${fichasHTML}${prestamosHTML}<div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`); },
+    showHistoryBreakdownModal(turnoId) { const turno = this.state.historial.find(t => t.id === turnoId); const { fichasHTML, prestamosHTML } = this._getTurnoBreakdownHTML(turno); this.showModal(`<h2>Desglose Histórico: ${turno.trabajador.nombre}</h2><p>Turno del ${new Date(turno.fecha_inicio).toLocaleDateString('es-CO')}</p>${fichasHTML}${prestamosHTML}<div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`); },
     showLiquidarModal(turnoId) {
         if (!this.isCajaAbierta()) {
-            this.showToast('Debes iniciar la caja del dÃ­a para poder liquidar un turno.', 'error');
+            this.showToast('Debes iniciar la caja del día para poder liquidar un turno.', 'error');
             return;
         }
         this._tempData.turnoId = turnoId; const turno = this.state.turnosActivos.find(t => t.id === turnoId); const summary = this.calculateSummary(turno); const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-        this.showModal(`<h2>Liquidar Turno de ${turno.trabajador.nombre}</h2><div class="form-group"><label for="input-pago-base">Pago Base del Turno (Sueldo Fijo)</label><input type="number" id="input-pago-base" value="${turno.pago_base_turno || 0}" required></div><div class="liquidacion-summary"><p>Fichas Ganadas (ComisiÃ³n): <span>${currency(summary.total_fichas)}</span></p><p>(+) Pago Base del Turno: <span id="pago-base-display">${currency(turno.pago_base_turno || 0)}</span></p><p>(-) PrÃ©stamos: <span style="color:var(--danger-color)">${currency(summary.total_prestamos)}</span></p><hr><p><strong>Total a Pagar al Trabajador:</strong> <strong><span id="total-pagar-display">${currency(summary.pago_final_al_trabajador)}</span></strong></p></div><form id="liquidacion-form" style="margin-top:1.5rem;"><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-success">Confirmar LiquidaciÃ³n</button></div></form>`);
+        this.showModal(`<h2>Liquidar Turno de ${turno.trabajador.nombre}</h2><div class="form-group"><label for="input-pago-base">Pago Base del Turno (Sueldo Fijo)</label><input type="number" id="input-pago-base" value="${turno.pago_base_turno || 0}" required></div><div class="liquidacion-summary"><p>Fichas Ganadas (Comisión): <span>${currency(summary.total_fichas)}</span></p><p>(+) Pago Base del Turno: <span id="pago-base-display">${currency(turno.pago_base_turno || 0)}</span></p><p>(-) Préstamos: <span style="color:var(--danger-color)">${currency(summary.total_prestamos)}</span></p><hr><p><strong>Total a Pagar al Trabajador:</strong> <strong><span id="total-pagar-display">${currency(summary.pago_final_al_trabajador)}</span></strong></p></div><form id="liquidacion-form" style="margin-top:1.5rem;"><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-success">Confirmar Liquidación</button></div></form>`);
         const pagoBaseInput = document.getElementById('input-pago-base');
         pagoBaseInput.addEventListener('input', (e) => { const pagoBase = parseFloat(e.target.value) || 0; const pagoFinal = summary.total_fichas + pagoBase - summary.total_prestamos; document.getElementById('pago-base-display').textContent = currency(pagoBase); document.getElementById('total-pagar-display').textContent = currency(pagoFinal); });
         document.getElementById('liquidacion-form').onsubmit = (e) => { e.preventDefault(); this.confirmLiquidacion(); }; pagoBaseInput.focus();
@@ -1023,15 +1023,15 @@ const app = {
         document.getElementById('btn-qty-plus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal < stock) input.value = currentVal + 1; });
         document.getElementById('dispatch-form').onsubmit = (e) => { e.preventDefault(); this.confirmDispatch(); }; input.focus();
     },
-    showWorkerManagementModal() { let list = this.state.trabajadores.map(t => `<tr><td data-label="Nombre">${t.nombre}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showWorkerModal('${t.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteWorker('${t.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Gestionar Trabajadores</h2><table class="management-table"><tbody>${list}</tbody></table><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showWorkerModal()">+ AÃ±adir Trabajador</button></div>`); },
-    showWorkerModal(id=null) { const w = id ? this.state.trabajadores.find(t=>t.id===id) : null; this.showModal(`<h2>${w ? 'Editar':'AÃ±adir'} Trabajador</h2><form id="w-form"><div class="form-group"><label>Nombre Completo</label><input id="w-name" value="${w ? w.nombre : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showWorkerManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('w-form').onsubmit = (e) => { e.preventDefault(); this.saveWorker(id); }; document.getElementById('w-name').focus(); },
-    saveWorker(id) { const n = document.getElementById('w-name').value.trim(); if(!n) return; if (id) { this.state.trabajadores.find(t=>t.id===id).nombre = n; this.showToast('Trabajador actualizado'); } else { this.state.trabajadores.push({id: this.uid(), nombre: n}); this.showToast('Trabajador creado con Ã©xito'); } this.saveState(); this.showWorkerManagementModal(); },
-    deleteWorker(id) { this.showConfirmationModal('Â¿Eliminar a este trabajador? No se podrÃ¡ deshacer.', () => { this.state.trabajadores = this.state.trabajadores.filter(t => t.id !== id); this.saveState(); this.showWorkerManagementModal(); this.showToast('Trabajador eliminado', 'error'); }); },
-    showProductManagementModal() { const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); let list = this.state.productos.map(p => `<tr><td data-label="Producto">${p.nombre}</td><td data-label="P. Venta">${c(p.precio_venta)}</td><td data-label="P. Costo">${c(p.precio_costo_unitario)}</td><td data-label="Ficha">${c(p.valor_ficha)}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showProductModal('${p.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteProduct('${p.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Plantillas de Productos Vendibles</h2><div style="overflow-x:auto;"><table class="management-table"><thead><tr><th>Producto</th><th>P. Venta</th><th>Costo Unit.</th><th>Valor Ficha</th><th></th></tr></thead><tbody>${list}</tbody></table></div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showProductModal()">+ AÃ±adir Producto</button></div>`); },
-    showProductModal(id=null) { const p = id ? this.state.productos.find(pr=>pr.id===id) : null; this.showModal(`<h2>${p ? 'Editar':'AÃ±adir'} Producto</h2><form id="p-form"><div class="form-group"><label>Nombre</label><input id="p-name" value="${p ? p.nombre : ''}" required></div><div class="form-group"><label>Precio Venta</label><input id="p-venta" type="number" value="${p ? p.precio_venta : ''}" required></div><div class="form-group"><label>Costo Unitario</label><input id="p-costo" type="number" value="${p ? p.precio_costo_unitario : ''}" required></div><div class="form-group"><label>Valor Ficha</label><input id="p-ficha" type="number" value="${p ? p.valor_ficha : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showProductManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('p-form').onsubmit = (e) => { e.preventDefault(); this.saveProduct(id); }; document.getElementById('p-name').focus(); },
-    saveProduct(id) { const n=document.getElementById('p-name').value.trim(), v=parseFloat(document.getElementById('p-venta').value), c=parseFloat(document.getElementById('p-costo').value), f=parseFloat(document.getElementById('p-ficha').value); if(!n || isNaN(v) || isNaN(c) || isNaN(f)) { this.showToast("Datos invÃ¡lidos. Todos los campos son obligatorios.", "error"); return; } const data = {nombre:n, precio_venta:v, precio_costo_unitario:c, valor_ficha:f}; if (id) { Object.assign(this.state.productos.find(p=>p.id===id), data); this.showToast('Producto actualizado'); } else { this.state.productos.push({...data, id: this.uid(), stock_actual: 0}); this.showToast('Producto creado con Ã©xito'); } this.saveState(); this.showProductManagementModal(); },
-    deleteProduct(id) { this.showConfirmationModal('Â¿Eliminar esta plantilla de producto? Esto podrÃ­a afectar lotes y reportes antiguos.', () => { this.state.productos = this.state.productos.filter(p => p.id !== id); this.saveState(); this.showProductManagementModal(); this.showToast('Producto eliminado', 'error'); }); },
-    showLoanModal: function(turnoId) { this._tempData = { turnoId }; this.showModal(`<h2>Registrar PrÃ©stamo</h2><form id="loan-form"><div class="form-group"><label>Monto</label><input type="number" id="input-monto" min="1" required></div><div class="form-group"><label>DescripciÃ³n</label><textarea id="input-descripcion" rows="3" required></textarea></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar</button></div></form>`); document.getElementById('loan-form').onsubmit = (e) => { e.preventDefault(); this.confirmLoan(); }; document.getElementById('input-monto').focus(); },
+    showWorkerManagementModal() { let list = this.state.trabajadores.map(t => `<tr><td data-label="Nombre">${t.nombre}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showWorkerModal('${t.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteWorker('${t.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Gestionar Trabajadores</h2><table class="management-table"><tbody>${list}</tbody></table><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showWorkerModal()">+ Añadir Trabajador</button></div>`); },
+    showWorkerModal(id=null) { const w = id ? this.state.trabajadores.find(t=>t.id===id) : null; this.showModal(`<h2>${w ? 'Editar':'Añadir'} Trabajador</h2><form id="w-form"><div class="form-group"><label>Nombre Completo</label><input id="w-name" value="${w ? w.nombre : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showWorkerManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('w-form').onsubmit = (e) => { e.preventDefault(); this.saveWorker(id); }; document.getElementById('w-name').focus(); },
+    saveWorker(id) { const n = document.getElementById('w-name').value.trim(); if(!n) return; if (id) { this.state.trabajadores.find(t=>t.id===id).nombre = n; this.showToast('Trabajador actualizado'); } else { this.state.trabajadores.push({id: this.uid(), nombre: n}); this.showToast('Trabajador creado con éxito'); } this.saveState(); this.showWorkerManagementModal(); },
+    deleteWorker(id) { this.showConfirmationModal('¿Eliminar a este trabajador? No se podrá deshacer.', () => { this.state.trabajadores = this.state.trabajadores.filter(t => t.id !== id); this.saveState(); this.showWorkerManagementModal(); this.showToast('Trabajador eliminado', 'error'); }); },
+    showProductManagementModal() { const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); let list = this.state.productos.map(p => `<tr><td data-label="Producto">${p.nombre}</td><td data-label="P. Venta">${c(p.precio_venta)}</td><td data-label="P. Costo">${c(p.precio_costo_unitario)}</td><td data-label="Ficha">${c(p.valor_ficha)}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showProductModal('${p.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteProduct('${p.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Plantillas de Productos Vendibles</h2><div style="overflow-x:auto;"><table class="management-table"><thead><tr><th>Producto</th><th>P. Venta</th><th>Costo Unit.</th><th>Valor Ficha</th><th></th></tr></thead><tbody>${list}</tbody></table></div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showProductModal()">+ Añadir Producto</button></div>`); },
+    showProductModal(id=null) { const p = id ? this.state.productos.find(pr=>pr.id===id) : null; this.showModal(`<h2>${p ? 'Editar':'Añadir'} Producto</h2><form id="p-form"><div class="form-group"><label>Nombre</label><input id="p-name" value="${p ? p.nombre : ''}" required></div><div class="form-group"><label>Precio Venta</label><input id="p-venta" type="number" value="${p ? p.precio_venta : ''}" required></div><div class="form-group"><label>Costo Unitario</label><input id="p-costo" type="number" value="${p ? p.precio_costo_unitario : ''}" required></div><div class="form-group"><label>Valor Ficha</label><input id="p-ficha" type="number" value="${p ? p.valor_ficha : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showProductManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('p-form').onsubmit = (e) => { e.preventDefault(); this.saveProduct(id); }; document.getElementById('p-name').focus(); },
+    saveProduct(id) { const n=document.getElementById('p-name').value.trim(), v=parseFloat(document.getElementById('p-venta').value), c=parseFloat(document.getElementById('p-costo').value), f=parseFloat(document.getElementById('p-ficha').value); if(!n || isNaN(v) || isNaN(c) || isNaN(f)) { this.showToast("Datos inválidos. Todos los campos son obligatorios.", "error"); return; } const data = {nombre:n, precio_venta:v, precio_costo_unitario:c, valor_ficha:f}; if (id) { Object.assign(this.state.productos.find(p=>p.id===id), data); this.showToast('Producto actualizado'); } else { this.state.productos.push({...data, id: this.uid(), stock_actual: 0}); this.showToast('Producto creado con éxito'); } this.saveState(); this.showProductManagementModal(); },
+    deleteProduct(id) { this.showConfirmationModal('¿Eliminar esta plantilla de producto? Esto podría afectar lotes y reportes antiguos.', () => { this.state.productos = this.state.productos.filter(p => p.id !== id); this.saveState(); this.showProductManagementModal(); this.showToast('Producto eliminado', 'error'); }); },
+    showLoanModal: function(turnoId) { this._tempData = { turnoId }; this.showModal(`<h2>Registrar Préstamo</h2><form id="loan-form"><div class="form-group"><label>Monto</label><input type="number" id="input-monto" min="1" required></div><div class="form-group"><label>Descripción</label><textarea id="input-descripcion" rows="3" required></textarea></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar</button></div></form>`); document.getElementById('loan-form').onsubmit = (e) => { e.preventDefault(); this.confirmLoan(); }; document.getElementById('input-monto').focus(); },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
