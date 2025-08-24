@@ -8,11 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- INICIO: Librerías para exportar a PDF y Excel -->
+    <!-- Librerías para exportar a PDF y Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- FIN: Librerías para exportar a PDF y Excel -->
 
     <style>
         /* --- INICIO: Sistema de Temas y Modo Oscuro --- */
@@ -269,11 +268,33 @@
         .btn-outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); } .btn-outline:hover:not(:disabled) { background-color: var(--primary-light); }
         [data-theme="dark"] .btn-outline:hover:not(:disabled) { background-color: rgba(59, 130, 246, 0.1); }
         .btn-icon { padding: 0.5rem; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(17, 24, 39, 0.6); align-items: center; justify-content: center; padding: 1rem; overflow-y: auto; backdrop-filter: blur(4px); }
-        .modal-content { background-color: var(--surface-color); padding: 2rem; border-radius: var(--border-radius); width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); animation: slide-up 0.3s ease-out; }
+        
+        .modal { 
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; 
+            width: 100%; height: 100%; 
+            background-color: rgba(17, 24, 39, 0.6); 
+            align-items: flex-start;
+            justify-content: center; 
+            padding: 2rem 1rem;
+            overflow-y: auto;
+            backdrop-filter: blur(4px); 
+        }
+        .modal-content { 
+            background-color: var(--surface-color); 
+            padding: 2rem; 
+            border-radius: var(--border-radius); 
+            width: 100%; 
+            max-width: 500px; 
+            box-shadow: var(--shadow-lg); 
+            animation: slide-up 0.3s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content.modal-lg { max-width: 800px; }
         .modal-content h2 { margin-top: 0; }
         .auth-modal .modal-content { max-width: 400px; }
         @keyframes slide-up { from { transform: translateY(20px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        
         .form-group { margin-bottom: 1.25rem; text-align: left; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
         .form-group input, .form-group select, .form-group textarea { font-size: 1rem; padding: 0.75rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; transition: border-color 0.2s, box-shadow 0.2s; background-color: var(--surface-color); color: var(--text-color); }
@@ -293,6 +314,7 @@
         .worker-card-header h3 { margin: 0; font-size: 1.2rem; }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; color: white; }
         .status-active { background-color: var(--primary-color); } .status-liquidado { background-color: var(--success-color); } .status-inactive { background-color: var(--secondary-color); }
+        .status-pago-pagado { background-color: var(--success-color); } .status-pago-parcial { background-color: var(--warning-color); } .status-pago-pendiente { background-color: var(--danger-color); }
         .worker-card-summary p { margin: 0.5rem 0 0 0; display: flex; justify-content: space-between; font-size: 0.95rem; }
         .worker-card-summary span { font-weight: 600; }
         .dispatch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin: 1.5rem 0; }
@@ -495,6 +517,8 @@
         <symbol id="icon-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></symbol>
         <symbol id="icon-pdf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2.25 15.25c0-.41.34-.75.75-.75h1.25a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a.75.75 0 0 1-.75-.75v-1.25Z"></path><path d="M4.25 18H3a.75.75 0 0 0-.75.75v.5c0 .41.34.75.75.75h1.25a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1Z"></path><path d="M10 18h1"></path><path d="M8.5 15h1"></path><path d="M10 15h1"></path><path d="M8.5 18h1"></path><path d="M10 21h1"></path><path d="M8.5 21h1"></path><path d="M12.5 15h1.25c.41 0 .75.34.75.75v3.5c0 .41-.34.75-.75.75h-1.25"></path></symbol>
         <symbol id="icon-excel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="m10.4 14-2.8 5"></path><path d="m7.6 14 2.8 5"></path></symbol>
+        <symbol id="icon-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></symbol>
+        <symbol id="icon-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8.5A2.5 2.5 0 0 1 5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5A2.5 2.5 0 0 1 2.5 14V10A2.5 2.5 0 0 1 2.5 8.5z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path></symbol>
     </svg>
     
     <div id="preloader">
@@ -555,7 +579,7 @@
             <div id="turnos" class="tab-content"><div id="turnos-view-container"></div></div>
             <div id="caja" class="tab-content"></div>
             <div id="inventario" class="tab-content">
-                <div class="card"><div class="card-header"><h2>Bodega (Lotes Comprados)</h2><button class="btn btn-primary" onclick="app.showLoteModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>Añadir Compra</span></button></div><div id="bodega-table-container"></div></div>
+                <div class="card"><div class="card-header"><h2>Bodega (Compras a Proveedores)</h2><button class="btn btn-primary" onclick="app.showLoteModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>Añadir Compra</span></button></div><div id="bodega-table-container"></div></div>
                 <div class="card"><div class="card-header"><h2>Barra (Productos para la Venta)</h2></div><div id="barra-table-container"></div></div>
             </div>
             <div id="historial" class="tab-content">
@@ -576,7 +600,6 @@
                         <div class="form-group" style="flex-grow: 1;"><label for="report-end-date">Fecha y Hora de Fin</label><input type="datetime-local" id="report-end-date"></div>
                         <div class="form-group" style="margin-bottom: 1.25rem;"><button class="btn btn-primary" onclick="app.generateReport()">Generar Reporte</button></div>
                     </div>
-                    <!-- Contenedor para botones de exportación -->
                     <div id="report-export-buttons" style="display:none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem; justify-content: flex-end;">
                         <button class="btn btn-danger" onclick="app.generatePdfReport()"><svg class="icon"><use href="#icon-pdf"></use></svg><span>Exportar a PDF</span></button>
                         <button class="btn btn-success" onclick="app.generateExcelReport()"><svg class="icon"><use href="#icon-excel"></use></svg><span>Exportar a Excel</span></button>
@@ -587,10 +610,11 @@
             <div id="configuracion" class="tab-content">
                 <div class="card">
                     <div class="card-header"><h2>Configuración General</h2></div>
-                    <p>Aquí defines las plantillas de productos vendibles y gestionas el personal.</p>
+                    <p>Aquí defines las plantillas de productos, gestionas el personal y los proveedores.</p>
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1rem; margin-top:1.5rem;">
                         <button class="btn btn-outline" onclick="app.showWorkerManagementModal()"><svg class="icon"><use href="#icon-users"></use></svg><span>Gestionar Trabajadores</span></button>
                         <button class="btn btn-outline" onclick="app.showProductManagementModal()"><svg class="icon"><use href="#icon-package"></use></svg><span>Gestionar Plantillas de Productos</span></button>
+                        <button class="btn btn-outline" onclick="app.showSupplierManagementModal()"><svg class="icon"><use href="#icon-truck"></use></svg><span>Gestionar Proveedores</span></button>
                     </div>
                 </div>
                 <div class="card" id="mobile-options-card">
@@ -619,13 +643,13 @@
 
 <script>
 const app = {
-    // Devuelve la estructura de un estado inicial para una nueva cuenta
     getInitialState() {
         return {
-            user: null, // Admin user
+            user: null,
             business: null,
             productos: [],
             trabajadores: [],
+            proveedores: [],
             lotes_bodega: [],
             turnosActivos: [],
             historial: [],
@@ -635,10 +659,9 @@ const app = {
                 transacciones: [],
                 fechaActual: null
             },
-            // Session state
             loggedIn: false,
-            currentUserType: null, // 'admin' or 'worker'
-            currentWorker: null, // Logged in worker object
+            currentUserType: null,
+            currentWorker: null,
             activeTab: 'turnos',
             currentTurnoView: { type: 'dashboard', workerId: null }
         };
@@ -646,7 +669,7 @@ const app = {
 
     state: null,
     _tempData: {},
-    currentReportData: null, // Almacenará los datos del reporte para exportar
+    currentReportData: null,
 
     init() {
         this.state = this.getInitialState();
@@ -654,7 +677,6 @@ const app = {
         this.attachAuthEventListeners();
         this.handlePreloader();
         
-        // Establecer fechas por defecto para el reporte (hoy)
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
         const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -672,7 +694,6 @@ const app = {
         const accountIndex = accounts.findIndex(acc => acc.user.email === this.state.user.email);
         
         const stateToSave = { ...this.state };
-        // No guardar datos específicos de la sesión en localStorage
         delete stateToSave.currentUserType;
         delete stateToSave.currentWorker;
 
@@ -684,7 +705,6 @@ const app = {
         localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
     },
 
-    loadState() { /* Deprecado */ },
     uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
 
     initTheme() {
@@ -992,7 +1012,7 @@ const app = {
                 </button>
             </div>`;
 
-        const turnDetailHTML = this.renderTurnoDetail(worker.id, true); // true for worker view
+        const turnDetailHTML = this.renderTurnoDetail(worker.id, true);
         container.innerHTML = header + `<div id="worker-turn-container">${turnDetailHTML}</div>`;
     },
     
@@ -1133,12 +1153,11 @@ const app = {
             id: this.uid(),
             fecha: this.state.caja.fechaActual,
             resumen: this.calcularResumenCaja(),
-            transacciones: [...this.state.caja.transacciones] // Copia de las transacciones
+            transacciones: [...this.state.caja.transacciones]
         };
 
         this.state.historialCaja.push(resumenCierre);
 
-        // Reiniciar la caja
         this.state.caja = {
             saldoInicialDia: 0,
             transacciones: [],
@@ -1173,9 +1192,7 @@ const app = {
         const turno = this.state.turnosActivos.find(t => t.trabajador.id === workerId);
         
         let backButton = `<button class="btn btn-outline" style="margin-bottom: 1rem;" onclick="app.viewTurnoDashboard()"><svg class="icon"><use href="#icon-arrow-left"></use></svg> Volver al Panel</button>`;
-        if (isWorkerView) {
-            backButton = ''; // No hay botón de volver en la vista del trabajador
-        }
+        if (isWorkerView) { backButton = ''; }
 
         if (turno) {
             const r = this.calculateSummary(turno); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
@@ -1269,31 +1286,80 @@ const app = {
         this.showToast('Turno liquidado y movimientos registrados en caja.');
     },
     renderInventario() { this.renderBodega(); this.renderBarra(); },
-    renderBodega() { const c = document.getElementById('bodega-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.lotes_bodega.length === 0) { c.innerHTML = `<div class="empty-state">No hay compras registradas en la bodega.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Lote</th><th>Producto</th><th>Stock en Bodega</th><th>Costo Unit.</th><th></th></tr></thead><tbody>`; this.state.lotes_bodega.forEach(l => { const p = this.state.productos.find(prod => prod.id === l.id_producto_asociado); const stockEmbalado = Math.floor(l.unidades_disponibles / l.unidades_por_empaque); const stockSuelto = l.unidades_disponibles % l.unidades_por_empaque; let stockLabel = `${l.unidades_disponibles} Unidades`; if(l.unidades_por_empaque > 1) { stockLabel = `${stockEmbalado} ${l.tipo_empaque}s y ${stockSuelto} uds. (${l.unidades_disponibles} total)`; } tbl += `<tr><td data-label="Lote">${l.nombre}</td><td data-label="Producto">${p ? p.nombre : 'ELIMINADO'}</td><td data-label="Stock">${stockLabel}</td><td data-label="Costo Unit.">${cur(l.precio_compra_total / (l.cantidad_empaques * l.unidades_por_empaque))}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-primary" onclick="app.showTrasladoModal('${l.id}')">Trasladar</button><button class="btn btn-icon" onclick="app.deleteLote('${l.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
+    renderBodega() {
+        const c = document.getElementById('bodega-table-container');
+        const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        if (this.state.lotes_bodega.length === 0) {
+            c.innerHTML = `<div class="empty-state">No hay compras registradas en la bodega.</div>`;
+            return;
+        }
+        let tbl = `<table class="management-table"><thead><tr><th>Compra</th><th>Proveedor</th><th>Costo Total</th><th>Deuda</th><th>Estado</th><th></th></tr></thead><tbody>`;
+        this.state.lotes_bodega.forEach(l => {
+            const proveedor = this.state.proveedores.find(p => p.id === l.id_proveedor);
+            const producto = this.state.productos.find(p => p.id === l.id_producto_asociado);
+            const estadoClass = { 'Pagado': 'status-pago-pagado', 'Parcial': 'status-pago-parcial', 'Pendiente': 'status-pago-pendiente' }[l.estado_pago] || '';
+            const descripcionCompra = `${l.nombre} <small style="display:block; color: var(--text-muted);">${l.cantidad_empaques} ${l.tipo_empaque}(s) de ${producto ? producto.nombre : 'N/A'}</small>`;
+            tbl += `<tr>
+                <td data-label="Compra">${descripcionCompra}</td>
+                <td data-label="Proveedor">${proveedor ? proveedor.nombre : 'N/A'}</td>
+                <td data-label="Costo Total">${cur(l.costo_total)}</td>
+                <td data-label="Deuda" style="color: ${l.monto_adeudado > 0 ? 'var(--danger-color)' : 'inherit'}; font-weight: bold;">${cur(l.monto_adeudado)}</td>
+                <td data-label="Estado"><span class="status-badge ${estadoClass}">${l.estado_pago}</span></td>
+                <td data-label="Acciones"><div class="actions">
+                    <button class="btn btn-outline" onclick="app.showLoteDetailModal('${l.id}')">Ver Detalles</button>
+                    <button class="btn btn-primary" onclick="app.showTrasladoModal('${l.id}')">Trasladar</button>
+                </div></td>
+            </tr>`;
+        });
+        c.innerHTML = tbl + '</tbody></table>';
+    },
     renderBarra() { const c = document.getElementById('barra-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.productos.length === 0) { c.innerHTML = `<div class="empty-state">No hay productos definidos para la venta.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Producto en Barra</th><th>Stock Actual</th><th>P. Venta</th><th>P. Costo Unit.</th><th>Valor Inventario</th></tr></thead><tbody>`; this.state.productos.forEach(p => { const v = p.stock_actual * p.precio_costo_unitario; tbl += `<tr><td data-label="Producto">${p.nombre}</td><td data-label="Stock" style="font-weight:bold;">${p.stock_actual}</td><td data-label="P. Venta">${cur(p.precio_venta)}</td><td data-label="P. Costo">${cur(p.precio_costo_unitario)}</td><td data-label="Valor">${cur(v)}</td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
     saveLote() {
         const idProd = document.getElementById('lote-producto').value;
         const nombre = document.getElementById('lote-nombre').value.trim();
+        const idProveedor = document.getElementById('lote-proveedor').value;
         const tipoEmpaque = document.getElementById('lote-empaque-tipo').value;
         const unidadesPorEmpaque = parseInt(document.getElementById('lote-unidades-empaque').value);
         const cantidadEmpaques = parseInt(document.getElementById('lote-cantidad-empaques').value);
         const precioTotal = parseFloat(document.getElementById('lote-precio-total').value);
+        const montoPagado = parseFloat(document.getElementById('lote-monto-pagado').value) || 0;
 
-        if(!idProd || !nombre || !tipoEmpaque || isNaN(unidadesPorEmpaque) || isNaN(cantidadEmpaques) || isNaN(precioTotal) || unidadesPorEmpaque <= 0 || cantidadEmpaques <= 0 || precioTotal < 0) {
+        if(!idProd || !nombre || !idProveedor || !tipoEmpaque || isNaN(unidadesPorEmpaque) || isNaN(cantidadEmpaques) || isNaN(precioTotal) || unidadesPorEmpaque <= 0 || cantidadEmpaques <= 0 || precioTotal < 0 || montoPagado < 0) {
             this.showToast('Todos los campos son obligatorios y los valores deben ser positivos.', 'error'); return;
         }
+        if (montoPagado > precioTotal) {
+            this.showToast('El monto pagado no puede ser mayor al costo total.', 'error'); return;
+        }
+
+        const montoAdeudado = precioTotal - montoPagado;
+        const estadoPago = montoAdeudado === 0 ? 'Pagado' : (montoPagado > 0 ? 'Parcial' : 'Pendiente');
 
         const nuevoLote = {
             id: this.uid(),
             nombre,
             id_producto_asociado: idProd,
+            id_proveedor: idProveedor,
             tipo_empaque: tipoEmpaque,
             unidades_por_empaque: unidadesPorEmpaque,
             cantidad_empaques: cantidadEmpaques,
             unidades_disponibles: unidadesPorEmpaque * cantidadEmpaques,
-            precio_compra_total: precioTotal,
+            costo_total: precioTotal,
+            monto_pagado: montoPagado,
+            monto_adeudado: montoAdeudado,
+            estado_pago: estadoPago,
+            historial_pagos: [],
             timestamp: new Date().toISOString()
         };
+        
+        if (montoPagado > 0) {
+            nuevoLote.historial_pagos.push({
+                id: this.uid(),
+                monto: montoPagado,
+                fecha: new Date().toISOString(),
+                descripcion: 'Pago inicial al registrar la compra'
+            });
+            this.addTransaccionCaja('egreso', montoPagado, `Pago inicial compra '${nombre}'`);
+        }
 
         this.state.lotes_bodega.push(nuevoLote);
         this.saveState(); 
@@ -1301,7 +1367,7 @@ const app = {
         this.closeModal();
         this.showToast('Nueva compra registrada en bodega.');
     },
-    deleteLote(id) { this.showConfirmationModal('¿Eliminar este lote de la bodega? Esta acción es irreversible.', () => { this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id); this.saveState(); this.renderInventario(); this.showToast('Lote eliminado', 'error'); }); },
+    deleteLote(id) { this.showConfirmationModal('¿Eliminar esta compra de la bodega? Esta acción es irreversible.', () => { this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id); this.saveState(); this.renderInventario(); this.showToast('Compra eliminada', 'error'); }); },
     showTrasladoModal(loteId) {
         const lote = this.state.lotes_bodega.find(l => l.id === loteId);
         const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
@@ -1312,7 +1378,7 @@ const app = {
         const stockSuelto = lote.unidades_disponibles % lote.unidades_por_empaque;
         
         const contentHTML = `<h2>Trasladar Stock a Barra</h2>
-            <p>Desde el lote: <strong>${lote.nombre}</strong> para <strong>${producto.nombre}</strong></p>
+            <p>Desde la compra: <strong>${lote.nombre}</strong> para <strong>${producto.nombre}</strong></p>
             <div class="form-summary">Stock disponible: <strong>${stockEmbalado} ${lote.tipo_empaque}s y ${stockSuelto} unidades</strong> (${lote.unidades_disponibles} total)</div>
             <form id="traslado-form" style="margin-top: 1.5rem;">
                 <div class="form-group"><label for="traslado-empaques">Cantidad de ${lote.tipo_empaque}s a trasladar (c/u tiene ${lote.unidades_por_empaque} uds.)</label><input type="number" id="traslado-empaques" min="0" max="${stockEmbalado}" placeholder="0"></div>
@@ -1348,7 +1414,7 @@ const app = {
         if(!lote) return;
         document.getElementById('traslado-empaques').value = 0;
         document.getElementById('traslado-unidades').value = lote.unidades_disponibles;
-        document.getElementById('traslado-empaques').dispatchEvent(new Event('input')); // Para actualizar el resumen
+        document.getElementById('traslado-empaques').dispatchEvent(new Event('input'));
     },
     confirmTraslado() {
         const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
@@ -1364,7 +1430,6 @@ const app = {
         lote.unidades_disponibles -= totalATrasladar;
 
         if (lote.unidades_disponibles === 0) {
-            this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== this._tempData.loteId);
             this.showToast(`Lote completo (${totalATrasladar} uds.) trasladado.`);
         } else {
             this.showToast(`${totalATrasladar} unidades trasladadas a la barra.`);
@@ -1456,7 +1521,6 @@ const app = {
         const trabajadorData = Object.entries(analisisTrabajador).filter(([k,v]) => v.turnos > 0).map(([k, v]) => ({ 'Trabajador': k, 'Turnos': v.turnos, 'Ingresos Gen.': v.ingresos, 'Ganancia Bruta Gen.': v.gananciaBruta, 'Comisiones': v.comisiones, 'Pago Base': v.pagoBase, 'Préstamos': v.prestamos, 'Pago Neto': v.pagoNeto }));
         const txLogData = transaccionesLog.sort((a,b) => a.fecha - b.fecha).map(log => ({ 'Fecha y Hora': log.fecha.toLocaleString('es-CO'), 'Trabajador': log.trabajador, 'Tipo': log.tipo, 'Detalle': log.detalle, 'Monto': log.monto }));
         
-        // Guardar datos para exportación
         this.currentReportData = {
             summary: { totalIngresos, gananciaBrutaTotal, gastosOperativos, gananciaNeta, margenNeto },
             ventasData,
@@ -1490,57 +1554,25 @@ const app = {
         }
         this.showModal(`<h2>${title}</h2><div>${contentHTML}</div><div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`);
     },
-    // --- INICIO: Nuevas Funciones para Exportar ---
     generatePdfReport() {
-        if (!this.currentReportData) {
-            this.showToast('Primero debe generar un reporte.', 'error');
-            return;
-        }
+        if (!this.currentReportData) { this.showToast('Primero debe generar un reporte.', 'error'); return; }
         const { summary, ventasData, trabajadorData, txLogData, dateRange } = this.currentReportData;
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         let y = 15;
 
-        doc.setFontSize(18);
-        doc.text(`Reporte Financiero - ${this.state.business.name}`, 14, y);
-        y += 8;
-        doc.setFontSize(11);
-        doc.setTextColor(100);
-        doc.text(`Periodo: ${dateRange.start} - ${dateRange.end}`, 14, y);
-        y += 12;
+        doc.setFontSize(18); doc.text(`Reporte Financiero - ${this.state.business.name}`, 14, y); y += 8;
+        doc.setFontSize(11); doc.setTextColor(100); doc.text(`Periodo: ${dateRange.start} - ${dateRange.end}`, 14, y); y += 12;
 
-        doc.setFontSize(12);
-        doc.text('Resumen General', 14, y);
-        y += 6;
-        doc.autoTable({
-            startY: y,
-            body: [
-                ['Ingresos por Ventas', currency(summary.totalIngresos)],
-                ['Ganancia Bruta', currency(summary.gananciaBrutaTotal)],
-                ['Gastos Operativos', currency(summary.gastosOperativos)],
-                ['Ganancia Neta', currency(summary.gananciaNeta)],
-                ['Margen Neto', `${summary.margenNeto.toFixed(1)}%`],
-            ],
-            theme: 'grid',
-            styles: { fontSize: 10 },
-            headStyles: { fillColor: [59, 130, 246] }
-        });
+        doc.setFontSize(12); doc.text('Resumen General', 14, y); y += 6;
+        doc.autoTable({ startY: y, body: [['Ingresos por Ventas', currency(summary.totalIngresos)], ['Ganancia Bruta', currency(summary.gananciaBrutaTotal)], ['Gastos Operativos', currency(summary.gastosOperativos)], ['Ganancia Neta', currency(summary.gananciaNeta)], ['Margen Neto', `${summary.margenNeto.toFixed(1)}%`]], theme: 'grid', styles: { fontSize: 10 }, headStyles: { fillColor: [59, 130, 246] } });
         y = doc.autoTable.previous.finalY + 10;
 
         const addTable = (title, data, headers) => {
             if (data.length > 0) {
-                doc.setFontSize(12);
-                doc.text(title, 14, y);
-                y += 6;
-                doc.autoTable({
-                    startY: y,
-                    head: [headers],
-                    body: data.map(row => headers.map(header => row[header])),
-                    theme: 'striped',
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [59, 130, 246] }
-                });
+                doc.setFontSize(12); doc.text(title, 14, y); y += 6;
+                doc.autoTable({ startY: y, head: [headers], body: data.map(row => headers.map(header => row[header])), theme: 'striped', styles: { fontSize: 8 }, headStyles: { fillColor: [59, 130, 246] } });
                 y = doc.autoTable.previous.finalY + 10;
             }
         };
@@ -1553,70 +1585,55 @@ const app = {
     },
 
     generateExcelReport() {
-        if (!this.currentReportData) {
-            this.showToast('Primero debe generar un reporte.', 'error');
-            return;
-        }
+        if (!this.currentReportData) { this.showToast('Primero debe generar un reporte.', 'error'); return; }
         const { summary, ventasData, trabajadorData, txLogData, dateRange } = this.currentReportData;
-        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         
         const wb = XLSX.utils.book_new();
-
-        // Hoja de Resumen
-        const summarySheetData = [
-            ['Reporte Financiero', this.state.business.name],
-            ['Periodo', `${dateRange.start} - ${dateRange.end}`],
-            [],
-            ['Métrica', 'Valor'],
-            ['Ingresos por Ventas', summary.totalIngresos],
-            ['Ganancia Bruta', summary.gananciaBrutaTotal],
-            ['Gastos Operativos', summary.gastosOperativos],
-            ['Ganancia Neta', summary.gananciaNeta],
-            ['Margen Neto (%)', summary.margenNeto],
-        ];
+        const summarySheetData = [['Reporte Financiero', this.state.business.name], ['Periodo', `${dateRange.start} - ${dateRange.end}`], [], ['Métrica', 'Valor'], ['Ingresos por Ventas', summary.totalIngresos], ['Ganancia Bruta', summary.gananciaBrutaTotal], ['Gastos Operativos', summary.gastosOperativos], ['Ganancia Neta', summary.gananciaNeta], ['Margen Neto (%)', summary.margenNeto]];
         const wsSummary = XLSX.utils.aoa_to_sheet(summarySheetData);
         XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
 
-        // Hoja de Ventas
-        if(ventasData.length > 0) {
-            const wsVentas = XLSX.utils.json_to_sheet(ventasData);
-            XLSX.utils.book_append_sheet(wb, wsVentas, 'Ventas por Producto');
-        }
-
-        // Hoja de Trabajadores
-        if(trabajadorData.length > 0) {
-            const wsTrabajadores = XLSX.utils.json_to_sheet(trabajadorData);
-            XLSX.utils.book_append_sheet(wb, wsTrabajadores, 'Desempeño Trabajadores');
-        }
-        
-        // Hoja de Log de Transacciones
-        if(txLogData.length > 0) {
-            const wsLog = XLSX.utils.json_to_sheet(txLogData);
-            XLSX.utils.book_append_sheet(wb, wsLog, 'Log de Transacciones');
-        }
+        if(ventasData.length > 0) { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ventasData), 'Ventas por Producto'); }
+        if(trabajadorData.length > 0) { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(trabajadorData), 'Desempeño Trabajadores'); }
+        if(txLogData.length > 0) { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txLogData), 'Log de Transacciones'); }
         
         XLSX.writeFile(wb, `Reporte_Excel_${this.state.business.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
     },
-    // --- FIN: Nuevas Funciones para Exportar ---
-    showModal(contentHTML) { document.getElementById('modal-content').innerHTML = contentHTML; document.getElementById('modal-container').style.display = 'flex'; },
+    showModal(contentHTML, size = 'normal') {
+        const modalContent = document.getElementById('modal-content');
+        modalContent.innerHTML = contentHTML;
+        modalContent.classList.remove('modal-lg');
+        if (size === 'large') {
+            modalContent.classList.add('modal-lg');
+        }
+        document.getElementById('modal-container').style.display = 'flex';
+    },
     closeModal() { document.getElementById('modal-container').style.display = 'none'; this._tempData = {}; },
     showConfirmationModal(message, onConfirm) { this._tempData.onConfirm = onConfirm; this.showModal(`<h2>Confirmación</h2><p>${message}</p><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="button" class="btn btn-danger" onclick="app.executeConfirmation()">Confirmar</button></div>`); },
     executeConfirmation() { if(this._tempData.onConfirm) this._tempData.onConfirm(); this.closeModal(); },
     showToast(message, type = 'success') { const tc = document.getElementById('toast-container'); const t = document.createElement('div'); const icon = type === 'success' ? '#icon-check' : '#icon-alert'; t.className = `toast ${type}`; t.innerHTML = `<svg class="icon"><use href="${icon}"></use></svg><span>${message}</span>`; tc.appendChild(t); setTimeout(() => t.remove(), 4000); },
     showLoteModal() {
+        if (this.state.productos.length === 0 || this.state.proveedores.length === 0) {
+            this.showToast('Debe registrar productos y proveedores en Configuración antes de añadir una compra.', 'error');
+            return;
+        }
         const productOptions = this.state.productos.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+        const supplierOptions = this.state.proveedores.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+        
         this.showModal(`<h2>Añadir Nueva Compra a Bodega</h2>
         <form id="lote-form"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
         <div class="form-group" style="grid-column: 1 / -1;"><label for="lote-producto">Producto Asociado</label><select id="lote-producto" required><option value="" disabled selected>Seleccione...</option>${productOptions}</select></div>
+        <div class="form-group" style="grid-column: 1 / -1;"><label for="lote-proveedor">Proveedor</label><select id="lote-proveedor" required><option value="" disabled selected>Seleccione...</option>${supplierOptions}</select></div>
         <div class="form-group" style="grid-column: 1 / -1;"><label for="lote-nombre">Nombre o Descripción de la Compra (Ej: Factura #123)</label><input type="text" id="lote-nombre" required></div>
         <div class="form-group"><label for="lote-empaque-tipo">Tipo de Empaque</label><select id="lote-empaque-tipo"><option>Caja</option><option>Paca</option><option>Canasta</option><option>Unidad</option></select></div>
         <div class="form-group"><label for="lote-unidades-empaque">Unidades por Empaque</label><input type="number" id="lote-unidades-empaque" value="1" min="1" required></div>
         <div class="form-group"><label for="lote-cantidad-empaques">Cantidad de Empaques</label><input type="number" id="lote-cantidad-empaques" value="1" min="1" required></div>
-        <div class="form-group"><label for="lote-precio-total">Precio Total de la Compra</label><input type="number" id="lote-precio-total" min="0" required></div>
+        <div class="form-group"><label for="lote-precio-total">Costo Total de la Compra</label><input type="number" id="lote-precio-total" min="0" required></div>
+        <div class="form-group" style="grid-column: 1 / -1;"><label for="lote-monto-pagado">Monto Pagado Ahora (Egreso de Caja)</label><input type="number" id="lote-monto-pagado" value="0" min="0" required></div>
         </div><div class="form-summary" id="lote-summary"></div>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Compra</button></div></form>`);
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Compra</button></div></form>`, 'large');
         
-        const inputs = ['lote-unidades-empaque', 'lote-cantidad-empaques', 'lote-precio-total'];
+        const inputs = ['lote-unidades-empaque', 'lote-cantidad-empaques', 'lote-precio-total', 'lote-monto-pagado'];
         inputs.forEach(id => document.getElementById(id).addEventListener('input', this.updateLoteSummary));
         document.getElementById('lote-empaque-tipo').addEventListener('change', (e) => {
             if (e.target.value === 'Unidad') { document.getElementById('lote-unidades-empaque').value = 1; document.getElementById('lote-unidades-empaque').disabled = true; } 
@@ -1631,10 +1648,12 @@ const app = {
         const unidadesPorEmpaque = parseInt(document.getElementById('lote-unidades-empaque').value) || 0;
         const cantidadEmpaques = parseInt(document.getElementById('lote-cantidad-empaques').value) || 0;
         const precioTotal = parseFloat(document.getElementById('lote-precio-total').value) || 0;
+        const montoPagado = parseFloat(document.getElementById('lote-monto-pagado').value) || 0;
         const totalUnidades = unidadesPorEmpaque * cantidadEmpaques;
         const costoUnitario = totalUnidades > 0 ? precioTotal / totalUnidades : 0;
+        const deuda = precioTotal - montoPagado;
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-        document.getElementById('lote-summary').innerHTML = `Total a ingresar: <strong>${totalUnidades} unidades</strong>. Costo unitario aprox: <strong>${currency(costoUnitario)}</strong>`;
+        document.getElementById('lote-summary').innerHTML = `Total a ingresar: <strong>${totalUnidades} unidades</strong>. Costo unitario aprox: <strong>${currency(costoUnitario)}</strong>. Deuda pendiente: <strong style="color:var(--danger-color)">${currency(deuda)}</strong>`;
     },
     _getTurnoBreakdownHTML(turno) {
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); const fichas = {}; let prestamosHTML = '';
@@ -1660,7 +1679,7 @@ const app = {
         document.getElementById('btn-qty-plus').addEventListener('click', () => { const currentVal = parseInt(input.value); if (currentVal < stock) input.value = currentVal + 1; });
         document.getElementById('dispatch-form').onsubmit = (e) => { e.preventDefault(); this.confirmDispatch(); }; input.focus();
     },
-    showWorkerManagementModal() { let list = this.state.trabajadores.map(t => `<tr><td data-label="Nombre">${t.nombre}</td><td data-label="Rol">${t.rol || 'Vendedor'}</td><td data-label="Código">${t.loginCode || 'N/A'}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showWorkerModal('${t.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteWorker('${t.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Gestionar Trabajadores</h2><div style="overflow-x:auto;"><table class="management-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Código</th><th></th></tr></thead><tbody>${list}</tbody></table></div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showWorkerModal()">+ Añadir Trabajador</button></div>`); },
+    showWorkerManagementModal() { let list = this.state.trabajadores.map(t => `<tr><td data-label="Nombre">${t.nombre}</td><td data-label="Rol">${t.rol || 'Vendedor'}</td><td data-label="Código">${t.loginCode || 'N/A'}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showWorkerModal('${t.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteWorker('${t.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Gestionar Trabajadores</h2><div style="overflow-x:auto;"><table class="management-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Código</th><th></th></tr></thead><tbody>${list}</tbody></table></div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showWorkerModal()">+ Añadir Trabajador</button></div>`, 'large'); },
     showWorkerModal(id=null) { 
         const w = id ? this.state.trabajadores.find(t=>t.id===id) : null; 
         this.showModal(`<h2>${w ? 'Editar':'Añadir'} Trabajador</h2>
@@ -1695,12 +1714,250 @@ const app = {
         this.showWorkerManagementModal(); 
     },
     deleteWorker(id) { this.showConfirmationModal('¿Eliminar a este trabajador? No se podrá deshacer.', () => { this.state.trabajadores = this.state.trabajadores.filter(t => t.id !== id); this.saveState(); this.showWorkerManagementModal(); this.showToast('Trabajador eliminado', 'error'); }); },
-    showProductManagementModal() { const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); let list = this.state.productos.map(p => `<tr><td data-label="Producto">${p.nombre}</td><td data-label="P. Venta">${c(p.precio_venta)}</td><td data-label="P. Costo">${c(p.precio_costo_unitario)}</td><td data-label="Ficha">${c(p.valor_ficha)}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showProductModal('${p.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteProduct('${p.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Plantillas de Productos Vendibles</h2><div style="overflow-x:auto;"><table class="management-table"><thead><tr><th>Producto</th><th>P. Venta</th><th>Costo Unit.</th><th>Valor Ficha</th><th></th></tr></thead><tbody>${list}</tbody></table></div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showProductModal()">+ Añadir Producto</button></div>`); },
+    showProductManagementModal() {
+        const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        let listHTML = this.state.productos.map(p => {
+            const lotesAsociados = this.state.lotes_bodega.filter(l => l.id_producto_asociado === p.id);
+            let lotesHTML = lotesAsociados.length > 0
+                ? `<div style="overflow-x:auto; margin-top:1rem;"><table class="management-table"><thead><tr><th>Compra</th><th>Proveedor</th><th>Stock Restante</th></tr></thead><tbody>
+                    ${lotesAsociados.map(l => {
+                        const prov = this.state.proveedores.find(pr => pr.id === l.id_proveedor);
+                        return `<tr><td>${l.nombre}</td><td>${prov ? prov.nombre : 'N/A'}</td><td>${l.unidades_disponibles} uds.</td></tr>`;
+                    }).join('')}
+                </tbody></table></div>`
+                : '<div class="empty-state" style="padding:1rem; margin-top:1rem;">No hay compras asociadas a este producto.</div>';
+
+            return `<details class="history-details">
+                <summary>
+                    <div style="flex-grow:1; display:grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; align-items: center;">
+                        <strong>${p.nombre}</strong>
+                        <span>Venta: ${c(p.precio_venta)}</span>
+                        <span>Costo: ${c(p.precio_costo_unitario)}</span>
+                        <span>Ficha: ${c(p.valor_ficha)}</span>
+                    </div>
+                    <div class="actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-icon" onclick="app.showProductModal('${p.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button>
+                        <button class="btn btn-icon" onclick="app.deleteProduct('${p.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button>
+                    </div>
+                </summary>
+                <div class="history-details-content">${lotesHTML}</div>
+            </details>`;
+        }).join('');
+        
+        if (this.state.productos.length === 0) {
+            listHTML = `<div class="empty-state">No hay plantillas de productos creadas.</div>`;
+        }
+
+        this.showModal(`<h2>Plantillas de Productos Vendibles</h2><div id="product-list-container">${listHTML}</div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showProductModal()">+ Añadir Producto</button></div>`, 'large');
+    },
     showProductModal(id=null) { const p = id ? this.state.productos.find(pr=>pr.id===id) : null; this.showModal(`<h2>${p ? 'Editar':'Añadir'} Producto</h2><form id="p-form"><div class="form-group"><label>Nombre</label><input id="p-name" value="${p ? p.nombre : ''}" required></div><div class="form-group"><label>Precio Venta</label><input id="p-venta" type="number" value="${p ? p.precio_venta : ''}" required></div><div class="form-group"><label>Costo Unitario</label><input id="p-costo" type="number" value="${p ? p.precio_costo_unitario : ''}" required></div><div class="form-group"><label>Valor Ficha</label><input id="p-ficha" type="number" value="${p ? p.valor_ficha : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showProductManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('p-form').onsubmit = (e) => { e.preventDefault(); this.saveProduct(id); }; document.getElementById('p-name').focus(); },
     saveProduct(id) { const n=document.getElementById('p-name').value.trim(), v=parseFloat(document.getElementById('p-venta').value), c=parseFloat(document.getElementById('p-costo').value), f=parseFloat(document.getElementById('p-ficha').value); if(!n || isNaN(v) || isNaN(c) || isNaN(f)) { this.showToast("Datos inválidos. Todos los campos son obligatorios.", "error"); return; } const data = {nombre:n, precio_venta:v, precio_costo_unitario:c, valor_ficha:f}; if (id) { Object.assign(this.state.productos.find(p=>p.id===id), data); this.showToast('Producto actualizado'); } else { this.state.productos.push({...data, id: this.uid(), stock_actual: 0}); this.showToast('Producto creado con éxito'); } this.saveState(); this.showProductManagementModal(); },
     deleteProduct(id) { this.showConfirmationModal('¿Eliminar esta plantilla de producto? Esto podría afectar lotes y reportes antiguos.', () => { this.state.productos = this.state.productos.filter(p => p.id !== id); this.saveState(); this.showProductManagementModal(); this.showToast('Producto eliminado', 'error'); }); },
     showLoanModal: function(turnoId) { this._tempData = { turnoId }; this.showModal(`<h2>Registrar Préstamo</h2><form id="loan-form"><div class="form-group"><label>Monto</label><input type="number" id="input-monto" min="1" required></div><div class="form-group"><label>Descripción</label><textarea id="input-descripcion" rows="3" required></textarea></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar</button></div></form>`); document.getElementById('loan-form').onsubmit = (e) => { e.preventDefault(); this.confirmLoan(); }; document.getElementById('input-monto').focus(); },
 
+    showSupplierManagementModal() {
+        const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        let listHTML = this.state.proveedores.map(s => {
+            const comprasAsociadas = this.state.lotes_bodega.filter(l => l.id_proveedor === s.id);
+            let comprasHTML = comprasAsociadas.length > 0
+                ? `<div style="overflow-x:auto; margin-top:1rem;"><table class="management-table"><thead><tr><th>Compra</th><th>Producto</th><th>Costo</th><th>Estado</th></tr></thead><tbody>
+                    ${comprasAsociadas.map(l => {
+                        const producto = this.state.productos.find(p => p.id === l.id_producto_asociado);
+                        const estadoClass = { 'Pagado': 'status-pago-pagado', 'Parcial': 'status-pago-parcial', 'Pendiente': 'status-pago-pendiente' }[l.estado_pago] || '';
+                        return `<tr><td>${l.nombre}</td><td>${producto ? producto.nombre : 'N/A'}</td><td>${c(l.costo_total)}</td><td><span class="status-badge ${estadoClass}">${l.estado_pago}</span></td></tr>`;
+                    }).join('')}
+                </tbody></table></div>`
+                : '<div class="empty-state" style="padding:1rem; margin-top:1rem;">No hay compras asociadas a este proveedor.</div>';
+
+            return `<details class="history-details">
+                <summary>
+                    <div style="flex-grow:1;">
+                        <strong>${s.nombre}</strong>
+                        <small style="display:block; color: var(--text-muted);">${s.contacto || 'Sin contacto'}</small>
+                    </div>
+                    <div class="actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-icon" onclick="app.showSupplierModal('${s.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button>
+                        <button class="btn btn-icon" onclick="app.deleteSupplier('${s.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button>
+                    </div>
+                </summary>
+                <div class="history-details-content">${comprasHTML}</div>
+            </details>`;
+        }).join('');
+
+        if (this.state.proveedores.length === 0) {
+            listHTML = `<div class="empty-state">No hay proveedores registrados.</div>`;
+        }
+
+        this.showModal(`<h2>Gestionar Proveedores</h2><div id="supplier-list-container">${listHTML}</div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showSupplierModal()">+ Añadir Proveedor</button></div>`, 'large');
+    },
+    showSupplierModal(id = null) {
+        const s = id ? this.state.proveedores.find(sup => sup.id === id) : null;
+        this.showModal(`<h2>${s ? 'Editar' : 'Añadir'} Proveedor</h2>
+            <form id="s-form">
+                <div class="form-group"><label>Nombre del Proveedor</label><input id="s-name" value="${s ? s.nombre : ''}" required></div>
+                <div class="form-group"><label>Información de Contacto (Teléfono, Email)</label><input id="s-contact" value="${s ? s.contacto : ''}"></div>
+                <div class="form-group"><label>Dirección</label><textarea id="s-address" rows="2">${s ? s.direccion : ''}</textarea></div>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showSupplierManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+            </form>`);
+        document.getElementById('s-form').onsubmit = (e) => { e.preventDefault(); this.saveSupplier(id); };
+        document.getElementById('s-name').focus();
+    },
+    saveSupplier(id) {
+        const nombre = document.getElementById('s-name').value.trim();
+        if (!nombre) { this.showToast('El nombre es obligatorio.', 'error'); return; }
+        const data = {
+            nombre,
+            contacto: document.getElementById('s-contact').value.trim(),
+            direccion: document.getElementById('s-address').value.trim()
+        };
+        if (id) {
+            Object.assign(this.state.proveedores.find(s => s.id === id), data);
+            this.showToast('Proveedor actualizado');
+        } else {
+            this.state.proveedores.push({ ...data, id: this.uid() });
+            this.showToast('Proveedor creado con éxito');
+        }
+        this.saveState();
+        this.showSupplierManagementModal();
+    },
+    deleteSupplier(id) {
+        this.showConfirmationModal('¿Eliminar este proveedor? Las compras asociadas no se eliminarán.', () => {
+            this.state.proveedores = this.state.proveedores.filter(s => s.id !== id);
+            this.saveState();
+            this.showSupplierManagementModal();
+            this.showToast('Proveedor eliminado', 'error');
+        });
+    },
+    showLoteDetailModal(loteId) {
+        const lote = this.state.lotes_bodega.find(l => l.id === loteId);
+        if (!lote) return;
+        const proveedor = this.state.proveedores.find(p => p.id === lote.id_proveedor);
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+
+        let pagosHTML = lote.historial_pagos.length > 0
+            ? lote.historial_pagos.map(p => `<li>${new Date(p.fecha).toLocaleString('es-CO')}: <strong>${currency(p.monto)}</strong> - <em>${p.descripcion}</em></li>`).join('')
+            : '<li>No hay pagos registrados.</li>';
+
+        const abonoButton = lote.monto_adeudado > 0
+            ? `<button class="btn btn-success" onclick="app.showRegisterPaymentModal('${lote.id}')">Registrar Abono</button>` : '';
+
+        const content = `
+            <h2>Detalles de la Compra</h2>
+            <div class="liquidacion-summary">
+                <p><strong>Descripción:</strong> <span>${lote.nombre}</span></p>
+                <p><strong>Proveedor:</strong> <span>${proveedor ? proveedor.nombre : 'N/A'}</span></p>
+                <p><strong>Producto:</strong> <span>${producto ? producto.nombre : 'Eliminado'}</span></p>
+                <p><strong>Fecha:</strong> <span>${new Date(lote.timestamp).toLocaleDateString('es-CO')}</span></p>
+            </div>
+            <h4>Resumen Financiero</h4>
+            <div class="liquidacion-summary">
+                <p>Costo Total: <span>${currency(lote.costo_total)}</span></p>
+                <p>Monto Pagado: <span>${currency(lote.monto_pagado)}</span></p>
+                <p><strong>Deuda Pendiente:</strong> <strong style="color:var(--danger-color)"><span>${currency(lote.monto_adeudado)}</span></strong></p>
+            </div>
+            <h4>Historial de Pagos</h4>
+            <ul style="padding-left: 1.5rem; font-size: 0.9rem;">${pagosHTML}</ul>
+            <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                <button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button>
+                ${abonoButton}
+                <button class="btn btn-outline" onclick="app.generatePurchaseReceipt('${lote.id}')"><svg class="icon"><use href="#icon-receipt"></use></svg>Generar Recibo</button>
+            </div>`;
+        this.showModal(content, 'large');
+    },
+    showRegisterPaymentModal(loteId) {
+        const lote = this.state.lotes_bodega.find(l => l.id === loteId);
+        if (!lote || lote.monto_adeudado <= 0) return;
+        this._tempData.loteId = loteId;
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+
+        this.showModal(`<h2>Registrar Abono a Deuda</h2>
+            <p>Compra: <strong>${lote.nombre}</strong></p>
+            <p>Deuda actual: <strong style="color:var(--danger-color)">${currency(lote.monto_adeudado)}</strong></p>
+            <form id="payment-form">
+                <div class="form-group">
+                    <label for="payment-amount">Monto a Abonar</label>
+                    <input type="number" id="payment-amount" min="1" max="${lote.monto_adeudado}" required>
+                </div>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="app.showLoteDetailModal('${lote.id}')">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Pago</button>
+                </div>
+            </form>`);
+        document.getElementById('payment-form').onsubmit = (e) => { e.preventDefault(); this.confirmPayment(); };
+    },
+    confirmPayment() {
+        const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
+        const monto = parseFloat(document.getElementById('payment-amount').value);
+
+        if (!lote || isNaN(monto) || monto <= 0 || monto > lote.monto_adeudado) {
+            this.showToast('Monto inválido.', 'error');
+            return;
+        }
+
+        lote.monto_pagado += monto;
+        lote.monto_adeudado -= monto;
+        lote.estado_pago = lote.monto_adeudado === 0 ? 'Pagado' : 'Parcial';
+        lote.historial_pagos.push({
+            id: this.uid(),
+            monto: monto,
+            fecha: new Date().toISOString(),
+            descripcion: 'Abono a la deuda'
+        });
+
+        this.addTransaccionCaja('egreso', monto, `Abono a compra '${lote.nombre}'`);
+        this.saveState();
+        this.showToast('Abono registrado con éxito.');
+        this.renderInventario();
+        this.showLoteDetailModal(lote.id);
+    },
+    generatePurchaseReceipt(loteId) {
+        const lote = this.state.lotes_bodega.find(l => l.id === loteId);
+        const business = this.state.business;
+        const proveedor = this.state.proveedores.find(p => p.id === lote.id_proveedor);
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
+        if (!lote || !business || !proveedor || !producto) {
+            this.showToast('Faltan datos para generar el recibo.', 'error');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        let y = 20;
+
+        if (business.logoDataUrl) {
+            try { doc.addImage(business.logoDataUrl, 'JPEG', 15, 15, 30, 30); } catch (e) { console.error("Error al añadir logo al PDF:", e); }
+        }
+        doc.setFontSize(22); doc.text(business.name, 50, 25);
+        doc.setFontSize(10); doc.setTextColor(100); doc.text(`Recibo de Compra #${lote.id.substring(0, 6)}`, 50, 32);
+        y = 50;
+
+        doc.setFontSize(12); doc.text('Proveedor:', 15, y);
+        doc.setFontSize(10); doc.text(proveedor.nombre, 50, y); y += 6;
+        doc.setFontSize(10); doc.text(proveedor.contacto || '', 50, y); y += 6;
+        doc.text(proveedor.direccion || '', 50, y); y += 10;
+        doc.setFontSize(12); doc.text('Fecha de Compra:', 15, y);
+        doc.setFontSize(10); doc.text(new Date(lote.timestamp).toLocaleDateString('es-CO'), 50, y); y += 10;
+
+        const totalUnidades = lote.cantidad_empaques * lote.unidades_por_empaque;
+        const costoUnitario = lote.costo_total / totalUnidades;
+        doc.autoTable({
+            startY: y,
+            head: [['Descripción', 'Cantidad', 'Costo Unitario', 'Total']],
+            body: [[`${lote.cantidad_empaques} ${lote.tipo_empaque}(s) de ${producto.nombre} (${lote.unidades_por_empaque} uds c/u)`, `${totalUnidades} uds`, currency(costoUnitario), currency(lote.costo_total)]],
+            theme: 'striped',
+        });
+        y = doc.autoTable.previous.finalY + 10;
+
+        doc.autoTable({
+            startY: y,
+            body: [['Costo Total', currency(lote.costo_total)], ['Monto Pagado', currency(lote.monto_pagado)], [{ content: 'Deuda Pendiente', styles: { fontStyle: 'bold' } }, { content: currency(lote.monto_adeudado), styles: { fontStyle: 'bold' } }]],
+            theme: 'grid', styles: { halign: 'right' }, columnStyles: { 0: { halign: 'left' } }
+        });
+
+        doc.save(`Recibo_Compra_${lote.nombre}.pdf`);
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
