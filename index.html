@@ -7,6 +7,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- INICIO: Librerías para exportar a PDF y Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- FIN: Librerías para exportar a PDF y Excel -->
+
     <style>
         /* --- INICIO: Sistema de Temas y Modo Oscuro --- */
         :root {
@@ -486,6 +493,8 @@
         <symbol id="icon-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></symbol>
         <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></symbol>
         <symbol id="icon-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></symbol>
+        <symbol id="icon-pdf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2.25 15.25c0-.41.34-.75.75-.75h1.25a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a.75.75 0 0 1-.75-.75v-1.25Z"></path><path d="M4.25 18H3a.75.75 0 0 0-.75.75v.5c0 .41.34.75.75.75h1.25a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1Z"></path><path d="M10 18h1"></path><path d="M8.5 15h1"></path><path d="M10 15h1"></path><path d="M8.5 18h1"></path><path d="M10 21h1"></path><path d="M8.5 21h1"></path><path d="M12.5 15h1.25c.41 0 .75.34.75.75v3.5c0 .41-.34.75-.75.75h-1.25"></path></symbol>
+        <symbol id="icon-excel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="m10.4 14-2.8 5"></path><path d="m7.6 14 2.8 5"></path></symbol>
     </svg>
     
     <div id="preloader">
@@ -559,7 +568,22 @@
                     <div id="historial-caja-container"></div>
                 </div>
             </div>
-            <div id="reportes" class="tab-content"><div class="card"><div class="card-header"><h2>Reportes Financieros y de Ventas</h2></div><div class="form-group" style="display:flex; gap:1rem; flex-wrap:wrap;"><div><label for="report-start-date">Fecha y Hora de Inicio</label><input type="datetime-local" id="report-start-date"></div><div><label for="report-end-date">Fecha y Hora de Fin</label><input type="datetime-local" id="report-end-date"></div><div style="align-self: flex-end;"><button class="btn btn-primary" onclick="app.generateReport()">Generar Reporte</button></div></div><div id="report-container" style="margin-top: 2rem;"></div></div></div>
+            <div id="reportes" class="tab-content">
+                <div class="card">
+                    <div class="card-header"><h2>Reportes Financieros y de Ventas</h2></div>
+                    <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items: flex-end;">
+                        <div class="form-group" style="flex-grow: 1;"><label for="report-start-date">Fecha y Hora de Inicio</label><input type="datetime-local" id="report-start-date"></div>
+                        <div class="form-group" style="flex-grow: 1;"><label for="report-end-date">Fecha y Hora de Fin</label><input type="datetime-local" id="report-end-date"></div>
+                        <div class="form-group" style="margin-bottom: 1.25rem;"><button class="btn btn-primary" onclick="app.generateReport()">Generar Reporte</button></div>
+                    </div>
+                    <!-- Contenedor para botones de exportación -->
+                    <div id="report-export-buttons" style="display:none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button class="btn btn-danger" onclick="app.generatePdfReport()"><svg class="icon"><use href="#icon-pdf"></use></svg><span>Exportar a PDF</span></button>
+                        <button class="btn btn-success" onclick="app.generateExcelReport()"><svg class="icon"><use href="#icon-excel"></use></svg><span>Exportar a Excel</span></button>
+                    </div>
+                    <div id="report-container" style="margin-top: 2rem;"></div>
+                </div>
+            </div>
             <div id="configuracion" class="tab-content">
                 <div class="card">
                     <div class="card-header"><h2>Configuración General</h2></div>
@@ -622,7 +646,7 @@ const app = {
 
     state: null,
     _tempData: {},
-    currentReportData: null,
+    currentReportData: null, // Almacenará los datos del reporte para exportar
 
     init() {
         this.state = this.getInitialState();
@@ -630,6 +654,7 @@ const app = {
         this.attachAuthEventListeners();
         this.handlePreloader();
         
+        // Establecer fechas por defecto para el reporte (hoy)
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
         const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -647,7 +672,7 @@ const app = {
         const accountIndex = accounts.findIndex(acc => acc.user.email === this.state.user.email);
         
         const stateToSave = { ...this.state };
-        // Don't save session-specific data to localStorage
+        // No guardar datos específicos de la sesión en localStorage
         delete stateToSave.currentUserType;
         delete stateToSave.currentWorker;
 
@@ -1105,9 +1130,10 @@ const app = {
 
     confirmCierreCaja() {
         const resumenCierre = {
+            id: this.uid(),
             fecha: this.state.caja.fechaActual,
             resumen: this.calcularResumenCaja(),
-            transacciones: [...this.state.caja.transacciones] // Copia profunda de las transacciones
+            transacciones: [...this.state.caja.transacciones] // Copia de las transacciones
         };
 
         this.state.historialCaja.push(resumenCierre);
@@ -1148,7 +1174,7 @@ const app = {
         
         let backButton = `<button class="btn btn-outline" style="margin-bottom: 1rem;" onclick="app.viewTurnoDashboard()"><svg class="icon"><use href="#icon-arrow-left"></use></svg> Volver al Panel</button>`;
         if (isWorkerView) {
-            backButton = ''; // No back button in worker view
+            backButton = ''; // No hay botón de volver en la vista del trabajador
         }
 
         if (turno) {
@@ -1399,12 +1425,16 @@ const app = {
         }).join('');
     },
     deleteHistoryEntry(turnoId) { this.showConfirmationModal('¿Está seguro de que desea eliminar este turno del historial? Esta acción es permanente y no se puede deshacer.', () => { const index = this.state.historial.findIndex(t => t.id === turnoId); if (index > -1) { this.state.historial.splice(index, 1); this.saveState(); this.renderHistorialTab(); this.showToast('Turno eliminado del historial.', 'error'); } }); },
-    renderReportUI() { document.getElementById('report-container').innerHTML = '<p style="color:var(--secondary-color)">Seleccione un rango de fechas y horas y presione "Generar Reporte".</p>'; },
+    renderReportUI() { 
+        document.getElementById('report-container').innerHTML = '<p style="color:var(--secondary-color)">Seleccione un rango de fechas y horas y presione "Generar Reporte".</p>'; 
+        document.getElementById('report-export-buttons').style.display = 'none';
+        this.currentReportData = null;
+    },
     generateReport() {
         const startInput = document.getElementById('report-start-date').value, endInput = document.getElementById('report-end-date').value; if (!startInput || !endInput) { this.showToast('Debe seleccionar una fecha y hora de inicio y fin.', 'error'); return; }
         const start = new Date(startInput), end = new Date(endInput); const turnos = this.state.historial.filter(t => { const d = new Date(t.fecha_fin); return d >= start && d <= end; });
-        const container = document.getElementById('report-container'); if (turnos.length === 0) { container.innerHTML = `<div class="empty-state">No hay turnos finalizados en el rango de fechas y horas seleccionado.</div>`; return; }
-        let totalIngresos = 0, totalCostos = 0; const ventasProductos = {}, analisisTrabajador = {}, transaccionesLog = []; this.currentReportData = { ingresosItems: [], costosItems: [], pagosItems: [] };
+        const container = document.getElementById('report-container'); if (turnos.length === 0) { container.innerHTML = `<div class="empty-state">No hay turnos finalizados en el rango de fechas y horas seleccionado.</div>`; document.getElementById('report-export-buttons').style.display = 'none'; return; }
+        let totalIngresos = 0, totalCostos = 0; const ventasProductos = {}, analisisTrabajador = {}, transaccionesLog = []; const reportData = { ingresosItems: [], costosItems: [], pagosItems: [] };
         this.state.trabajadores.forEach(t => { analisisTrabajador[t.nombre] = { turnos: 0, ingresos: 0, costos: 0, gananciaBruta: 0, comisiones: 0, pagoBase: 0, prestamos: 0, pagoNeto: 0 }; });
         turnos.forEach(turno => {
             const trabNombre = turno.trabajador.nombre, summary = turno.summary; if (!summary) return;
@@ -1412,21 +1442,33 @@ const app = {
             turno.transacciones.forEach(tx => {
                 const txDate = new Date(tx.timestamp); if (tx.tipo === 'DESPACHO') {
                     const p = this.state.productos.find(prod => prod.id === tx.productoId); if (!p) return; const ingresos = p.precio_venta * tx.cantidad, costos = p.precio_costo_unitario * tx.cantidad;
-                    totalIngresos += ingresos; totalCostos += costos; this.currentReportData.ingresosItems.push({ detalle: `${tx.cantidad} x ${p.nombre}`, valor: ingresos }); this.currentReportData.costosItems.push({ detalle: `Costo de ${tx.cantidad} x ${p.nombre}`, valor: costos });
+                    totalIngresos += ingresos; totalCostos += costos; reportData.ingresosItems.push({ detalle: `${tx.cantidad} x ${p.nombre}`, valor: ingresos }); reportData.costosItems.push({ detalle: `Costo de ${tx.cantidad} x ${p.nombre}`, valor: costos });
                     if (!ventasProductos[p.nombre]) { ventasProductos[p.nombre] = { cantidad: 0, ingresos: 0, costos: 0, gananciaBruta: 0 }; }
                     ventasProductos[p.nombre].cantidad += tx.cantidad; ventasProductos[p.nombre].ingresos += ingresos; ventasProductos[p.nombre].costos += costos; ventasProductos[p.nombre].gananciaBruta += (ingresos - costos);
                     analisisTrabajador[trabNombre].ingresos += ingresos; analisisTrabajador[trabNombre].costos += costos; analisisTrabajador[trabNombre].gananciaBruta += (ingresos - costos); analisisTrabajador[trabNombre].comisiones += p.valor_ficha * tx.cantidad; transaccionesLog.push({ fecha: txDate, trabajador: trabNombre, tipo: 'Venta', detalle: `${tx.cantidad} x ${p.nombre}`, monto: ingresos });
                 } else if (tx.tipo === 'PRESTAMO') { transaccionesLog.push({ fecha: txDate, trabajador: trabNombre, tipo: 'Préstamo', detalle: tx.descripcion, monto: -tx.monto }); }
             });
         });
-        Object.entries(analisisTrabajador).forEach(([nombre, data]) => { if (data.pagoNeto !== 0) { this.currentReportData.pagosItems.push({ detalle: `Pago Neto a ${nombre}`, valor: data.pagoNeto }); } });
-        const totalPagosNeto = this.currentReportData.pagosItems.reduce((sum, item) => sum + item.valor, 0); const gananciaBrutaTotal = totalIngresos - totalCostos, gastosOperativos = totalCostos + totalPagosNeto, gananciaNeta = totalIngresos - gastosOperativos;
+        Object.entries(analisisTrabajador).forEach(([nombre, data]) => { if (data.pagoNeto !== 0) { reportData.pagosItems.push({ detalle: `Pago Neto a ${nombre}`, valor: data.pagoNeto }); } });
+        const totalPagosNeto = reportData.pagosItems.reduce((sum, item) => sum + item.valor, 0); const gananciaBrutaTotal = totalIngresos - totalCostos, gastosOperativos = totalCostos + totalPagosNeto, gananciaNeta = totalIngresos - gastosOperativos;
         const margenNeto = totalIngresos > 0 ? (gananciaNeta / totalIngresos) * 100 : 0; const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         const ventasData = Object.entries(ventasProductos).map(([k, v]) => ({ 'Producto': k, 'Uds.': v.cantidad, 'Ingresos': v.ingresos, 'Costo Total': v.costos, 'Ganancia Bruta': v.gananciaBruta, 'Margen (%)': v.ingresos > 0 ? ((v.gananciaBruta / v.ingresos) * 100).toFixed(1) + '%' : 'N/A' })).sort((a, b) => b['Ganancia Bruta'] - a['Ganancia Bruta']);
         const trabajadorData = Object.entries(analisisTrabajador).filter(([k,v]) => v.turnos > 0).map(([k, v]) => ({ 'Trabajador': k, 'Turnos': v.turnos, 'Ingresos Gen.': v.ingresos, 'Ganancia Bruta Gen.': v.gananciaBruta, 'Comisiones': v.comisiones, 'Pago Base': v.pagoBase, 'Préstamos': v.prestamos, 'Pago Neto': v.pagoNeto }));
         const txLogData = transaccionesLog.sort((a,b) => a.fecha - b.fecha).map(log => ({ 'Fecha y Hora': log.fecha.toLocaleString('es-CO'), 'Trabajador': log.trabajador, 'Tipo': log.tipo, 'Detalle': log.detalle, 'Monto': log.monto }));
+        
+        // Guardar datos para exportación
+        this.currentReportData = {
+            summary: { totalIngresos, gananciaBrutaTotal, gastosOperativos, gananciaNeta, margenNeto },
+            ventasData,
+            trabajadorData,
+            txLogData,
+            dateRange: { start: start.toLocaleString('es-CO'), end: end.toLocaleString('es-CO') },
+            ...reportData
+        };
+
         const currencyCols = ['Ingresos', 'Costo Total', 'Ganancia Bruta', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'Préstamos', 'Pago Neto', 'Monto'];
         container.innerHTML = `<div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Resumen Financiero General</h3><div class="stats-grid"><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('ingresos')"><div class="stat-card-content"><h5>Ingresos por Ventas</h5><p>${currency(totalIngresos)}</p></div></div><div class="stat-card clickable-stat-card" onclick="app.showReportBreakdownModal('bruta')"><div class="stat-card-content"><h5>Ganancia Bruta</h5><p>${currency(gananciaBrutaTotal)}</p></div></div><div class="stat-card danger clickable-stat-card" onclick="app.showReportBreakdownModal('gastos')"><div class="stat-card-content"><h5>Gastos Operativos</h5><p>${currency(gastosOperativos)}</p></div></div><div class="stat-card success clickable-stat-card" onclick="app.showReportBreakdownModal('neta')"><div class="stat-card-content"><h5>Ganancia Neta</h5><p>${currency(gananciaNeta)}</p></div></div></div><div class="stat-card" style="margin-top: 1rem;"><div class="stat-card-content" style="width:100%; text-align:center;"><h5>Margen de Beneficio Neto</h5><p>${margenNeto.toFixed(1)}%</p></div></div></div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Análisis de Ventas por Producto</h3>${this.generateTableHTML(ventasData, ['Producto', 'Uds.', 'Ingresos', 'Costo Total', 'Ganancia Bruta', 'Margen (%)'], currencyCols)}</div><div class="card" style="margin-bottom: 2rem;"><h3 class="card-header" style="border:0; padding:0; margin-bottom:1.5rem;">Análisis de Desempeño por Trabajador</h3>${this.generateTableHTML(trabajadorData, ['Trabajador', 'Turnos', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Comisiones', 'Pago Base', 'Préstamos', 'Pago Neto'], currencyCols)}</div><details class="report-details"><summary>Ver Registro Detallado de Transacciones (${txLogData.length} eventos)</summary><div class="report-details-content" style="padding-top: 1rem;">${this.generateTableHTML(txLogData, ['Fecha y Hora', 'Trabajador', 'Tipo', 'Detalle', 'Monto'], currencyCols)}</div></details>`;
+        document.getElementById('report-export-buttons').style.display = 'flex';
     },
     generateTableHTML(data, headers, currencyColumns = []) {
         if (data.length === 0) return '<div class="empty-state" style="padding: 1.5rem 1rem;">No hay datos para esta sección.</div>';
@@ -1448,6 +1490,114 @@ const app = {
         }
         this.showModal(`<h2>${title}</h2><div>${contentHTML}</div><div class="actions" style="justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button></div>`);
     },
+    // --- INICIO: Nuevas Funciones para Exportar ---
+    generatePdfReport() {
+        if (!this.currentReportData) {
+            this.showToast('Primero debe generar un reporte.', 'error');
+            return;
+        }
+        const { summary, ventasData, trabajadorData, txLogData, dateRange } = this.currentReportData;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        let y = 15;
+
+        doc.setFontSize(18);
+        doc.text(`Reporte Financiero - ${this.state.business.name}`, 14, y);
+        y += 8;
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Periodo: ${dateRange.start} - ${dateRange.end}`, 14, y);
+        y += 12;
+
+        doc.setFontSize(12);
+        doc.text('Resumen General', 14, y);
+        y += 6;
+        doc.autoTable({
+            startY: y,
+            body: [
+                ['Ingresos por Ventas', currency(summary.totalIngresos)],
+                ['Ganancia Bruta', currency(summary.gananciaBrutaTotal)],
+                ['Gastos Operativos', currency(summary.gastosOperativos)],
+                ['Ganancia Neta', currency(summary.gananciaNeta)],
+                ['Margen Neto', `${summary.margenNeto.toFixed(1)}%`],
+            ],
+            theme: 'grid',
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [59, 130, 246] }
+        });
+        y = doc.autoTable.previous.finalY + 10;
+
+        const addTable = (title, data, headers) => {
+            if (data.length > 0) {
+                doc.setFontSize(12);
+                doc.text(title, 14, y);
+                y += 6;
+                doc.autoTable({
+                    startY: y,
+                    head: [headers],
+                    body: data.map(row => headers.map(header => row[header])),
+                    theme: 'striped',
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [59, 130, 246] }
+                });
+                y = doc.autoTable.previous.finalY + 10;
+            }
+        };
+
+        addTable('Análisis de Ventas por Producto', ventasData, ['Producto', 'Uds.', 'Ingresos', 'Costo Total', 'Ganancia Bruta', 'Margen (%)']);
+        addTable('Análisis por Trabajador', trabajadorData, ['Trabajador', 'Turnos', 'Ingresos Gen.', 'Ganancia Bruta Gen.', 'Pago Neto']);
+        addTable('Registro de Transacciones', txLogData, ['Fecha y Hora', 'Trabajador', 'Tipo', 'Detalle', 'Monto']);
+
+        doc.save(`Reporte_${this.state.business.name}_${new Date().toISOString().split('T')[0]}.pdf`);
+    },
+
+    generateExcelReport() {
+        if (!this.currentReportData) {
+            this.showToast('Primero debe generar un reporte.', 'error');
+            return;
+        }
+        const { summary, ventasData, trabajadorData, txLogData, dateRange } = this.currentReportData;
+        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        
+        const wb = XLSX.utils.book_new();
+
+        // Hoja de Resumen
+        const summarySheetData = [
+            ['Reporte Financiero', this.state.business.name],
+            ['Periodo', `${dateRange.start} - ${dateRange.end}`],
+            [],
+            ['Métrica', 'Valor'],
+            ['Ingresos por Ventas', summary.totalIngresos],
+            ['Ganancia Bruta', summary.gananciaBrutaTotal],
+            ['Gastos Operativos', summary.gastosOperativos],
+            ['Ganancia Neta', summary.gananciaNeta],
+            ['Margen Neto (%)', summary.margenNeto],
+        ];
+        const wsSummary = XLSX.utils.aoa_to_sheet(summarySheetData);
+        XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+        // Hoja de Ventas
+        if(ventasData.length > 0) {
+            const wsVentas = XLSX.utils.json_to_sheet(ventasData);
+            XLSX.utils.book_append_sheet(wb, wsVentas, 'Ventas por Producto');
+        }
+
+        // Hoja de Trabajadores
+        if(trabajadorData.length > 0) {
+            const wsTrabajadores = XLSX.utils.json_to_sheet(trabajadorData);
+            XLSX.utils.book_append_sheet(wb, wsTrabajadores, 'Desempeño Trabajadores');
+        }
+        
+        // Hoja de Log de Transacciones
+        if(txLogData.length > 0) {
+            const wsLog = XLSX.utils.json_to_sheet(txLogData);
+            XLSX.utils.book_append_sheet(wb, wsLog, 'Log de Transacciones');
+        }
+        
+        XLSX.writeFile(wb, `Reporte_Excel_${this.state.business.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    },
+    // --- FIN: Nuevas Funciones para Exportar ---
     showModal(contentHTML) { document.getElementById('modal-content').innerHTML = contentHTML; document.getElementById('modal-container').style.display = 'flex'; },
     closeModal() { document.getElementById('modal-container').style.display = 'none'; this._tempData = {}; },
     showConfirmationModal(message, onConfirm) { this._tempData.onConfirm = onConfirm; this.showModal(`<h2>Confirmación</h2><p>${message}</p><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="button" class="btn btn-danger" onclick="app.executeConfirmation()">Confirmar</button></div>`); },
@@ -1517,7 +1667,7 @@ const app = {
             <form id="w-form">
                 <div class="form-group"><label>Nombre Completo</label><input id="w-name" value="${w ? w.nombre : ''}" required></div>
                 <div class="form-group"><label>Rol</label><input id="w-role" value="${w ? w.rol : 'Vendedor'}" required></div>
-                <div class="form-group"><label>Código de Acceso (Numérico)</label><input id="w-code" type="password" pattern="[0-9]*" inputmode="numeric" value="${w ? w.loginCode : ''}" placeholder="Dejar en blanco para no cambiar" required></div>
+                <div class="form-group"><label>Código de Acceso (Numérico)</label><input id="w-code" type="password" pattern="[0-9]*" inputmode="numeric" value="" placeholder="${w ? 'Dejar en blanco para no cambiar' : ''}" ${!w ? 'required' : ''}></div>
                 <div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showWorkerManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
             </form>`); 
         document.getElementById('w-form').onsubmit = (e) => { e.preventDefault(); this.saveWorker(id); }; 
