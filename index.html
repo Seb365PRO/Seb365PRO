@@ -510,26 +510,6 @@
             margin-top: 1rem;
             border: 1px solid var(--border-color);
         }
-        .purchase-item-list {
-            max-height: 150px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .purchase-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem;
-            font-size: 0.9rem;
-            border-bottom: 1px dashed var(--border-color);
-        }
-        .purchase-item:last-child {
-            border-bottom: none;
-        }
-
 
         /* VISTA DE TRABAJADOR */
         #worker-view { display: none; }
@@ -756,7 +736,13 @@
             <div id="turnos" class="tab-content"><div id="turnos-view-container"></div></div>
             <div id="caja" class="tab-content"></div>
             <div id="inventario" class="tab-content">
-                <div class="card"><div class="card-header"><h2>Bodega (Compras a Proveedores)</h2><button class="btn btn-primary" onclick="app.showPurchaseModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>Registrar Compra</span></button></div><div id="bodega-table-container"></div></div>
+    <div class="card">
+        <div class="card-header">
+            <h2>Bodega (Compras a Proveedores)</h2>
+            <button class="btn btn-primary" onclick="app.showPurchaseModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>Añadir Compra</span></button>
+        </div>
+        <div id="bodega-table-container"></div>
+    </div>
                 <div class="card"><div class="card-header"><h2>Barra (Productos para la Venta)</h2></div><div id="barra-table-container"></div></div>
             </div>
             <div id="historial" class="tab-content">
@@ -785,22 +771,6 @@
                 </div>
             </div>
             <div id="configuracion" class="tab-content">
-                 <div class="card" id="business-card-container">
-                    <div class="card-header"><h2>Datos del Negocio</h2></div>
-                    <form id="business-details-form">
-                        <div class="form-group">
-                            <label for="business-name">Nombre del Establecimiento</label>
-                            <input type="text" id="business-name" required>
-                        </div>
-                         <div class="form-group">
-                            <label for="business-address">Dirección del Establecimiento</label>
-                            <textarea id="business-address" rows="2" placeholder="Ej: Calle 100 # 1-23, Bogotá"></textarea>
-                        </div>
-                        <div class="actions" style="justify-content:flex-end;">
-                             <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                        </div>
-                    </form>
-                </div>
                 <div class="card">
                     <div class="card-header"><h2>Configuración General</h2></div>
                     <p>Aquí defines las plantillas de productos, gestionas el personal y los proveedores.</p>
@@ -843,7 +813,8 @@ const app = {
             productos: [],
             trabajadores: [],
             proveedores: [],
-            compras: [],
+            lotes_bodega: [],
+            lotes_bodega_archivados: [],
             turnosActivos: [],
             historial: [],
             historialCaja: [],
@@ -1060,7 +1031,6 @@ const app = {
         this._tempData.newAccount.business = {
             id: this.uid(),
             name: barname,
-            address: '',
             logoDataUrl: this._tempData.logoDataUrl || null,
             category: null
         };
@@ -1085,33 +1055,14 @@ const app = {
     },
 
     verifyLicense() {
-        const code = document.getElementById('license-code').value.trim().toLowerCase();
+        const code = document.getElementById('license-code').value.trim();
         const errorEl = document.getElementById('license-error');
+        const correctCode = 'm12d09a1995';
 
-        const validLicenses = {
-            'm12d09a1995': 1,  // 1 mes
-            'm09d24a1972': 3,  // 3 meses
-            'm09d26a1989': 6,  // 6 meses
-            'm03d17a2001': 9,  // 9 meses
-            'm05d17a1966': 12  // 1 año
-        };
-
-        if (!validLicenses[code]) {
+        if (code.toLowerCase() !== correctCode.toLowerCase()) {
             errorEl.textContent = 'El código de licencia no es válido.';
             return;
         }
-
-        const duration = validLicenses[code];
-        const activationDate = new Date();
-        const expirationDate = new Date(activationDate);
-        expirationDate.setMonth(expirationDate.getMonth() + duration);
-
-        this._tempData.newAccount.user.license = {
-            code: code,
-            duration: duration,
-            activatedAt: activationDate.toISOString(),
-            expiresAt: expirationDate.toISOString()
-        };
         
         let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
         accounts.push(this._tempData.newAccount);
@@ -1122,7 +1073,7 @@ const app = {
         this.state.currentUserType = 'admin';
         this._tempData = {};
         
-        this.showToast(`¡Bienvenido! Tu licencia de ${duration} mes(es) ha sido activada.`, 'success');
+        this.showToast('¡Bienvenido! Tu cuenta ha sido activada.', 'success');
         this.transitionToApp();
     },
     
@@ -1238,7 +1189,6 @@ const app = {
             case 'inventario': this.renderInventario(); break;
             case 'historial': this.renderHistorialTab(); break;
             case 'reportes': this.renderReportUI(); break;
-            case 'configuracion': this.renderConfiguracionTab(); break;
         }
     },
 
@@ -1530,128 +1480,174 @@ const app = {
         this.renderUI();
         this.showToast('Turno liquidado y movimientos registrados en caja.');
     },
-    renderInventario() { this.renderBodega(); this.renderBarra(); },
-    renderBodega() {
-        const container = document.getElementById('bodega-table-container');
-        const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-        
-        const activePurchases = this.state.compras.filter(p => !p.archived);
-        
-        let tbl = '';
-        if (activePurchases.length === 0) {
-            tbl = `<div class="empty-state">No hay compras activas en la bodega.</div>`;
-        } else {
-            tbl = `<table class="management-table"><thead><tr><th>Referencia</th><th>Proveedor</th><th>Costo Total</th><th>Deuda</th><th>Estado</th><th></th></tr></thead><tbody>`;
-            activePurchases.forEach(p => {
-                const proveedor = this.state.proveedores.find(prov => prov.id === p.id_proveedor);
-                const estadoClass = { 'Pagado': 'status-pago-pagado', 'Parcial': 'status-pago-parcial', 'Pendiente': 'status-pago-pendiente' }[p.estado_pago] || '';
-                
-                tbl += `<tr>
-                    <td data-label="Referencia">${p.nombre} <small style="display:block; color: var(--text-muted);">${new Date(p.timestamp).toLocaleDateString('es-CO')}</small></td>
-                    <td data-label="Proveedor">${proveedor ? proveedor.nombre : 'N/A'}</td>
-                    <td data-label="Costo Total">${currency(p.costo_total)}</td>
-                    <td data-label="Deuda" style="color: ${p.monto_adeudado > 0 ? 'var(--danger-color)' : 'inherit'}; font-weight: bold;">${currency(p.monto_adeudado)}</td>
-                    <td data-label="Estado"><span class="status-badge ${estadoClass}">${p.estado_pago}</span></td>
-                    <td data-label="Acciones"><div class="actions">
-                        <button class="btn btn-outline" onclick="app.showPurchaseDetailModal('${p.id}')">Ver Detalles</button>
-                    </div></td>
-                </tr>`;
+renderInventario() { this.renderBodega(); this.renderBarra(); },
+    renderBodega() {
+        const c = document.getElementById('bodega-table-container');
+        const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+        
+        const lotesActivos = this.state.lotes_bodega;
+        let tbl = '';
+        if (lotesActivos.length === 0) {
+            tbl = `<div class="empty-state">No hay compras con stock disponible en la bodega.</div>`;
+        } else {
+            tbl = `<table class="management-table"><thead><tr><th>Compra</th><th>Producto</th><th>Stock Bodega</th><th>Proveedor</th><th>Deuda</th><th>Estado</th><th></th></tr></thead><tbody>`;
+            // Agrupamos por compraId para mostrarlo de forma más ordenada
+            const comprasAgrupadas = lotesActivos.reduce((acc, lote) => {
+                const compraId = lote.compraId || lote.id; // Usamos compraId o el id del lote para compatibilidad
+                if (!acc[compraId]) {
+                    acc[compraId] = {
+                        nombre: lote.nombre,
+                        proveedorId: lote.id_proveedor,
+                        lotes: []
+                    };
+                }
+                acc[compraId].lotes.push(lote);
+                return acc;
+            }, {});
+
+            Object.values(comprasAgrupadas).forEach(compra => {
+                compra.lotes.forEach((l, index) => {
+                    const proveedor = this.state.proveedores.find(p => p.id === l.id_proveedor);
+                    const producto = this.state.productos.find(p => p.id === l.id_producto_asociado);
+                    const estadoClass = { 'Pagado': 'status-pago-pagado', 'Parcial': 'status-pago-parcial', 'Pendiente': 'status-pago-pendiente' }[l.estado_pago] || '';
+                    
+                    tbl += `<tr>
+                        <td data-label="Compra">${index === 0 ? `<strong>${l.nombre}</strong>` : ''}</td>
+                        <td data-label="Producto">${producto ? producto.nombre : 'N/A'} <small style="display:block; color: var(--text-muted);">${l.cantidad_empaques} ${l.tipo_empaque}(s)</small></td>
+                        <td data-label="Stock Bodega" style="font-weight: bold; font-size: 1.1em;">${l.unidades_disponibles} uds.</td>
+                        <td data-label="Proveedor">${proveedor ? proveedor.nombre : 'N/A'}</td>
+                        <td data-label="Deuda" style="color: ${l.monto_adeudado > 0 ? 'var(--danger-color)' : 'inherit'}; font-weight: bold;">${cur(l.monto_adeudado)}</td>
+                        <td data-label="Estado"><span class="status-badge ${estadoClass}">${l.estado_pago}</span></td>
+                        <td data-label="Acciones"><div class="actions">
+                            <button class="btn btn-outline" onclick="app.showLoteDetailModal('${l.id}')">Detalles</button>
+                            <button class="btn btn-primary" onclick="app.showTrasladoModal('${l.id}')">Trasladar</button>
+                        </div></td>
+                    </tr>`;
+                });
             });
-            tbl += '</tbody></table>';
-        }
+            tbl += '</tbody></table>';
+        }
 
-        const archivedPurchases = this.state.compras.filter(p => p.archived);
-        let archivadosHTML = '';
-        if (archivedPurchases.length > 0) {
-            let archivadosTbl = `<table class="management-table"><thead><tr><th>Referencia</th><th>Proveedor</th><th>Fecha Archivo</th><th></th></tr></thead><tbody>`;
-            archivedPurchases.slice().sort((a,b) => new Date(b.fecha_archivado) - new Date(a.fecha_archivado)).forEach(p => {
-                const proveedor = this.state.proveedores.find(prov => prov.id === p.id_proveedor);
-                archivadosTbl += `<tr>
-                    <td data-label="Referencia">${p.nombre}</td>
-                    <td data-label="Proveedor">${proveedor ? proveedor.nombre : 'N/A'}</td>
-                    <td data-label="Fecha Archivo">${new Date(p.fecha_archivado).toLocaleDateString('es-CO')}</td>
-                    <td data-label="Acciones"><div class="actions">
-                        <button class="btn btn-icon btn-outline" title="Generar Recibo" onclick="app.generatePurchaseReceipt('${p.id}')"><svg class="icon"><use href="#icon-receipt"></use></svg></button>
-                        <button class="btn btn-icon btn-danger" title="Eliminar Registro" onclick="app.deletePurchaseRecord('${p.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button>
-                    </div></td>
-                </tr>`;
-            });
-            archivadosTbl += '</tbody></table>';
+        let archivadosHTML = '';
+        if (this.state.lotes_bodega_archivados.length > 0) {
+            let archivadosTbl = `<table class="management-table"><thead><tr><th>Compra</th><th>Proveedor</th><th>Fecha Archivo</th><th></th></tr></thead><tbody>`;
+            this.state.lotes_bodega_archivados.slice().sort((a,b) => new Date(b.fecha_archivado) - new Date(a.fecha_archivado)).forEach(l => {
+                const proveedor = this.state.proveedores.find(p => p.id === l.id_proveedor);
+                archivadosTbl += `<tr>
+                    <td data-label="Compra">${l.nombre}</td>
+                    <td data-label="Proveedor">${proveedor ? proveedor.nombre : 'N/A'}</td>
+                    <td data-label="Fecha Archivo">${new Date(l.fecha_archivado).toLocaleDateString('es-CO')}</td>
+                    <td data-label="Acciones"><div class="actions">
+                        <button class="btn btn-icon btn-outline" title="Generar Recibo" onclick="app.generatePurchaseReceipt('${l.id}', true)"><svg class="icon"><use href="#icon-receipt"></use></svg></button>
+                        <button class="btn btn-icon btn-danger" title="Eliminar Registro" onclick="app.deletePurchaseRecord('${l.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button>
+                    </div></td>
+                </tr>`;
+            });
+            archivadosTbl += '</tbody></table>';
+            archivadosHTML = `
+                <details class="history-details" style="margin-top: 2rem;">
+                    <summary>Historial de Compras (Stock Agotado)</summary>
+                    <div class="history-details-content">${archivadosTbl}</div>
+                </details>`;
+        }
+        c.innerHTML = tbl + archivadosHTML;
+    },
+    renderBarra() { const c = document.getElementById('barra-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.productos.length === 0) { c.innerHTML = `<div class="empty-state">No hay productos definidos para la venta.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Producto en Barra</th><th>Stock Actual</th><th>P. Venta</th><th>P. Costo Unit.</th><th>Valor Inventario</th></tr></thead><tbody>`; this.state.productos.forEach(p => { const v = p.stock_actual * p.precio_costo_unitario; tbl += `<tr><td data-label="Producto">${p.nombre}</td><td data-label="Stock" style="font-weight:bold;">${p.stock_actual}</td><td data-label="P. Venta">${cur(p.precio_venta)}</td><td data-label="P. Costo">${cur(p.precio_costo_unitario)}</td><td data-label="Valor">${cur(v)}</td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
+    deletePurchaseRecord(id) {
+        this.showConfirmationModal('¿Eliminar este registro de compra permanentemente? Esta acción es irreversible.', () => {
+            let found = false;
+            let initialLength = this.state.lotes_bodega.length;
+            this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id);
+            if (this.state.lotes_bodega.length < initialLength) found = true;
 
-            archivadosHTML = `
-                <details class="history-details" style="margin-top: 2rem;">
-                    <summary>Historial de Compras (Stock Agotado)</summary>
-                    <div class="history-details-content">${archivadosTbl}</div>
-                </details>`;
-        }
-        container.innerHTML = tbl + archivadosHTML;
-    },
-    renderBarra() { const c = document.getElementById('barra-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.productos.length === 0) { c.innerHTML = `<div class="empty-state">No hay productos definidos para la venta.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Producto en Barra</th><th>Stock Actual</th><th>P. Venta</th><th>P. Costo Unit.</th><th>Valor Inventario</th></tr></thead><tbody>`; this.state.productos.forEach(p => { const v = p.stock_actual * p.precio_costo_unitario; tbl += `<tr><td data-label="Producto">${p.nombre}</td><td data-label="Stock" style="font-weight:bold;">${p.stock_actual}</td><td data-label="P. Venta">${cur(p.precio_venta)}</td><td data-label="P. Costo">${cur(p.precio_costo_unitario)}</td><td data-label="Valor">${cur(v)}</td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
-    
-    deletePurchaseRecord(id) {
-        this.showConfirmationModal('¿Eliminar este registro de compra permanentemente? Esta acción es irreversible.', () => {
-            const initialLength = this.state.compras.length;
-            this.state.compras = this.state.compras.filter(p => p.id !== id);
-            if(this.state.compras.length < initialLength) {
-                this.saveState();
-                this.renderInventario();
-                this.closeModal();
-                this.showToast('Registro de compra eliminado.', 'error');
-            }
-        });
-    },
+            if (!found) {
+                let initialArchivedLength = this.state.lotes_bodega_archivados.length;
+                this.state.lotes_bodega_archivados = this.state.lotes_bodega_archivados.filter(l => l.id !== id);
+                if (this.state.lotes_bodega_archivados.length < initialArchivedLength) found = true;
+            }
 
-    showTrasladoModal(purchaseId, itemId) {
-        const purchase = this.state.compras.find(p => p.id === purchaseId);
-        const item = purchase.items.find(i => i.id === itemId);
-        const producto = this.state.productos.find(p => p.id === item.id_producto_asociado);
-        if (!item || !producto) { this.showToast('Error: No se encontró el item o producto asociado.', 'error'); return; }
-        
-        this._tempData.purchaseId = purchaseId;
-        this._tempData.itemId = itemId;
+            if(found) {
+                this.saveState();
+                this.renderInventario();
+                this.closeModal();
+                this.showToast('Registro de compra eliminado.', 'error');
+            }
+        });
+    },
+    showTrasladoModal(loteId) {
+        const lote = this.state.lotes_bodega.find(l => l.id === loteId);
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
+        if (!lote || !producto) { this.showToast('Error: No se encontró el lote o producto asociado.', 'error'); return; }
+        
+        this._tempData.loteId = loteId;
+        const stockEmbalado = Math.floor(lote.unidades_disponibles / lote.unidades_por_empaque);
+        const stockSuelto = lote.unidades_disponibles % lote.unidades_por_empaque;
+        
+        const contentHTML = `<h2>Trasladar Stock a Barra</h2>
+            <p>Desde la compra: <strong>${lote.nombre}</strong> para <strong>${producto.nombre}</strong></p>
+            <div class="form-summary">Stock disponible: <strong>${stockEmbalado} ${lote.tipo_empaque}(s) y ${stockSuelto} unidades</strong> (${lote.unidades_disponibles} total)</div>
+            <form id="traslado-form" style="margin-top: 1.5rem;">
+                <div class="form-group"><label for="traslado-empaques">Cantidad de ${lote.tipo_empaque}s a trasladar (c/u tiene ${lote.unidades_por_empaque} uds.)</label><input type="number" id="traslado-empaques" min="0" max="${stockEmbalado}" placeholder="0"></div>
+                <div class="form-group"><label for="traslado-unidades">Unidades adicionales a trasladar</label><input type="number" id="traslado-unidades" min="0" max="${lote.unidades_disponibles}" placeholder="0"></div>
+                <div class="form-summary" id="traslado-summary" style="display:none;"></div>
+                <button type="button" class="btn btn-outline" style="width:100%; margin: 1rem 0;" onclick="app.trasladarLoteCompleto()">Trasladar Lote Completo (${lote.unidades_disponibles} uds.)</button>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar Traslado</button></div>
+            </form>`;
+        this.showModal(contentHTML);
 
-        const stockEmbalado = Math.floor(item.unidades_disponibles / item.unidades_por_empaque);
-        const stockSuelto = item.unidades_disponibles % item.unidades_por_empaque;
-        
-        const contentHTML = `<h2>Trasladar Stock a Barra</h2>
-            <p>Desde la compra: <strong>${purchase.nombre}</strong></p>
-            <p>Producto: <strong>${producto.nombre}</strong></p>
-            <div class="form-summary">Stock disponible en este lote: <strong>${stockEmbalado} ${item.tipo_empaque}s y ${stockSuelto} unidades</strong> (${item.unidades_disponibles} total)</div>
-            <form id="traslado-form" style="margin-top: 1.5rem;">
-                <div class="form-group"><label for="traslado-unidades">Cantidad de Unidades a trasladar</label><input type="number" id="traslado-unidades" min="0" max="${item.unidades_disponibles}" placeholder="0" required></div>
-                <button type="button" class="btn btn-outline" style="width:100%; margin: 1rem 0;" onclick="document.getElementById('traslado-unidades').value = ${item.unidades_disponibles}">Trasladar Lote Completo</button>
-                <div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar Traslado</button></div>
-            </form>`;
-        this.showModal(contentHTML);
-        
-        document.getElementById('traslado-form').onsubmit = (e) => { e.preventDefault(); this.confirmTraslado(); };
-    },
-    
-    confirmTraslado() {
-        const purchase = this.state.compras.find(p => p.id === this._tempData.purchaseId);
-        const item = purchase.items.find(i => i.id === this._tempData.itemId);
-        const producto = this.state.productos.find(p => p.id === item.id_producto_asociado);
-        const totalATrasladar = parseInt(document.getElementById('traslado-unidades').value) || 0;
+        const empaquesInput = document.getElementById('traslado-empaques');
+        const unidadesInput = document.getElementById('traslado-unidades');
+        const summaryEl = document.getElementById('traslado-summary');
+        
+        const updateTotal = () => {
+            const numEmpaques = parseInt(empaquesInput.value) || 0;
+            const numUnidades = parseInt(unidadesInput.value) || 0;
+            const total = (numEmpaques * lote.unidades_por_empaque) + numUnidades;
+            if (total > 0) {
+                summaryEl.style.display = 'block';
+                summaryEl.innerHTML = `Total a trasladar: <strong>${total} unidades</strong>`;
+            } else {
+                summaryEl.style.display = 'none';
+            }
+        };
+        empaquesInput.oninput = updateTotal;
+        unidadesInput.oninput = updateTotal;
+        
+        document.getElementById('traslado-form').onsubmit = (e) => { e.preventDefault(); this.confirmTraslado(); };
+    },
+    trasladarLoteCompleto() {
+        const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
+        if(!lote) return;
+        document.getElementById('traslado-empaques').value = 0;
+        document.getElementById('traslado-unidades').value = lote.unidades_disponibles;
+        document.getElementById('traslado-empaques').dispatchEvent(new Event('input'));
+    },
+    confirmTraslado() {
+        const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
+        const numEmpaques = parseInt(document.getElementById('traslado-empaques').value) || 0;
+        const numUnidades = parseInt(document.getElementById('traslado-unidades').value) || 0;
+        const totalATrasladar = (numEmpaques * lote.unidades_por_empaque) + numUnidades;
 
-        if (totalATrasladar <= 0) { this.showToast('Debes ingresar una cantidad a trasladar.', 'error'); return; }
-        if (totalATrasladar > item.unidades_disponibles) { this.showToast(`No puedes trasladar más de las ${item.unidades_disponibles} unidades disponibles.`, 'error'); return; }
+        if (totalATrasladar <= 0) { this.showToast('Debes ingresar una cantidad a trasladar.', 'error'); return; }
+        if (totalATrasladar > lote.unidades_disponibles) { this.showToast(`No puedes trasladar más de las ${lote.unidades_disponibles} unidades disponibles.`, 'error'); return; }
 
-        producto.stock_actual += totalATrasladar;
-        item.unidades_disponibles -= totalATrasladar;
+        producto.stock_actual += totalATrasladar;
+        lote.unidades_disponibles -= totalATrasladar;
 
-        const allItemsEmpty = purchase.items.every(i => i.unidades_disponibles === 0);
-        if (allItemsEmpty) {
-            purchase.archived = true;
-            purchase.fecha_archivado = new Date().toISOString();
-            this.showToast(`Stock trasladado. Compra '${purchase.nombre}' completada y archivada.`);
-        } else {
-            this.showToast(`${totalATrasladar} unidades trasladadas a la barra.`);
-        }
-        
-        this.saveState(); 
-        this.renderInventario(); 
-        this.closeModal();
-    },
+        if (lote.unidades_disponibles === 0) {
+            const loteIndex = this.state.lotes_bodega.findIndex(l => l.id === lote.id);
+            if (loteIndex > -1) {
+                const [archivedLote] = this.state.lotes_bodega.splice(loteIndex, 1);
+                archivedLote.fecha_archivado = new Date().toISOString();
+                this.state.lotes_bodega_archivados.push(archivedLote);
+                this.showToast(`Lote completo (${totalATrasladar} uds.) trasladado y archivado.`);
+            }
+        } else {
+            this.showToast(`${totalATrasladar} unidades trasladadas a la barra.`);
+        }
+        this.saveState(); this.renderInventario(); this.closeModal();
+    },
     renderHistorialTab() {
         this.renderHistorialTurnos();
         this.renderHistorialCaja();
@@ -1815,7 +1811,264 @@ const app = {
         
         XLSX.writeFile(wb, `Reporte_Excel_${this.state.business.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
     },
-    
+    showModal(contentHTML, size = 'normal') {
+        const modalContent = document.getElementById('modal-content');
+        modalContent.innerHTML = contentHTML;
+        modalContent.classList.remove('modal-lg');
+        if (size === 'large') {
+            modalContent.classList.add('modal-lg');
+        }
+        document.getElementById('modal-container').style.display = 'flex';
+    },
+    closeModal() { document.getElementById('modal-container').style.display = 'none'; this._tempData = {}; },
+    showConfirmationModal(message, onConfirm) { this._tempData.onConfirm = onConfirm; this.showModal(`<h2>Confirmación</h2><p>${message}</p><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="button" class="btn btn-danger" onclick="app.executeConfirmation()">Confirmar</button></div>`); },
+    executeConfirmation() { if(this._tempData.onConfirm) this._tempData.onConfirm(); this.closeModal(); },
+    showToast(message, type = 'success') {
+        const tc = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        const icon = type === 'success' ? '#icon-check' : '#icon-alert';
+        t.className = `toast ${type}`;
+        t.innerHTML = `<svg class="icon"><use href="${icon}"></use></svg><div>${message}</div>`;
+        tc.appendChild(t);
+        setTimeout(() => t.remove(), 6000);
+    },
+    showPurchaseModal() {
+    if (this.state.productos.length === 0 || this.state.proveedores.length === 0) {
+        this.showToast('Debe registrar productos y proveedores en Configuración antes de añadir una compra.', 'error');
+        return;
+    }
+    const supplierOptions = this.state.proveedores.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+
+    const modalHTML = `
+        <h2>Añadir Nueva Compra a Bodega</h2>
+        <form id="purchase-form">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="purchase-proveedor">Proveedor</label>
+                    <select id="purchase-proveedor" required><option value="" disabled selected>Seleccione...</option>${supplierOptions}</select>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="purchase-nombre">Nombre o Descripción de la Compra (Ej: Factura #123)</label>
+                    <input type="text" id="purchase-nombre" required>
+                </div>
+            </div>
+
+            <h4 style="margin-top: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">Productos en esta Compra</h4>
+            <div id="purchase-items-container">
+                </div>
+            <button type="button" class="btn btn-outline" onclick="app._addPurchaseItemRow()" style="width: 100%; margin-top: 1rem;">
+                <svg class="icon"><use href="#icon-plus"></use></svg>
+                <span>Añadir otro producto</span>
+            </button>
+
+            <h4 style="margin-top: 2rem; margin-bottom: 1rem;">Resumen de Pago</h4>
+            <div class="form-group">
+                <label for="purchase-monto-pagado">Monto Pagado Ahora (Esto generará un egreso en caja)</label>
+                <input type="number" id="purchase-monto-pagado" value="0" min="0" required oninput="app._updatePurchaseSummary()">
+            </div>
+            <div class="form-summary" id="purchase-summary"></div>
+
+            <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Compra</button>
+            </div>
+        </form>`;
+
+    this.showModal(modalHTML, 'large');
+    this._addPurchaseItemRow(); // Añade la primera fila de producto automáticamente
+     document.getElementById('purchase-form').onsubmit = (e) => { e.preventDefault(); this.savePurchase(); };
+},
+
+savePurchase() {
+    const purchaseName = document.getElementById('purchase-nombre').value.trim();
+    const proveedorId = document.getElementById('purchase-proveedor').value;
+    const totalAmountPaid = parseFloat(document.getElementById('purchase-monto-pagado').value) || 0;
+
+    const itemRows = document.querySelectorAll('#purchase-items-container > .card');
+
+    if (!purchaseName || !proveedorId) {
+        this.showToast('El nombre de la compra y el proveedor son obligatorios.', 'error');
+        return;
+    }
+    if (itemRows.length === 0) {
+        this.showToast('Debe añadir al menos un producto a la compra.', 'error');
+        return;
+    }
+
+    const newLotesData = [];
+    let totalPurchaseCost = 0;
+    let isValid = true;
+
+    // 1. Validamos y recolectamos los datos de cada producto
+    itemRows.forEach(row => {
+        const itemId = row.dataset.itemId;
+        const idProd = document.getElementById(`item-producto-${itemId}`).value;
+        const tipoEmpaque = document.getElementById(`item-empaque-tipo-${itemId}`).value;
+        const unidadesPorEmpaque = parseInt(document.getElementById(`item-unidades-empaque-${itemId}`).value);
+        const cantidadEmpaques = parseInt(document.getElementById(`item-cantidad-empaques-${itemId}`).value);
+        const costoItem = parseFloat(document.getElementById(`item-precio-${itemId}`).value);
+
+        if (!idProd || !tipoEmpaque || isNaN(unidadesPorEmpaque) || isNaN(cantidadEmpaques) || isNaN(costoItem) || unidadesPorEmpaque <= 0 || cantidadEmpaques <= 0 || costoItem < 0) {
+            isValid = false;
+        }
+
+        totalPurchaseCost += costoItem;
+
+        newLotesData.push({
+            id_producto_asociado: idProd,
+            tipo_empaque: tipoEmpaque,
+            unidades_por_empaque: unidadesPorEmpaque,
+            cantidad_empaques: cantidadEmpaques,
+            costo_total: costoItem,
+        });
+    });
+
+    if (!isValid) {
+        this.showToast('Revise los datos de los productos. Todos los campos son obligatorios.', 'error');
+        return;
+    }
+    if (totalAmountPaid > totalPurchaseCost) {
+        this.showToast('El monto pagado no puede ser mayor al costo total de la compra.', 'error');
+        return;
+    }
+
+    const compraId = this.uid();
+    let remainingPaymentToDistribute = totalAmountPaid;
+
+    // 2. Creamos los lotes individuales y distribuimos el pago
+    newLotesData.forEach(itemData => {
+        const itemCost = itemData.costo_total;
+        const paymentForItem = Math.min(remainingPaymentToDistribute, itemCost);
+        const debtForItem = itemCost - paymentForItem;
+        const estadoPago = debtForItem <= 0 ? 'Pagado' : (paymentForItem > 0 ? 'Parcial' : 'Pendiente');
+
+        const nuevoLote = {
+            id: this.uid(),
+            compraId: compraId,
+            nombre: purchaseName,
+            id_producto_asociado: itemData.id_producto_asociado,
+            id_proveedor: proveedorId,
+            tipo_empaque: itemData.tipo_empaque,
+            unidades_por_empaque: itemData.unidades_por_empaque,
+            cantidad_empaques: itemData.cantidad_empaques,
+            unidades_disponibles: itemData.unidades_por_empaque * itemData.cantidad_empaques,
+            costo_total: itemCost,
+            monto_pagado: paymentForItem,
+            monto_adeudado: debtForItem,
+            estado_pago: estadoPago,
+            historial_pagos: [],
+            timestamp: new Date().toISOString()
+        };
+
+        if (paymentForItem > 0) {
+            nuevoLote.historial_pagos.push({
+                id: this.uid(),
+                monto: paymentForItem,
+                fecha: new Date().toISOString(),
+                descripcion: 'Pago inicial al registrar la compra'
+            });
+        }
+
+        remainingPaymentToDistribute -= paymentForItem;
+        this.state.lotes_bodega.push(nuevoLote);
+    });
+
+    if (totalAmountPaid > 0) {
+        this.addTransaccionCaja('egreso', totalAmountPaid, `Pago compra '${purchaseName}'`);
+    }
+
+    this.saveState();
+    this.renderInventario();
+    this.closeModal();
+    const toastMessage = `Compra con ${newLotesData.length} producto(s) registrada. 
+        <button class='btn btn-outline' style='color:white; border-color:white; margin-top: 0.5rem;' 
+        onclick='app.generateConsolidatedReceipt("${compraId}")'>
+        Generar Recibo
+        </button>`;
+    this.showToast(toastMessage);
+},
+
+_addPurchaseItemRow() {
+    const container = document.getElementById('purchase-items-container');
+    const productOptions = this.state.productos.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    const itemId = this.uid();
+
+    const itemHTML = `
+        <div class="card" id="item-${itemId}" data-item-id="${itemId}" style="padding: 1rem; margin-bottom: 1rem; background-color: var(--bg-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h5 style="margin:0;">Detalle del Producto</h5>
+                <button type="button" class="btn btn-icon btn-danger" onclick="app._removePurchaseItemRow('${itemId}')"><svg class="icon"><use href="#icon-trash"></use></svg></button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="item-producto-${itemId}">Producto</label>
+                    <select id="item-producto-${itemId}" class="purchase-item-input" required><option value="" disabled selected>Seleccione...</option>${productOptions}</select>
+                </div>
+                <div class="form-group">
+                    <label for="item-empaque-tipo-${itemId}">Empaque</label>
+                    <select id="item-empaque-tipo-${itemId}" class="purchase-item-input">
+                        <option>Caja</option><option>Paca</option><option>Canasta</option><option selected>Unidad</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="item-unidades-empaque-${itemId}">Uds/Empaque</label>
+                    <input type="number" id="item-unidades-empaque-${itemId}" value="1" min="1" class="purchase-item-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="item-cantidad-empaques-${itemId}"># Empaques</label>
+                    <input type="number" id="item-cantidad-empaques-${itemId}" value="1" min="1" class="purchase-item-input" required>
+                </div>
+                 <div class="form-group">
+                    <label for="item-precio-${itemId}">Costo de este Item</label>
+                    <input type="number" id="item-precio-${itemId}" min="0" class="purchase-item-input" required>
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', itemHTML);
+
+    document.querySelectorAll(`#item-${itemId} .purchase-item-input`).forEach(input => {
+        input.addEventListener('input', this._updatePurchaseSummary);
+    });
+
+    document.getElementById(`item-empaque-tipo-${itemId}`).addEventListener('change', (e) => {
+        const unidadesInput = document.getElementById(`item-unidades-empaque-${itemId}`);
+        if (e.target.value === 'Unidad') {
+            unidadesInput.value = 1;
+            unidadesInput.disabled = true;
+        } else {
+            unidadesInput.disabled = false;
+        }
+        this._updatePurchaseSummary();
+    });
+    document.getElementById(`item-empaque-tipo-${itemId}`).dispatchEvent(new Event('change'));
+
+    this._updatePurchaseSummary();
+},
+
+_removePurchaseItemRow(itemId) {
+    document.getElementById(`item-${itemId}`).remove();
+    this._updatePurchaseSummary();
+},
+
+_updatePurchaseSummary() {
+    let totalCost = 0;
+    const items = document.querySelectorAll('#purchase-items-container > .card');
+    items.forEach(item => {
+        const itemId = item.dataset.itemId;
+        const itemCost = parseFloat(document.getElementById(`item-precio-${itemId}`).value) || 0;
+        totalCost += itemCost;
+    });
+
+    const amountPaid = parseFloat(document.getElementById('purchase-monto-pagado').value) || 0;
+    const debt = totalCost - amountPaid;
+
+    const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+
+    document.getElementById('purchase-summary').innerHTML = `
+        Costo Total de la Compra: <strong>${currency(totalCost)}</strong>. 
+        Deuda pendiente: <strong style="color: ${debt > 0 ? 'var(--danger-color)' : 'var(--success-color)'}">${currency(debt)}</strong>`;
+},
     _getTurnoBreakdownHTML(turno) {
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); const fichas = {}; let prestamosHTML = '';
         turno.transacciones.forEach(t => { if (t.tipo === 'DESPACHO') { const p = this.state.productos.find(prod => prod.id === t.productoId); if(p) { if (!fichas[p.nombre]) fichas[p.nombre] = { cantidad: 0, total: 0 }; fichas[p.nombre].cantidad += t.cantidad; fichas[p.nombre].total += t.cantidad * p.valor_ficha; } } else if (t.tipo === 'PRESTAMO') { prestamosHTML += `<li><strong>${currency(t.monto)}:</strong> ${t.descripcion} <em>(${new Date(t.timestamp).toLocaleTimeString('es-CO')})</em></li>`; } });
@@ -1878,13 +2131,12 @@ const app = {
     showProductManagementModal() {
         const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         let listHTML = this.state.productos.map(p => {
-            const lotesAsociados = this.state.compras.flatMap(compra => compra.items.filter(item => item.id_producto_asociado === p.id));
+            const lotesAsociados = this.state.lotes_bodega.filter(l => l.id_producto_asociado === p.id);
             let lotesHTML = lotesAsociados.length > 0
                 ? `<div style="overflow-x:auto; margin-top:1rem;"><table class="management-table"><thead><tr><th>Compra</th><th>Proveedor</th><th>Stock Restante</th></tr></thead><tbody>
-                    ${lotesAsociados.map(item => {
-                        const compra = this.state.compras.find(c => c.items.some(i => i.id === item.id));
-                        const prov = this.state.proveedores.find(pr => pr.id === compra.id_proveedor);
-                        return `<tr><td>${compra.nombre}</td><td>${prov ? prov.nombre : 'N/A'}</td><td>${item.unidades_disponibles} uds.</td></tr>`;
+                    ${lotesAsociados.map(l => {
+                        const prov = this.state.proveedores.find(pr => pr.id === l.id_proveedor);
+                        return `<tr><td>${l.nombre}</td><td>${prov ? prov.nombre : 'N/A'}</td><td>${l.unidades_disponibles} uds.</td></tr>`;
                     }).join('')}
                 </tbody></table></div>`
                 : '<div class="empty-state" style="padding:1rem; margin-top:1rem;">No hay compras asociadas a este producto.</div>';
@@ -1920,12 +2172,13 @@ const app = {
     showSupplierManagementModal() {
         const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         let listHTML = this.state.proveedores.map(s => {
-            const comprasAsociadas = this.state.compras.filter(l => l.id_proveedor === s.id);
+            const comprasAsociadas = this.state.lotes_bodega.filter(l => l.id_proveedor === s.id);
             let comprasHTML = comprasAsociadas.length > 0
-                ? `<div style="overflow-x:auto; margin-top:1rem;"><table class="management-table"><thead><tr><th>Compra</th><th>Costo</th><th>Estado</th></tr></thead><tbody>
+                ? `<div style="overflow-x:auto; margin-top:1rem;"><table class="management-table"><thead><tr><th>Compra</th><th>Producto</th><th>Costo</th><th>Estado</th></tr></thead><tbody>
                     ${comprasAsociadas.map(l => {
+                        const producto = this.state.productos.find(p => p.id === l.id_producto_asociado);
                         const estadoClass = { 'Pagado': 'status-pago-pagado', 'Parcial': 'status-pago-parcial', 'Pendiente': 'status-pago-pendiente' }[l.estado_pago] || '';
-                        return `<tr><td>${l.nombre}</td><td>${c(l.costo_total)}</td><td><span class="status-badge ${estadoClass}">${l.estado_pago}</span></td></tr>`;
+                        return `<tr><td>${l.nombre}</td><td>${producto ? producto.nombre : 'N/A'}</td><td>${c(l.costo_total)}</td><td><span class="status-badge ${estadoClass}">${l.estado_pago}</span></td></tr>`;
                     }).join('')}
                 </tbody></table></div>`
                 : '<div class="empty-state" style="padding:1rem; margin-top:1rem;">No hay compras asociadas a este proveedor.</div>';
@@ -1989,191 +2242,101 @@ const app = {
             this.showToast('Proveedor eliminado', 'error');
         });
     },
-    showPurchaseDetailModal(purchaseId) {
-        const purchase = this.state.compras.find(p => p.id === purchaseId);
-        if (!purchase) return;
-        const proveedor = this.state.proveedores.find(p => p.id === purchase.id_proveedor);
+    showLoteDetailModal(loteId) {
+        const lote = this.state.lotes_bodega.find(l => l.id === loteId);
+        if (!lote) return;
+        const proveedor = this.state.proveedores.find(p => p.id === lote.id_proveedor);
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
 
-        let itemsHTML = purchase.items.map(item => {
-             const producto = this.state.productos.find(p => p.id === item.id_producto_asociado);
-             return `<tr>
-                <td data-label="Producto">${producto ? producto.nombre : 'Eliminado'}</td>
-                <td data-label="Cant. Empaques">${item.cantidad_empaques} ${item.tipo_empaque}(s)</td>
-                <td data-label="Stock Bodega">${item.unidades_disponibles} / ${item.cantidad_empaques * item.unidades_por_empaque} uds.</td>
-                <td data-label="Costo Item">${currency(item.costo_total_item)}</td>
-                <td data-label="Acciones"><div class="actions">${item.unidades_disponibles > 0 ? `<button class="btn btn-primary" onclick="app.showTrasladoModal('${purchase.id}', '${item.id}')">Trasladar</button>` : `<span class="status-badge status-liquidado">Agotado</span>`}</div></td>
-             </tr>`;
-        }).join('');
+        let pagosHTML = lote.historial_pagos.length > 0
+            ? lote.historial_pagos.map(p => `<li>${new Date(p.fecha).toLocaleString('es-CO')}: <strong>${currency(p.monto)}</strong> - <em>${p.descripcion}</em></li>`).join('')
+            : '<li>No hay pagos registrados.</li>';
 
-        const abonoButton = purchase.monto_adeudado > 0
-            ? `<button class="btn btn-success" onclick="app.showRegisterPaymentModal('${purchase.id}')">Registrar Abono</button>` : '';
+        const abonoButton = lote.monto_adeudado > 0
+            ? `<button class="btn btn-success" onclick="app.showRegisterPaymentModal('${lote.id}')">Registrar Abono</button>` : '';
 
         const content = `
-            <h2>Detalles de la Compra: ${purchase.nombre}</h2>
+            <h2>Detalles de la Compra</h2>
             <div class="liquidacion-summary">
+                <p><strong>Descripción:</strong> <span>${lote.nombre}</span></p>
                 <p><strong>Proveedor:</strong> <span>${proveedor ? proveedor.nombre : 'N/A'}</span></p>
-                <p><strong>Fecha:</strong> <span>${new Date(purchase.timestamp).toLocaleDateString('es-CO')}</span></p>
-                <p>Costo Total: <span>${currency(purchase.costo_total)}</span></p>
-                <p>Monto Pagado: <span>${currency(purchase.monto_pagado)}</span></p>
-                <p><strong>Deuda Pendiente:</strong> <strong style="color:var(--danger-color)"><span>${currency(purchase.monto_adeudado)}</span></strong></p>
+                <p><strong>Producto:</strong> <span>${producto ? producto.nombre : 'Eliminado'}</span></p>
+                <p><strong>Fecha:</strong> <span>${new Date(lote.timestamp).toLocaleDateString('es-CO')}</span></p>
             </div>
-            <h4>Items Incluidos en esta Compra</h4>
-            <table class="management-table">
-                <thead><tr><th>Producto</th><th>Cant. Empaques</th><th>Stock en Bodega</th><th>Costo del Item</th><th></th></tr></thead>
-                <tbody>${itemsHTML}</tbody>
-            </table>
+            <h4>Resumen Financiero</h4>
+            <div class="liquidacion-summary">
+                <p>Costo Total: <span>${currency(lote.costo_total)}</span></p>
+                <p>Monto Pagado: <span>${currency(lote.monto_pagado)}</span></p>
+                <p><strong>Deuda Pendiente:</strong> <strong style="color:var(--danger-color)"><span>${currency(lote.monto_adeudado)}</span></strong></p>
+            </div>
+            <h4>Historial de Pagos</h4>
+            <ul style="padding-left: 1.5rem; font-size: 0.9rem;">${pagosHTML}</ul>
             <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
-                <button class="btn btn-secondary" onclick="app.renderInventario(); app.closeModal()">Cerrar</button>
-                <button class="btn btn-danger" onclick="app.deletePurchaseRecord('${purchase.id}')">Eliminar Compra</button>
+                <button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button>
+                <button class="btn btn-danger" onclick="app.deletePurchaseRecord('${lote.id}')">Eliminar Compra</button>
                 ${abonoButton}
-                <button class="btn btn-outline" onclick="app.generatePurchaseReceipt('${purchase.id}')"><svg class="icon"><use href="#icon-receipt"></use></svg>Generar Recibo</button>
+                <button class="btn btn-outline" onclick="app.generatePurchaseReceipt('${lote.id}')"><svg class="icon"><use href="#icon-receipt"></use></svg>Generar Recibo</button>
             </div>`;
         this.showModal(content, 'large');
     },
-    showRegisterPaymentModal(purchaseId) {
-        const purchase = this.state.compras.find(p => p.id === purchaseId);
-        if (!purchase || purchase.monto_adeudado <= 0) return;
-        this._tempData.purchaseId = purchaseId;
+    showRegisterPaymentModal(loteId) {
+        const lote = this.state.lotes_bodega.find(l => l.id === loteId);
+        if (!lote || lote.monto_adeudado <= 0) return;
+        this._tempData.loteId = loteId;
         const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
 
         this.showModal(`<h2>Registrar Abono a Deuda</h2>
-            <p>Compra: <strong>${purchase.nombre}</strong></p>
-            <p>Deuda actual: <strong style="color:var(--danger-color)">${currency(purchase.monto_adeudado)}</strong></p>
+            <p>Compra: <strong>${lote.nombre}</strong></p>
+            <p>Deuda actual: <strong style="color:var(--danger-color)">${currency(lote.monto_adeudado)}</strong></p>
             <form id="payment-form">
                 <div class="form-group">
                     <label for="payment-amount">Monto a Abonar</label>
-                    <input type="number" id="payment-amount" min="1" max="${purchase.monto_adeudado}" required>
+                    <input type="number" id="payment-amount" min="1" max="${lote.monto_adeudado}" required>
                 </div>
                 <div class="actions" style="justify-content:flex-end; gap:0.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="app.showPurchaseDetailModal('${purchase.id}')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="app.showLoteDetailModal('${lote.id}')">Cancelar</button>
                     <button type="submit" class="btn btn-success">Confirmar Pago</button>
                 </div>
             </form>`);
         document.getElementById('payment-form').onsubmit = (e) => { e.preventDefault(); this.confirmPayment(); };
     },
     confirmPayment() {
-        const purchase = this.state.compras.find(p => p.id === this._tempData.purchaseId);
+        const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
         const monto = parseFloat(document.getElementById('payment-amount').value);
 
-        if (!purchase || isNaN(monto) || monto <= 0 || monto > purchase.monto_adeudado) {
+        if (!lote || isNaN(monto) || monto <= 0 || monto > lote.monto_adeudado) {
             this.showToast('Monto inválido.', 'error');
             return;
         }
 
-        purchase.monto_pagado += monto;
-        purchase.monto_adeudado -= monto;
-        purchase.estado_pago = purchase.monto_adeudado === 0 ? 'Pagado' : 'Parcial';
-        
-        this.addTransaccionCaja('egreso', monto, `Abono a compra '${purchase.nombre}'`);
+        lote.monto_pagado += monto;
+        lote.monto_adeudado -= monto;
+        lote.estado_pago = lote.monto_adeudado === 0 ? 'Pagado' : 'Parcial';
+        lote.historial_pagos.push({
+            id: this.uid(),
+            monto: monto,
+            fecha: new Date().toISOString(),
+            descripcion: 'Abono a la deuda'
+        });
+
+        this.addTransaccionCaja('egreso', monto, `Abono a compra '${lote.nombre}'`);
         this.saveState();
         this.showToast('Abono registrado con éxito.');
         this.renderInventario();
-        this.showPurchaseDetailModal(purchase.id);
+        this.showLoteDetailModal(lote.id);
     },
-    
-    // =================================================================
-    // <<< INICIO: NUEVA LÓGICA DE RECIBO Y COMPRA MULTI-PRODUCTO >>>
-    // =================================================================
-
-    renderConfiguracionTab() {
+    generatePurchaseReceipt(loteId, isArchived = false) {
+        const lote = isArchived
+            ? this.state.lotes_bodega_archivados.find(l => l.id === loteId)
+            : this.state.lotes_bodega.find(l => l.id === loteId);
+            
         const business = this.state.business;
         const user = this.state.user;
-        document.getElementById('business-name').value = business.name || '';
-        document.getElementById('business-address').value = business.address || '';
-        
-        // Mostrar información de la licencia
-        const container = document.getElementById('business-card-container');
-        let licenseHTML = '';
-        if(user.license && user.license.expiresAt) {
-            const expirationDate = new Date(user.license.expiresAt);
-            const isExpired = expirationDate < new Date();
-            licenseHTML = `<div class="form-summary" style="margin-top: 1.5rem;">
-                <p style="display:flex; justify-content:space-between; margin:0.2rem 0;">
-                    <span>Estado de la Licencia</span>
-                    <strong style="color: ${isExpired ? 'var(--danger-color)' : 'var(--success-color)'};">${isExpired ? 'Vencida' : 'Activa'}</strong>
-                </p>
-                <p style="display:flex; justify-content:space-between; margin:0.2rem 0;">
-                    <span>Duración</span>
-                    <strong>${user.license.duration} mes(es)</strong>
-                </p>
-                <p style="display:flex; justify-content:space-between; margin:0.2rem 0;">
-                    <span>Vence el</span>
-                    <strong>${expirationDate.toLocaleDateString('es-CO')}</strong>
-                </p>
-            </div>`;
-        }
-        // Limpiar antes de añadir para evitar duplicados
-        const existingSummary = container.querySelector('.form-summary');
-        if (existingSummary) existingSummary.remove();
-        container.insertAdjacentHTML('beforeend', licenseHTML);
+        const proveedor = this.state.proveedores.find(p => p.id === lote.id_proveedor);
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
 
-
-        document.getElementById('business-details-form').onsubmit = (e) => {
-            e.preventDefault();
-            this.state.business.name = document.getElementById('business-name').value.trim();
-            this.state.business.address = document.getElementById('business-address').value.trim();
-            this.saveState();
-            this.renderUI();
-            this.showToast('Datos del negocio actualizados.');
-        };
-    },
-
-    savePurchase() {
-        const id_proveedor = document.getElementById('purchase-provider').value;
-        const nombre = document.getElementById('purchase-name').value.trim();
-        const monto_pagado = parseFloat(document.getElementById('purchase-monto-pagado').value) || 0;
-        
-        if(!id_proveedor || !nombre || this._tempData.purchaseItems.length === 0) {
-            this.showToast('Debe seleccionar un proveedor, dar un nombre a la compra y añadir al menos un producto.', 'error');
-            return;
-        }
-
-        const costo_total = this._tempData.purchaseItems.reduce((sum, item) => sum + item.costo_total_item, 0);
-
-        if (monto_pagado > costo_total) {
-            this.showToast('El monto pagado no puede ser mayor al costo total.', 'error');
-            return;
-        }
-
-        const monto_adeudado = costo_total - monto_pagado;
-        const estado_pago = monto_adeudado === 0 ? 'Pagado' : (monto_pagado > 0 ? 'Parcial' : 'Pendiente');
-
-        const nuevaCompra = {
-            id: this.uid(),
-            nombre,
-            id_proveedor,
-            items: this._tempData.purchaseItems,
-            costo_total,
-            monto_pagado,
-            monto_adeudado,
-            estado_pago,
-            archived: false,
-            timestamp: new Date().toISOString()
-        };
-
-        if (monto_pagado > 0) {
-            this.addTransaccionCaja('egreso', monto_pagado, `Pago inicial compra '${nombre}'`);
-        }
-
-        this.state.compras.push(nuevaCompra);
-        this.saveState();
-        this.renderInventario();
-        this.closeModal();
-        this.showToast('Nueva compra registrada con éxito.');
-    },
-
-    // =================================================================
-    // <<< FIN: NUEVA LÓGICA DE RECIBO Y COMPRA MULTI-PRODUCTO >>>
-    // =================================================================
-
-    generatePurchaseReceipt(purchaseId) {
-        const purchase = this.state.compras.find(p => p.id === purchaseId);
-        const business = this.state.business;
-        const user = this.state.user;
-        const proveedor = this.state.proveedores.find(p => p.id === purchase.id_proveedor);
-
-        if (!purchase || !business || !proveedor) {
+        if (!lote || !business || !proveedor || !producto) {
             this.showToast('Faltan datos para generar el recibo.', 'error');
             return;
         }
@@ -2186,32 +2349,26 @@ const app = {
         const pageWidth = doc.internal.pageSize.getWidth();
         const centerX = pageWidth / 2;
         const margin = 10;
-        const lineHeight = 11;
+        const lineHeight = 12;
         let y = 20;
         const separator = '-'.repeat(38);
-        const separatorEq = '='.repeat(38);
 
         doc.setFont('Courier', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.text(`*** ${business.name} ***`, centerX, y, { align: 'center' });
         y += lineHeight;
 
         doc.setFont('Courier', 'normal');
         doc.setFontSize(8);
-        if (business.address) {
-             doc.text(business.address, centerX, y, { align: 'center' });
-             y += lineHeight;
-        }
-        if (user.phone) {
+        if(user.phone) {
             doc.text(`Tel: ${user.phone}`, centerX, y, { align: 'center' });
             y += lineHeight;
         }
         y += 5;
 
-        const purchaseDate = new Date(purchase.timestamp);
-        doc.text(`Fecha: ${purchaseDate.toLocaleDateString('es-CO')} ${purchaseDate.toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}`, margin, y);
+        doc.text(`Fecha: ${new Date(lote.timestamp).toLocaleString('es-CO')}`, margin, y);
         y += lineHeight;
-        doc.text(`Recibo de Compra: ${purchase.id.substring(0, 8).toUpperCase()}`, margin, y);
+        doc.text(`Recibo de Compra: ${lote.id.substring(0, 8).toUpperCase()}`, margin, y);
         y += lineHeight;
         doc.text(separator, centerX, y, { align: 'center' });
         y += lineHeight;
@@ -2222,10 +2379,6 @@ const app = {
         doc.setFont('Courier', 'normal');
         doc.text(proveedor.nombre, margin, y);
         y += lineHeight;
-        if(proveedor.direccion) {
-            doc.text(proveedor.direccion, margin, y);
-            y += lineHeight;
-        }
         if(proveedor.contacto) {
             doc.text(`Contacto: ${proveedor.contacto}`, margin, y);
             y += lineHeight;
@@ -2240,39 +2393,27 @@ const app = {
         doc.text(separator, centerX, y, { align: 'center' });
         y += lineHeight;
 
-        purchase.items.forEach(item => {
-            const producto = this.state.productos.find(p => p.id === item.id_producto_asociado);
-            if (!producto) return;
-            const totalUnidadesItem = item.cantidad_empaques * item.unidades_por_empaque;
-            const precioPorUnidad = totalUnidadesItem > 0 ? item.costo_total_item / totalUnidadesItem : 0;
-            const precioPorEmpaque = item.unidades_por_empaque * precioPorUnidad;
-            
-            doc.setFont('Courier', 'bold');
-            doc.text(`- ${producto.nombre}`, margin, y);
-            doc.text(currency(item.costo_total_item), pageWidth - margin, y, {align: 'right'});
-            y += lineHeight;
-
-            doc.setFont('Courier', 'normal');
-            doc.text(`  ${item.cantidad_empaques} ${item.tipo_empaque}(s) (x${item.unidades_por_empaque} uds)`, margin, y);
-            y += lineHeight;
-            doc.text(`  P/U Prod: ${currency(precioPorUnidad)}`, margin, y);
-            y += lineHeight;
-            doc.text(`  P/U Empaque: ${currency(precioPorEmpaque)}`, margin, y);
-            y += (lineHeight + 5);
-        });
-
+        const totalUnidades = lote.cantidad_empaques * lote.unidades_por_empaque;
+        doc.text(lote.nombre, margin, y);
+        y += lineHeight;
+        doc.text(`(${producto.nombre})`, margin, y);
+        doc.text(currency(lote.costo_total), pageWidth - margin, y, {align: 'right'});
+        y += lineHeight;
+        doc.text(`${totalUnidades} uds.`, margin, y);
+        y += 15;
 
         // Totals
+        const separatorEq = '='.repeat(38);
         doc.text(separatorEq, centerX, y, { align: 'center' });
         y += lineHeight;
 
         doc.setFont('Courier', 'normal');
         doc.text('Costo Total:', margin, y);
-        doc.text(currency(purchase.costo_total), pageWidth - margin, y, { align: 'right' });
+        doc.text(currency(lote.costo_total), pageWidth - margin, y, { align: 'right' });
         y += lineHeight;
 
         doc.text('Monto Pagado:', margin, y);
-        doc.text(currency(purchase.monto_pagado), pageWidth - margin, y, { align: 'right' });
+        doc.text(currency(lote.monto_pagado), pageWidth - margin, y, { align: 'right' });
         y += lineHeight;
 
         doc.text(separator, centerX, y, { align: 'center' });
@@ -2280,7 +2421,7 @@ const app = {
         
         doc.setFont('Courier', 'bold');
         doc.text('SALDO PENDIENTE:', margin, y);
-        doc.text(currency(purchase.monto_adeudado), pageWidth - margin, y, { align: 'right' });
+        doc.text(currency(lote.monto_adeudado), pageWidth - margin, y, { align: 'right' });
         y += lineHeight;
 
         doc.text(separatorEq, centerX, y, { align: 'center' });
@@ -2290,8 +2431,132 @@ const app = {
         doc.text('Gracias por su negocio.', centerX, y, { align: 'center' });
         y += lineHeight;
 
-        doc.save(`Recibo_Compra_${purchase.nombre.replace(/\s/g, '_')}.pdf`);
+        doc.save(`Recibo_Compra_${lote.nombre.replace(/\s/g, '_')}.pdf`);
+    },
+  
+generateConsolidatedReceipt(compraId) {
+    const lotesDeLaCompra = this.state.lotes_bodega.filter(l => l.compraId === compraId);
+    if (lotesDeLaCompra.length === 0) {
+        this.showToast('No se encontraron los productos para esta compra.', 'error');
+        return;
     }
+
+    const primerLote = lotesDeLaCompra[0];
+    const business = this.state.business;
+    const user = this.state.user;
+    const proveedor = this.state.proveedores.find(p => p.id === primerLote.id_proveedor);
+
+    if (!business || !proveedor) {
+        this.showToast('Faltan datos de negocio o proveedor.', 'error');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: [227, 842] });
+    const currency = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
+    
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const centerX = pageWidth / 2;
+    const margin = 10;
+    const lineHeight = 12;
+    let y = 20;
+    const separator = '-'.repeat(38);
+
+    // Encabezado
+    doc.setFont('Courier', 'bold');
+    doc.setFontSize(11);
+    doc.text(`*** ${business.name} ***`, centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFont('Courier', 'normal');
+    doc.setFontSize(8);
+    if (user.phone) {
+        doc.text(`Tel: ${user.phone}`, centerX, y, { align: 'center' });
+        y += lineHeight;
+    }
+    y += 5;
+    doc.text(`Fecha: ${new Date(primerLote.timestamp).toLocaleString('es-CO')}`, margin, y);
+    y += lineHeight;
+    doc.text(`Recibo Compra: ${primerLote.nombre}`, margin, y);
+    y += lineHeight;
+    doc.text(separator, centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFont('Courier', 'bold');
+    doc.text('PROVEEDOR:', margin, y);
+    y += lineHeight;
+    doc.setFont('Courier', 'normal');
+    doc.text(proveedor.nombre, margin, y);
+    y += lineHeight;
+    doc.text(separator, centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // Items de la compra
+    doc.text('DESCRIPCION', margin, y);
+    doc.text('TOTAL', pageWidth - margin, y, { align: 'right' });
+    y += lineHeight;
+    doc.text(separator, centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    let totalCost = 0;
+    let totalPaid = 0;
+
+    lotesDeLaCompra.forEach(lote => {
+        const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
+        if (producto) {
+            doc.text(producto.nombre, margin, y);
+            doc.text(currency(lote.costo_total), pageWidth - margin, y, { align: 'right' });
+            y += lineHeight;
+            doc.text(` ${lote.cantidad_empaques} ${lote.tipo_empaque}(s) de ${lote.unidades_por_empaque} uds.`, margin, y, { textColor: '#666' });
+            y += lineHeight;
+        }
+        totalCost += lote.costo_total;
+        totalPaid += lote.monto_pagado;
+    });
+    y += 5;
+
+    // Resumen Financiero
+    const separatorEq = '='.repeat(38);
+    doc.text(separatorEq, centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFont('Courier', 'normal');
+    doc.text('Costo Total:', margin, y);
+    doc.text(currency(totalCost), pageWidth - margin, y, { align: 'right' });
+    y += lineHeight;
+    doc.text('Monto Pagado:', margin, y);
+    doc.text(currency(totalPaid), pageWidth - margin, y, { align: 'right' });
+    y += lineHeight;
+    doc.text(separator, centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFont('Courier', 'bold');
+    doc.text('SALDO PENDIENTE:', margin, y);
+    doc.text(currency(totalCost - totalPaid), pageWidth - margin, y, { align: 'right' });
+    y += lineHeight;
+    doc.text(separatorEq, centerX, y, { align: 'center' });
+    y += (lineHeight * 2);
+    doc.setFont('Courier', 'normal');
+    doc.text('Gracias por su negocio.', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // En lugar de descargar, generamos los datos del PDF
+    const pdfDataUri = doc.output('datauristring');
+
+    // Creamos el contenido HTML para la ventana modal
+    const modalContent = `
+        <h2>Vista Previa del Recibo</h2>
+        <iframe src="${pdfDataUri}" style="width: 100%; height: 60vh; border: 1px solid var(--border-color); border-radius: 6px;"></iframe>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button>
+            <a href="${pdfDataUri}" download="Recibo_Compra_${primerLote.nombre.replace(/\s/g, '_')}.pdf" class="btn btn-primary">
+                <svg class="icon"><use href="#icon-download"></use></svg>
+                <span>Descargar</span>
+            </a>
+        </div>
+    `;
+    
+    // Mostramos la ventana modal con el recibo dentro
+    this.showModal(modalContent, 'large');
+    // --- FIN DE LA MODIFICACIÓN ---
+},
 
 };
 
