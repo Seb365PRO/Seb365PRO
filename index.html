@@ -8,11 +8,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-    <style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
         /* --- INICIO: Sistema de Temas y Modo Oscuro --- */
         :root {
             --primary-color: #3B82F6;
@@ -613,7 +617,56 @@
             .management-table td::before { content: attr(data-label); position: absolute; left: 0.75rem; width: calc(50% - 1.5rem); text-align: left; font-weight: bold; color: var(--text-muted); }
             .stats-grid { grid-template-columns: 1fr; }
         }
-    </style>
+   /* --- ESTILOS PARA EL NUEVO MENÚ DE USUARIO --- */
+#app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.header-right {
+    position: relative;
+}
+.user-menu-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    width: 220px;
+    z-index: 1000;
+    overflow: hidden;
+    animation: slide-up 0.2s ease-out;
+}
+.user-menu-dropdown.active {
+    display: block;
+}
+.user-menu-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.user-menu-header strong {
+    display: block;
+    font-size: 0.9rem;
+}
+.user-menu-header small {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.user-menu-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+.user-menu-item:hover {
+    background-color: var(--bg-color);
+}
+  </style>
 </head>
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -641,7 +694,9 @@
         <symbol id="icon-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></symbol>
         <symbol id="icon-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8.5A2.5 2.5 0 0 1 5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5A2.5 2.5 0 0 1 2.5 14V10A2.5 2.5 0 0 1 2.5 8.5z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path></symbol>
         <symbol id="icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></symbol>
-    </svg>
+ <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></symbol>
+        <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></symbol>
+    </svg>
     
     <div id="preloader">
         <div class="preloader-logo-container">
@@ -666,8 +721,6 @@
     <div id="register-modal" class="modal"><div class="modal-content" style="max-width: 600px;"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Configura tu Cuenta y Negocio</h2><p style="text-align: center; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 2rem;">Un solo paso para empezar a organizar todo.</p><form id="register-form"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem 1.5rem;"><div class="form-group"><label for="reg-fullname">Nombre Completo</label><input type="text" id="reg-fullname" required></div><div class="form-group"><label for="reg-phone">Teléfono</label><input type="tel" id="reg-phone"></div><div class="form-group"><label for="reg-email">Correo Electrónico</label><input type="email" id="reg-email" required></div><div class="form-group"><label for="reg-password">Crear Contraseña</label><input type="password" id="reg-password" required></div><div class="form-group"><label for="reg-barname">Nombre del Establecimiento</label><input type="text" id="reg-barname" required></div><div class="form-group"><label for="reg-role">Tu Rol Principal</label><select id="reg-role" required><option value="" disabled selected>Selecciona un rol...</option><option value="propietario">Propietario</option><option value="administrador">Administrador</option></select></div><div class="form-group" style="grid-column: 1 / -1;"><label for="reg-logo">Logo del Establecimiento</label><label class="logo-uploader" for="reg-logo"><span class="uploader-text">Click para subir una imagen</span><img id="logo-preview" class="logo-preview" src="#" alt="Vista previa del logo"><input type="file" id="reg-logo" accept="image/png, image/jpeg, image/webp"></label></div></div><div class="form-error-msg" id="register-error" style="margin-top: 1.5rem;"></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-outline" onclick="app.showAuthHome()">Cancelar</button><button type="submit" class="btn btn-primary">Siguiente Paso &rarr;</button></div></form></div></div>
 
     <div id="category-modal" class="modal"><div class="modal-content"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>¿Qué tipo de negocio tienes?</h2><p style="text-align: center; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 1rem;">Esto nos ayudará a personalizar tu experiencia.</p><div class="category-grid"><div class="category-card" onclick="app.selectCategory('Discoteca / Bar')">Discoteca / Bar</div><div class="category-card" onclick="app.selectCategory('Restaurante / Cafetería')">Restaurante / Cafetería</div><div class="category-card" onclick="app.selectCategory('Tienda / Minimarket')">Tienda / Minimarket</div><div class="category-card" onclick="app.selectCategory('Supermercado')">Supermercado</div><div class="category-card" onclick="app.selectCategory('Bodega / Almacén')">Bodega / Almacén</div><div class="category-card" onclick="app.selectCategory('Otro')">Otro</div></div></div></div>
-
-    <div id="license-modal" class="modal"><div class="modal-content" style="max-width: 420px;"><svg class="static-logo" style="margin: 0 auto 1rem auto; display:block;"><use href="#icon-logo"></use></svg><h2>Último paso: Activar Licencia</h2><p style="text-align: center; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 2rem;">Ingresa tu código de licencia para desbloquear todas las funciones.</p><form id="license-form"><div class="form-group"><label for="license-code">Código de Licencia</label><input type="text" id="license-code" required></div><div class="form-error-msg" id="license-error"></div><button type="submit" class="btn btn-success" style="width: 100%; margin-top: 1rem;">Activar y Empezar</button></form></div></div>
 
     <div id="app-shell">
         <aside id="sidebar">
@@ -697,106 +750,108 @@
                 </button>
             </div>
         </aside>
-        <main>
-            <header id="app-header">
-                <div class="header-left">
-                    <div id="header-logo-container"></div>
-                    <h2 id="header-bar-name"></h2>
-                    <svg class="chevron-icon"><use href="#icon-chevron-down"></use></svg>
-                </div>
-            </header>
-            <div id="dashboard-menu">
-                <div class="dashboard-menu-grid">
-                    <button class="dashboard-menu-item" data-tab="turnos">
-                        <svg class="icon"><use href="#icon-turnos"></use></svg>
-                        <div><span>Turnos</span><small>Gestiona los vendedores</small></div>
-                    </button>
-                     <button class="dashboard-menu-item" data-tab="caja">
-                        <svg class="icon"><use href="#icon-caja"></use></svg>
-                        <div><span>Flujo de Caja</span><small>Controla ingresos y egresos</small></div>
-                    </button>
-                     <button class="dashboard-menu-item" data-tab="inventario">
-                        <svg class="icon"><use href="#icon-inventario"></use></svg>
-                        <div><span>Inventario</span><small>Bodega y productos</small></div>
-                    </button>
-                     <button class="dashboard-menu-item" data-tab="historial">
-                        <svg class="icon"><use href="#icon-historial"></use></svg>
-                        <div><span>Historial</span><small>Consulta registros pasados</small></div>
-                    </button>
-                     <button class="dashboard-menu-item" data-tab="reportes">
-                        <svg class="icon"><use href="#icon-reportes"></use></svg>
-                        <div><span>Reportes</span><small>Analiza tu rendimiento</small></div>
-                    </button>
-                     <button class="dashboard-menu-item" data-tab="configuracion">
-                        <svg class="icon"><use href="#icon-configuracion"></use></svg>
-                        <div><span>Configuración</span><small>Ajustes del sistema</small></div>
-                    </button>
-                </div>
-            </div>
-            <div id="turnos" class="tab-content"><div id="turnos-view-container"></div></div>
-            <div id="caja" class="tab-content"></div>
-            <div id="inventario" class="tab-content">
-    <div class="card">
-        <div class="card-header">
-            <h2>Bodega (Compras a Proveedores)</h2>
-            <button class="btn btn-primary" onclick="app.showPurchaseModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>Añadir Compra</span></button>
+<main>
+    <header id="app-header">
+        <div class="header-left">
+            <div id="header-logo-container"></div>
+            <h2 id="header-bar-name"></h2>
+            <svg class="chevron-icon"><use href="#icon-chevron-down"></use></svg>
         </div>
-        <div id="bodega-table-container"></div>
+        <div class="header-right">
+            <button id="user-menu-trigger" class="btn btn-icon">
+                <svg class="icon"><use href="#icon-user"></use></svg>
+            </button>
+            <div id="user-menu" class="user-menu-dropdown">
+                <div class="user-menu-header">
+                    <strong id="user-menu-name"></strong>
+                    <small id="user-menu-email"></small>
+                </div>
+                <a href="#" id="profile-link" class="user-menu-item">Mi Perfil</a>
+                <a href="#" onclick="app.logout()" class="user-menu-item">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <div id="dashboard-menu">
+        <div class="dashboard-menu-grid">
+            <button class="dashboard-menu-item" data-tab="turnos"><svg class="icon"><use href="#icon-turnos"></use></svg><div><span>Turnos</span><small>Gestiona los vendedores</small></div></button>
+            <button class="dashboard-menu-item" data-tab="caja"><svg class="icon"><use href="#icon-caja"></use></svg><div><span>Flujo de Caja</span><small>Controla ingresos y egresos</small></div></button>
+            <button class="dashboard-menu-item" data-tab="inventario"><svg class="icon"><use href="#icon-inventario"></use></svg><div><span>Inventario</span><small>Bodega y productos</small></div></button>
+            <button class="dashboard-menu-item" data-tab="historial"><svg class="icon"><use href="#icon-historial"></use></svg><div><span>Historial</span><small>Consulta registros pasados</small></div></button>
+            <button class="dashboard-menu-item" data-tab="reportes"><svg class="icon"><use href="#icon-reportes"></use></svg><div><span>Reportes</span><small>Analiza tu rendimiento</small></div></button>
+            <button class="dashboard-menu-item" data-tab="configuracion"><svg class="icon"><use href="#icon-configuracion"></use></svg><div><span>Configuración</span><small>Ajustes del sistema</small></div></button>
+        </div>
     </div>
-                <div class="card"><div class="card-header"><h2>Barra (Productos para la Venta)</h2></div><div id="barra-table-container"></div></div>
+
+    <div id="turnos" class="tab-content"><div id="turnos-view-container"></div></div>
+    <div id="caja" class="tab-content"></div>
+    <div id="inventario" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2>Bodega (Compras a Proveedores)</h2>
+                <button class="btn btn-primary" onclick="app.showPurchaseModal()"><svg class="icon"><use href="#icon-plus"></use></svg><span>Añadir Compra</span></button>
             </div>
-            <div id="historial" class="tab-content">
-                <div class="card">
-                    <div class="card-header"><h2>Historial de Turnos Finalizados</h2></div>
-                    <div id="historial-turnos-container"></div>
-                </div>
-                <div class="card">
-                    <div class="card-header"><h2>Historial de Cierres de Caja</h2></div>
-                    <div id="historial-caja-container"></div>
-                </div>
+            <div id="bodega-table-container"></div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2>Barra (Productos para la Venta)</h2></div>
+            <div id="barra-table-container"></div>
+        </div>
+    </div>
+    <div id="historial" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>Historial de Turnos Finalizados</h2></div>
+            <div id="historial-turnos-container"></div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2>Historial de Cierres de Caja</h2></div>
+            <div id="historial-caja-container"></div>
+        </div>
+    </div>
+    <div id="reportes" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>Reportes Financieros y de Ventas</h2></div>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items: flex-end;">
+                <div class="form-group" style="flex-grow: 1;"><label for="report-start-date">Fecha y Hora de Inicio</label><input type="datetime-local" id="report-start-date"></div>
+                <div class="form-group" style="flex-grow: 1;"><label for="report-end-date">Fecha y Hora de Fin</label><input type="datetime-local" id="report-end-date"></div>
+                <div class="form-group" style="margin-bottom: 1.25rem;"><button class="btn btn-primary" onclick="app.generateReport()">Generar Reporte</button></div>
             </div>
-            <div id="reportes" class="tab-content">
-                <div class="card">
-                    <div class="card-header"><h2>Reportes Financieros y de Ventas</h2></div>
-                    <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items: flex-end;">
-                        <div class="form-group" style="flex-grow: 1;"><label for="report-start-date">Fecha y Hora de Inicio</label><input type="datetime-local" id="report-start-date"></div>
-                        <div class="form-group" style="flex-grow: 1;"><label for="report-end-date">Fecha y Hora de Fin</label><input type="datetime-local" id="report-end-date"></div>
-                        <div class="form-group" style="margin-bottom: 1.25rem;"><button class="btn btn-primary" onclick="app.generateReport()">Generar Reporte</button></div>
-                    </div>
-                    <div id="report-export-buttons" style="display:none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button class="btn btn-danger" onclick="app.generatePdfReport()"><svg class="icon"><use href="#icon-pdf"></use></svg><span>Exportar a PDF</span></button>
-                        <button class="btn btn-success" onclick="app.generateExcelReport()"><svg class="icon"><use href="#icon-excel"></use></svg><span>Exportar a Excel</span></button>
-                    </div>
-                    <div id="report-container" style="margin-top: 2rem;"></div>
-                </div>
+            <div id="report-export-buttons" style="display:none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn btn-danger" onclick="app.generatePdfReport()"><svg class="icon"><use href="#icon-pdf"></use></svg><span>Exportar a PDF</span></button>
+                <button class="btn btn-success" onclick="app.generateExcelReport()"><svg class="icon"><use href="#icon-excel"></use></svg><span>Exportar a Excel</span></button>
             </div>
-            <div id="configuracion" class="tab-content">
-                <div class="card">
-                    <div class="card-header"><h2>Configuración General</h2></div>
-                    <p>Aquí defines las plantillas de productos, gestionas el personal y los proveedores.</p>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1rem; margin-top:1.5rem;">
-                        <button class="btn btn-outline" onclick="app.showWorkerManagementModal()"><svg class="icon"><use href="#icon-users"></use></svg><span>Gestionar Trabajadores</span></button>
-                        <button class="btn btn-outline" onclick="app.showProductManagementModal()"><svg class="icon"><use href="#icon-package"></use></svg><span>Gestionar Plantillas de Productos</span></button>
-                        <button class="btn btn-outline" onclick="app.showSupplierManagementModal()"><svg class="icon"><use href="#icon-truck"></use></svg><span>Gestionar Proveedores</span></button>
-                    </div>
-                </div>
-                <div class="card" id="mobile-options-card">
-                    <div class="card-header"><h2>Opciones de la App</h2></div>
-                    <div class="theme-switch-wrapper" style="padding: 0; margin: 0;">
-                        <span>Modo Oscuro</span>
-                        <label class="theme-switch">
-                            <input type="checkbox" id="theme-toggle-mobile">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
-                    <button class="btn btn-danger" onclick="app.logout()" style="width:100%;">
-                        <svg class="icon"><use href="#icon-logout"></use></svg>
-                        <span>Cerrar Sesión</span>
-                    </button>
-                </div>
+            <div id="report-container" style="margin-top: 2rem;"></div>
+        </div>
+    </div>
+    <div id="configuracion" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>Configuración General</h2></div>
+            <p>Aquí defines las plantillas de productos, gestionas el personal y los proveedores.</p>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1rem; margin-top:1.5rem;">
+                <button class="btn btn-outline" onclick="app.showWorkerManagementModal()"><svg class="icon"><use href="#icon-users"></use></svg><span>Gestionar Trabajadores</span></button>
+                <button class="btn btn-outline" onclick="app.showProductManagementModal()"><svg class="icon"><use href="#icon-package"></use></svg><span>Gestionar Plantillas de Productos</span></button>
+                <button class="btn btn-outline" onclick="app.showSupplierManagementModal()"><svg class="icon"><use href="#icon-truck"></use></svg><span>Gestionar Proveedores</span></button>
             </div>
-        </main>
+        </div>
+        <div class="card" id="mobile-options-card">
+            <div class="card-header"><h2>Opciones de la App</h2></div>
+            <div class="theme-switch-wrapper" style="padding: 0; margin: 0;">
+                <span>Modo Oscuro</span>
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle-mobile">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+            <button class="btn btn-danger" onclick="app.logout()" style="width:100%;">
+                <svg class="icon"><use href="#icon-logout"></use></svg>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </div>
+    <div id="perfil" class="tab-content">
+        </div>
+</main>
     </div>
 
     <div id="worker-view"></div>
@@ -805,8 +860,26 @@
     <div id="toast-container"></div>
 
 <script>
-const app = {
-    getInitialState() {
+    // --- AÑADE ESTE BLOQUE DE INICIALIZACIÓN ---
+    // Pega aquí tu configuración de Firebase del Paso 0
+      const firebaseConfig = {
+    apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
+    authDomain: "seb360-pro.firebaseapp.com",
+    projectId: "seb360-pro",
+    storageBucket: "seb360-pro.firebasestorage.app",
+    messagingSenderId: "750401346580",
+    appId: "1:750401346580:web:a682fd6ae09292ff589b01"
+  };
+
+    // Inicializa Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    // --- FIN DEL BLOQUE DE INICIALIZACIÓN ---
+
+    const app = {
+
+    getInitialState() {
         return {
             user: null,
             business: null,
@@ -834,13 +907,254 @@ const app = {
     state: null,
     _tempData: {},
     currentReportData: null,
+initUserMenu() {
+        const trigger = document.getElementById('user-menu-trigger');
+        const menu = document.getElementById('user-menu');
+        const profileLink = document.getElementById('profile-link');
+
+        document.getElementById('user-menu-name').textContent = this.state.user.fullname;
+        document.getElementById('user-menu-email').textContent = this.state.user.email;
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('active');
+        });
+
+        profileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showProfileTab();
+            menu.classList.remove('active');
+        });
+
+        document.addEventListener('click', () => {
+            menu.classList.remove('active');
+        });
+    },
+
+    showProfileTab() {
+        // Ocultamos todas las pestañas principales
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        // Quitamos la selección de la barra de navegación
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        
+        const profileTab = document.getElementById('perfil');
+        profileTab.classList.add('active');
+        this.renderProfileTab();
+    },
+
+    renderProfileTab() {
+        const container = document.getElementById('perfil');
+        const user = this.state.user;
+        const business = this.state.business;
+
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h2>Mis Datos</h2>
+                    <button class="btn btn-outline" onclick="app.showEditUserModal()"><svg class="icon"><use href="#icon-edit"></use></svg> Editar</button>
+                </div>
+                <p><strong>Nombre:</strong> ${user.fullname}</p>
+                <p><strong>Correo:</strong> ${user.email}</p>
+                <p><strong>Teléfono:</strong> ${user.phone || 'No especificado'}</p>
+            </div>
+            <div class="card">
+                <div class="card-header"><h2>Seguridad</h2></div>
+                <button class="btn btn-secondary" onclick="app.showChangePasswordModal()">Cambiar Contraseña</button>
+            </div>
+             <div class="card">
+                <div class="card-header">
+                    <h2>Datos del Negocio</h2>
+                    <button class="btn btn-outline" onclick="app.showEditBusinessModal()"><svg class="icon"><use href="#icon-edit"></use></svg> Editar</button>
+                </div>
+                <p><strong>Nombre:</strong> ${business.name}</p>
+                <p><strong>Categoría:</strong> ${business.category || 'No especificada'}</p>
+            </div>
+        `;
+    },
+
+    showEditUserModal() {
+        const user = this.state.user;
+        const content = `
+            <h2>Editar Mis Datos</h2>
+            <form id="edit-user-form">
+                <div class="form-group">
+                    <label for="user-fullname">Nombre Completo</label>
+                    <input type="text" id="user-fullname" value="${user.fullname}" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-phone">Teléfono</label>
+                    <input type="tel" id="user-phone" value="${user.phone || ''}">
+                </div>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        `;
+        this.showModal(content);
+        document.getElementById('edit-user-form').onsubmit = (e) => {
+            e.preventDefault();
+            this.saveUser();
+        };
+    },
+
+    saveUser() {
+        this.state.user.fullname = document.getElementById('user-fullname').value.trim();
+        this.state.user.phone = document.getElementById('user-phone').value.trim();
+        this.saveState();
+        this.showToast('Datos actualizados con éxito.');
+        this.closeModal();
+        this.renderProfileTab(); // Para refrescar la vista
+    },
+
+    showChangePasswordModal() {
+        const content = `
+            <h2>Cambiar Contraseña</h2>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label for="current-password">Contraseña Actual</label>
+                    <input type="password" id="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Nueva Contraseña</label>
+                    <input type="password" id="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirm-password" required>
+                </div>
+                <div id="password-error" class="form-error-msg"></div>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+                </div>
+            </form>
+        `;
+        this.showModal(content);
+        document.getElementById('change-password-form').onsubmit = (e) => {
+            e.preventDefault();
+            this.changePassword();
+        };
+    },
+    
+    changePassword() {
+        const currentPass = document.getElementById('current-password').value;
+        const newPass = document.getElementById('new-password').value;
+        const confirmPass = document.getElementById('confirm-password').value;
+        const errorEl = document.getElementById('password-error');
+
+        if (btoa(currentPass) !== this.state.user.password) {
+            errorEl.textContent = 'La contraseña actual es incorrecta.';
+            return;
+        }
+        if (newPass.length < 6) {
+            errorEl.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
+            return;
+        }
+        if (newPass !== confirmPass) {
+            errorEl.textContent = 'Las nuevas contraseñas no coinciden.';
+            return;
+        }
+
+        this.state.user.password = btoa(newPass);
+        this.saveState();
+        this.showToast('Contraseña actualizada con éxito.');
+        this.closeModal();
+    },
+
+    showEditBusinessModal() {
+        const business = this.state.business;
+        const content = `
+            <h2>Editar Datos del Negocio</h2>
+            <form id="edit-business-form">
+                <div class="form-group">
+                    <label for="business-name">Nombre del Negocio</label>
+                    <input type="text" id="business-name" value="${business.name}" required>
+                </div>
+                <div class="form-group">
+                    <label for="business-logo">Logo del Negocio</label>
+                    <label class="logo-uploader" for="business-logo">
+                        <span class="uploader-text">Click para cambiar imagen</span>
+                        <img id="business-logo-preview" class="logo-preview" src="${business.logoDataUrl || '#'}" alt="Vista previa del logo">
+                        <input type="file" id="business-logo" accept="image/png, image/jpeg, image/webp">
+                    </label>
+                </div>
+                <div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        `;
+        this.showModal(content);
+
+        // Lógica para previsualizar el logo
+        if (business.logoDataUrl) {
+            document.querySelector('.logo-uploader').classList.add('has-logo');
+        }
+        document.getElementById('business-logo').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                document.getElementById('business-logo-preview').src = event.target.result;
+                document.querySelector('.logo-uploader').classList.add('has-logo');
+                this._tempData.newLogoDataUrl = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('edit-business-form').onsubmit = (e) => {
+            e.preventDefault();
+            this.saveBusiness();
+        };
+    },
+
+    saveBusiness() {
+        this.state.business.name = document.getElementById('business-name').value.trim();
+        if (this._tempData.newLogoDataUrl) {
+            this.state.business.logoDataUrl = this._tempData.newLogoDataUrl;
+        }
+        this.saveState();
+        this.showToast('Datos del negocio actualizados.');
+        this.closeModal();
+        this.renderProfileTab(); // Refrescar vista de perfil
+        this.renderAppUI(); // Refrescar la UI general para que se vea el nuevo nombre/logo
+    },
 
     init() {
-        this.state = this.getInitialState();
-        this.initTheme();
-        this.attachAuthEventListeners();
-        this.handlePreloader();
-        this.initHeaderDashboard();
+    this.state = this.getInitialState();
+    this.initTheme();
+    this.attachAuthEventListeners();
+    this.initHeaderDashboard();
+
+    // --- INICIO DE LA NUEVA LÓGICA DE FIREBASE ---
+    // auth.onAuthStateChanged es el "oyente" que se ejecuta al cargar la página y cada vez que alguien inicia o cierra sesión.
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            // Si Firebase nos dice que hay un 'user'... significa que alguien está conectado.
+            console.log("Usuario conectado:", user.uid);
+
+            // Llamamos a la función para cargar sus datos desde la base de datos Firestore usando su ID único (uid).
+            await this.loadData(user.uid); 
+
+            // Actualizamos el estado interno de la app.
+            this.state.loggedIn = true;
+            this.state.currentUserType = 'admin'; // Asumimos que es administrador por ahora.
+
+            // Finalmente, hacemos la transición para mostrar la interfaz principal de la aplicación.
+            this.transitionToApp(); 
+        } else {
+            // Si Firebase nos dice que 'user' es nulo... significa que nadie está conectado.
+            console.log("No hay usuario conectado.");
+
+            // Reseteamos el estado de la app a sus valores iniciales.
+            this.state = this.getInitialState(); 
+
+            // Ejecutamos la animación de carga y LUEGO mostramos la pantalla de autenticación.
+            this.handlePreloader();
+        }
+    });
+    // --- FIN DE LA NUEVA LÓGICA ---
         
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
@@ -853,22 +1167,54 @@ const app = {
         document.getElementById('report-end-date').value = toLocalISOString(todayEnd);
     },
 
-    saveState() {
-        if (!this.state.loggedIn || !this.state.user) return;
-        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        const accountIndex = accounts.findIndex(acc => acc.user.email === this.state.user.email);
-        
-        const stateToSave = { ...this.state };
-        delete stateToSave.currentUserType;
-        delete stateToSave.currentWorker;
+    async saveState() {
+    // Verificamos que haya un usuario de Firebase conectado.
+    if (!auth.currentUser) {
+        console.error("Intento de guardar sin un usuario conectado.");
+        return;
+    }
 
-        if (accountIndex > -1) {
-            accounts[accountIndex] = stateToSave;
+    const uid = auth.currentUser.uid; // Obtenemos el ID único del usuario.
+
+    // Preparamos los datos a guardar, quitando datos temporales de la UI.
+    const stateToSave = { ...this.state };
+    delete stateToSave.loggedIn;
+    delete stateToSave.currentUserType;
+    delete stateToSave.currentWorker;
+
+    try {
+        // Guardamos todo el estado en el documento del usuario en Firestore.
+        // Si el documento no existe, .set() lo crea. Si existe, lo sobrescribe.
+        await db.collection('users').doc(uid).set(stateToSave);
+        console.log("Estado guardado en Firestore.");
+    } catch (error) {
+        console.error("Error al guardar el estado:", error);
+    }
+},
+      // Pega este bloque completo después de la función saveState()
+async loadData(uid) {
+    try {
+        // Creamos una referencia al documento del usuario usando su UID.
+        const docRef = db.collection('users').doc(uid);
+        // Le pedimos a Firestore que nos traiga los datos de ese documento.
+        const docSnap = await docRef.get();
+
+        if (docSnap.exists()) {
+            // Si el documento existe en la base de datos...
+            console.log("Datos cargados desde Firestore.");
+            const loadedState = docSnap.data();
+            // ...cargamos sus datos en el estado de nuestra aplicación.
+            this.state = { ...this.getInitialState(), ...loadedState };
         } else {
-            accounts.push(stateToSave);
+            // Esto es un caso raro, pero podría pasar si el registro falla a la mitad.
+            console.warn("No se encontró documento para el usuario, se usará estado inicial.");
+            this.state = this.getInitialState();
         }
-        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
-    },
+    } catch (error) {
+        console.error("Error al cargar los datos:", error);
+        this.showToast('No se pudieron cargar tus datos.', 'error');
+    }
+},
 
     uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
 
@@ -912,16 +1258,15 @@ const app = {
         }, 2800);
     },
 
-    attachAuthEventListeners() { 
-        document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); 
-        document.getElementById('show-worker-login-btn').addEventListener('click', () => this.showWorkerLoginModal());
-        document.getElementById('show-register-btn').addEventListener('click', () => this.showRegisterModal()); 
-        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); this.login(); }); 
-        document.getElementById('worker-login-form').addEventListener('submit', (e) => { e.preventDefault(); this.loginWorker(); });
-        document.getElementById('register-form').addEventListener('submit', (e) => { e.preventDefault(); this.registerUser(); });
-        document.getElementById('reg-logo').addEventListener('change', (e) => this.handleLogoUpload(e));
-        document.getElementById('license-form').addEventListener('submit', (e) => { e.preventDefault(); this.verifyLicense(); });
-    },
+ attachAuthEventListeners() { 
+    document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); 
+    document.getElementById('show-worker-login-btn').addEventListener('click', () => this.showWorkerLoginModal());
+    document.getElementById('show-register-btn').addEventListener('click', () => this.showRegisterModal()); 
+    document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); this.login(); }); 
+    document.getElementById('worker-login-form').addEventListener('submit', (e) => { e.preventDefault(); this.loginWorker(); });
+    document.getElementById('register-form').addEventListener('submit', (e) => { e.preventDefault(); this.registerUser(); });
+    document.getElementById('reg-logo').addEventListener('change', (e) => this.handleLogoUpload(e));
+},
     
     initHeaderDashboard() {
         const header = document.querySelector('#app-header .header-left');
@@ -1000,105 +1345,55 @@ const app = {
         reader.readAsDataURL(file);
     },
 
-    registerUser() {
-        const fullname = document.getElementById('reg-fullname').value.trim();
-        const email = document.getElementById('reg-email').value.trim();
-        const password = document.getElementById('reg-password').value;
-        const barname = document.getElementById('reg-barname').value.trim();
-        const role = document.getElementById('reg-role').value;
-        const errorEl = document.getElementById('register-error');
-        
-        if (!fullname || !email || !password || !barname || !role) {
-            errorEl.textContent = 'Por favor, completa todos los campos obligatorios.';
-            return;
-        }
-        
-        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        if (accounts.some(acc => acc.user.email === email)) {
-            errorEl.textContent = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
-            return;
-        }
-
-        this._tempData.newAccount = this.getInitialState();
-        this._tempData.newAccount.user = {
-            id: this.uid(),
-            fullname,
-            phone: document.getElementById('reg-phone').value.trim(),
-            email,
-            password: btoa(password),
-            role,
-        };
-        this._tempData.newAccount.business = {
-            id: this.uid(),
-            name: barname,
-            logoDataUrl: this._tempData.logoDataUrl || null,
-            category: null
-        };
-
-        document.getElementById('register-modal').style.display = 'none';
-        this.showCategoryModal();
-    },
+    async selectCategory(category) {
+    // Verificamos que los datos del paso anterior aún existan.
+    if (!this._tempData.uid || !this._tempData.newAccount) {
+        console.error("Faltan datos temporales para finalizar el registro.");
+        this.showToast('Ha ocurrido un error, por favor intenta de nuevo.', 'error');
+        return;
+    }
     
-    showCategoryModal() {
-        document.getElementById('category-modal').style.display = 'flex';
-    },
+    // Añadimos la categoría elegida a los datos del negocio.
+    this._tempData.newAccount.business.category = category;
+    
+    try {
+        // (NUEVO) ¡Aquí ocurre la magia!
+        // Le decimos a Firestore: "en la colección 'users', crea un nuevo documento
+        // cuyo nombre (ID) sea el UID de nuestro usuario, y guarda dentro
+        // todo el objeto 'newAccount' que preparamos".
+        await db.collection('users').doc(this._tempData.uid).set(this._tempData.newAccount);
 
-    selectCategory(category) {
-        this._tempData.newAccount.business.category = category;
+        console.log("Datos del usuario guardados en Firestore.");
+        
+        // Limpiamos los datos temporales, ya no los necesitamos.
+        this._tempData = {}; 
+        
+        // Cerramos la ventana modal. El listener 'onAuthStateChanged' que configuramos en el Paso 1
+        // detectará que hay un nuevo usuario autenticado y se encargará de mostrar la app.
         document.getElementById('category-modal').style.display = 'none';
-        this.showLicenseModal();
-    },
 
-    showLicenseModal() {
-        document.getElementById('license-modal').style.display = 'flex';
-        document.getElementById('license-error').textContent = '';
-    },
-
-    verifyLicense() {
-        const code = document.getElementById('license-code').value.trim();
-        const errorEl = document.getElementById('license-error');
-        const correctCode = 'm12d09a1995';
-
-        if (code.toLowerCase() !== correctCode.toLowerCase()) {
-            errorEl.textContent = 'El código de licencia no es válido.';
-            return;
-        }
-        
-        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        accounts.push(this._tempData.newAccount);
-        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
-        
-        this.state = this._tempData.newAccount;
-        this.state.loggedIn = true;
-        this.state.currentUserType = 'admin';
-        this._tempData = {};
-        
-        this.showToast('¡Bienvenido! Tu cuenta ha sido activada.', 'success');
-        this.transitionToApp();
-    },
+    } catch (error) {
+        console.error("Error al guardar en Firestore:", error);
+        this.showToast('Hubo un error finalizando tu registro.', 'error');
+    }
+},
     
-    login() {
-        const email = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const errorEl = document.getElementById('login-error');
+    async login() {
+    const email = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.textContent = '';
 
-        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        const foundAccount = accounts.find(acc => acc.user.email === email);
-
-        if (!foundAccount) {
-            errorEl.textContent = 'No se encontró ninguna cuenta con ese correo.';
-            return;
-        }
-        
-        if (foundAccount.user.password === btoa(password)) {
-            this.state = foundAccount;
-            this.state.loggedIn = true;
-            this.state.currentUserType = 'admin';
-            this.transitionToApp();
-        } else {
-            errorEl.textContent = 'Correo o contraseña incorrectos.';
-        }
-    },
+    try {
+        // Le pedimos a Firebase que intente iniciar sesión con las credenciales.
+        await auth.signInWithEmailAndPassword(email, password);
+        // Si tiene éxito, el listener 'onAuthStateChanged' que ya configuramos
+        // se activará y hará todo el trabajo de cargar datos y mostrar la app.
+    } catch (error) {
+        console.error("Error de inicio de sesión:", error);
+        errorEl.textContent = "Correo o contraseña incorrectos.";
+    }
+},
 
     loginWorker() {
         const businessEmail = document.getElementById('business-select').value;
@@ -1132,11 +1427,13 @@ const app = {
     },
 
     logout() {
-        this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => {
-            this.state = this.getInitialState();
-            window.location.reload();
-        });
-    },
+    this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => {
+        // Le decimos a Firebase que cierre la sesión activa.
+        auth.signOut();
+        // El listener 'onAuthStateChanged' detectará esto y mostrará
+        // la pantalla de login automáticamente, sin recargar la página.
+    });
+},
     
     transitionToApp() { 
         document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
@@ -1159,6 +1456,7 @@ const app = {
     changeTab(tabId) { this.state.activeTab = tabId; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.renderAppUI(); },
 
     renderAppUI() {
+      this.initUserMenu();
         document.getElementById('header-bar-name').textContent = this.state.business.name;
         const headerLogoContainer = document.getElementById('header-logo-container');
 
@@ -2094,9 +2392,9 @@ _updatePurchaseSummary() {
         document.getElementById('dispatch-form').onsubmit = (e) => { e.preventDefault(); this.confirmDispatch(); }; input.focus();
     },
     showWorkerManagementModal() { let list = this.state.trabajadores.map(t => `<tr><td data-label="Nombre">${t.nombre}</td><td data-label="Rol">${t.rol || 'Vendedor'}</td><td data-label="Código">${t.loginCode || 'N/A'}</td><td data-label="Acciones"><div class="actions"><button class="btn btn-icon" onclick="app.showWorkerModal('${t.id}')"><svg class="icon"><use href="#icon-edit"></use></svg></button><button class="btn btn-icon" onclick="app.deleteWorker('${t.id}')"><svg class="icon"><use href="#icon-trash"></use></svg></button></div></td></tr>`).join(''); this.showModal(`<h2>Gestionar Trabajadores</h2><div style="overflow-x:auto;"><table class="management-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Código</th><th></th></tr></thead><tbody>${list}</tbody></table></div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showWorkerModal()">+ Añadir Trabajador</button></div>`, 'large'); },
-    showWorkerModal(id=null) { 
-        const w = id ? this.state.trabajadores.find(t=>t.id===id) : null; 
-        this.showModal(`<h2>${w ? 'Editar':'Añadir'} Trabajador</h2>
+    showWorkerModal(id=null) { 
+        const w = id ? this.state.trabajadores.find(t=>t.id===id) : null; 
+        this.showModal(`<h2>${w ? 'Editar':'Añadir'} Trabajador</h2>
             <form id="w-form">
                 <div class="form-group"><label>Nombre Completo</label><input id="w-name" value="${w ? w.nombre : ''}" required></div>
                 <div class="form-group"><label>Rol</label><input id="w-role" value="${w ? w.rol : 'Vendedor'}" required></div>
