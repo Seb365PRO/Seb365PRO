@@ -2879,8 +2879,7 @@ auth.onAuthStateChanged(async (fbUser) => {
         logoDataUrl: biz.logoDataUrl || null,
         category: biz.category || null
       };
-      hideLegacyPreloaders();
-        app.transitionToApp();
+      app.transitionToApp();
     } else {
       if (typeof app !== 'undefined') {
         app.state = app.getInitialState();
@@ -2929,8 +2928,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.add("auth-visible");
     }
     function showApp() {
-      if (window.app && typeof app.transitionToApp === "function") hideLegacyPreloaders();
-        app.transitionToApp();
+      if (window.app && typeof app.transitionToApp === "function") app.transitionToApp();
       var ac = document.getElementById("auth-container"); if (ac) ac.style.display = "none";
       document.body.classList.remove("auth-visible");
     }
@@ -2964,7 +2962,6 @@ auth.onAuthStateChanged(async function(fbUser){
       app.state.business = app.state.business || { id: null, name: 'Mi negocio', logoDataUrl: null, category: null };
 
       if (typeof app.transitionToApp === 'function') {
-        hideLegacyPreloaders();
         app.transitionToApp();
       } else {
         showApp();
@@ -3291,7 +3288,7 @@ auth.onAuthStateChanged(async function(fbUser){
       const persistence = remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
       await auth.setPersistence(persistence);
       await auth.signInWithEmailAndPassword(email, pass);
-      document.getElementById('authOverlay').style.display='none'; hideLegacyPreloaders();
+      document.getElementById('authOverlay').style.display='none';
     }catch(e){
       err.textContent = 'Correo o contraseña incorrectos.';
       console.error('login:', e);
@@ -3329,12 +3326,12 @@ auth.onAuthStateChanged(async function(fbUser){
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      document.getElementById('authOverlay').style.display='none'; hideLegacyPreloaders();
+      document.getElementById('authOverlay').style.display='none';
     }catch(e){
       if(e.code==='auth/email-already-in-use'){
         try{
           await auth.signInWithEmailAndPassword(em, pw);
-          document.getElementById('authOverlay').style.display='none'; hideLegacyPreloaders();
+          document.getElementById('authOverlay').style.display='none';
         }catch(e2){
           err.textContent='Este correo ya existe. Inicia sesión con tu contraseña o usa "Olvidé mi contraseña".';
         }
@@ -3368,171 +3365,5 @@ auth.onAuthStateChanged(async function(fbUser){
   });
 })();
 </script>
-
-
-<style>
-  .loading-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.55);backdrop-filter:blur(4px);display:none;place-items:center;z-index:10000}
-  .spinner{width:64px;height:64px;border-radius:50%;border:6px solid rgba(148,163,184,.25);border-top-color:#3b82f6;animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-</style>
-<div id="loading" class="loading-backdrop"><div class="spinner"></div></div>
-
-
-<script>
-(function(){
-  // 1) Eliminar por completo formularios/modales anteriores si existen
-  ['login-form','register-form','register-modal','auth-container','legacy-login','legacy-register'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(el && el.parentNode){ el.parentNode.removeChild(el); }
-  });
-
-  // 2) Spinner helpers
-  function showLoading(){ var l=document.getElementById('loading'); if(l) l.style.display='grid'; }
-  function hideLoading(){ var l=document.getElementById('loading'); if(l) l.style.display='none'; }
-
-  // 3) Hacer que los datos del login se reflejen inmediatamente en tu app
-  if (window.firebase) {
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    firebase.auth().onAuthStateChanged(async function(fbUser){
-      try{
-        if(!fbUser){ var ov=document.getElementById('authOverlay'); if(ov) ov.style.display='grid'; return; }
-        // Estado mínimo inmediato para entrar
-        window.app = window.app || {};
-        if (typeof app.getInitialState === 'function') {
-          app.state = app.getInitialState();
-        } else {
-          app.state = app.state || {};
-        }
-        app.state.loggedIn = true;
-        app.state.currentUserType = app.state.currentUserType || 'admin';
-        app.state.user = { id: fbUser.uid, fullname: fbUser.displayName || 'Usuario', email: fbUser.email || '' };
-        app.state.business = app.state.business || { id:null, name:'Mi negocio', logoDataUrl:null, category:null };
-
-        // Ocultar modal/overlay y spinner si estuvieran abiertos
-        var ov = document.getElementById('authOverlay'); if(ov) ov.style.display='none';
-        hideLoading();
-
-        // Enrutar a la app inmediatamente
-        if (typeof app.transitionToApp === 'function') hideLegacyPreloaders();
-        app.transitionToApp();
-
-        // En segundo plano, sincroniza Firestore y actualiza cabeceras
-        try {
-          const userRef = db.collection('users').doc(fbUser.uid);
-          let userSnap = await userRef.get();
-          let user, biz, bizId;
-          if(!userSnap.exists){
-            const bizRef = db.collection('businesses').doc();
-            bizId = bizRef.id;
-            await bizRef.set({ name:'Mi negocio', ownerUid: fbUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            await userRef.set({
-              fullname: fbUser.displayName || 'Usuario',
-              phone:'', role:'admin', businessId: bizId, email: fbUser.email || '',
-              createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            user = (await userRef.get()).data();
-            biz  = (await bizRef.get()).data();
-          } else {
-            user = userSnap.data();
-            bizId = user.businessId;
-            const bizSnap = await db.collection('businesses').doc(bizId).get();
-            if(!bizSnap.exists){
-              await db.collection('businesses').doc(bizId).set({ name:'Mi negocio', ownerUid: fbUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            }
-            biz = (await db.collection('businesses').doc(bizId).get()).data();
-          }
-          // Refrescar encabezados/menus si existen
-          function setText(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
-          function setSrc(id,v){ var el=document.getElementById(id); if(el) el.src=v||''; }
-          setText('sidebar-bar-name', (biz && biz.name) ? biz.name : 'Mi negocio');
-          setText('header-bar-name',  (biz && biz.name) ? biz.name : 'Mi negocio');
-          setText('user-menu-name',   user.fullname || '');
-          setText('user-menu-email',  fbUser.email || '');
-          setSrc('biz-logo',          (biz && biz.logoUrl) ? biz.logoUrl : '');
-          window.__SEB360__ = { uid: fbUser.uid, businessId: bizId };
-        } catch(e){ console.warn('Sincronización en background:', e); }
-
-      }catch(err){
-        console.error('Auth observer error:', err);
-        hideLoading();
-      }
-    });
-
-    // 4) Conectar el nuevo login/registro al spinner y a Auth
-    const doLoginBtn = document.getElementById('doLogin');
-    const doRegisterBtn = document.getElementById('doRegister');
-    const forgotLink = document.getElementById('forgotLink');
-
-    async function withLoading(fn){
-      try{ showLoading(); await fn(); } finally { hideLoading(); }
-    }
-    if (doLoginBtn){
-      const orig = doLoginBtn.onclick;
-      doLoginBtn.onclick = null;
-      doLoginBtn.addEventListener('click', ()=>withLoading(async ()=>{
-        // Reutilizamos el controlador definido en el archivo (doLogin)
-        if (window.doLogin) { await window.doLogin(); } else {
-          // Si no está global, dispara el click normal (ya está enlazado por el wire)
-          doLoginBtn.dispatchEvent(new Event('seb360-internal-login'));
-        }
-      }));
-    }
-    if (doRegisterBtn){
-      doRegisterBtn.onclick = null;
-      doRegisterBtn.addEventListener('click', ()=>withLoading(async ()=>{
-        if (window.doRegister) { await window.doRegister(); } else {
-          doRegisterBtn.dispatchEvent(new Event('seb360-internal-register'));
-        }
-      }));
-    }
-    if (forgotLink){
-      forgotLink.addEventListener('click', ()=>{
-        // El controlador original ya maneja el envío; aquí no necesitamos spinner
-      });
-    }
-  }
-})();
-</script>
-
-
-<script>
-(function(){
-  // Utilidad global para ocultar preloaders heredados
-  window.hideLegacyPreloaders = function(){
-    try{
-      const ids = ['preloader','preloader-overlay','loading','loading-screen','loader','app-preloader','cube-preloader'];
-      ids.forEach(id=>{ const el=document.getElementById(id); if(el){ el.style.display='none'; el.classList.add('hidden'); }});
-      // Por clases comunes
-      const classNames = ['preloader','loading','loading-screen','loader','cube','cube-loader'];
-      classNames.forEach(cn => {
-        document.querySelectorAll('.'+cn).forEach(el=>{ el.style.display='none'; el.classList.add('hidden'); });
-      });
-      // Oculta overlays de pantalla completa si existieran
-      document.querySelectorAll('[data-preloader], [aria-busy="true"]').forEach(el=>{ el.style.display='none'; el.classList.add('hidden'); el.removeAttribute('aria-busy'); });
-      // El body a veces queda bloqueado por clases
-      document.body.classList.remove('loading','is-loading','preloading');
-    }catch(e){ console.warn('hideLegacyPreloaders:', e); }
-  };
-})();
-</script>
-
-
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-  var ov = document.getElementById('authOverlay');
-  if (ov) { ov.style.display = 'grid'; }
-  // Fallback por si onAuthStateChanged tarda: mostrar overlay a los 1200ms si no hay sesión
-  setTimeout(function(){
-    try{
-      if (window.firebase && (!firebase.auth().currentUser)) {
-        var ov2 = document.getElementById('authOverlay'); if (ov2) ov2.style.display='grid';
-      }
-    }catch(_){}
-  }, 1200);
-});
-</script>
-
 </body>
 </html>
