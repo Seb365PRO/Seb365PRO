@@ -860,22 +860,23 @@
     <div id="toast-container"></div>
 
 <script>
-    // --- AÑADE ESTE BLOQUE DE INICIALIZACIÓN ---
-    // Pega aquí tu configuración de Firebase del Paso 0
-      const firebaseConfig = {
+    // --- INICIO: BLOQUE DE INICIALIZACIÓN DE FIREBASE ---
+    // ✅ ¡IMPORTANTE! Pega aquí tu configuración real de Firebase.
+    const firebaseConfig = {
     apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
     authDomain: "seb360-pro.firebaseapp.com",
     projectId: "seb360-pro",
-    storageBucket: "seb360-pro.firebasestorage.app",
+    storageBucket: "seb360-pro.appspot.com",
     messagingSenderId: "750401346580",
     appId: "1:750401346580:web:a682fd6ae09292ff589b01"
   };
 
-    // Inicializa Firebase
+
+    // Inicializa Firebase y obtén las instancias de los servicios
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    // --- FIN DEL BLOQUE DE INICIALIZACIÓN ---
+    // --- FIN: BLOQUE DE INICIALIZACIÓN DE FIREBASE ---
 
     const app = {
 
@@ -908,7 +909,16 @@
     _tempData: {},
     currentReportData: null,
 initUserMenu() {
-        const trigger = document.getElementById('user-menu-trigger');
+    // ✅ INICIO: BLOQUE DE SEGURIDAD ESENCIAL
+    // Si esta función se ejecuta antes de que this.state.user tenga datos,
+    // nos detenemos aquí para prevenir el error fatal.
+    if (!this.state || !this.state.user) {
+        console.warn("initUserMenu fue llamado sin datos de usuario. Abortando para prevenir error.");
+        return;
+    }
+    // ✅ FIN: BLOQUE DE SEGURIDAD
+
+    const trigger = document.getElementById('user-menu-trigger');
         const menu = document.getElementById('user-menu');
         const profileLink = document.getElementById('profile-link');
 
@@ -943,34 +953,45 @@ initUserMenu() {
     },
 
     renderProfileTab() {
-        const container = document.getElementById('perfil');
-        const user = this.state.user;
-        const business = this.state.business;
+    // ✅ INICIO: BLOQUE DE SEGURIDAD ESENCIAL
+    // Prevenimos el error si esta función se llama antes de que los datos estén listos.
+    if (!this.state || !this.state.user || !this.state.business) {
+        console.warn("renderProfileTab fue llamado sin datos. Abortando.");
+        // Opcionalmente, puedes mostrar un estado de carga aquí.
+        document.getElementById('perfil').innerHTML = `<p>Cargando datos del perfil...</p>`;
+        return;
+    }
+    // ✅ FIN: BLOQUE DE SEGURIDAD
 
-        container.innerHTML = `
+    const container = document.getElementById('perfil');
+    const user = this.state.user;
+    const business = this.state.business;
+
+    // Este código ahora solo se ejecutará cuando 'user' y 'business' estén definidos.
+    container.innerHTML = `
+        <div class="card">
+            <div class="card-header">
+                <h2>Mis Datos</h2>
+                <button class="btn btn-outline" onclick="app.showEditUserModal()"><svg class="icon"><use href="#icon-edit"></use></svg> Editar</button>
+            </div>
+            <p><strong>Nombre:</strong> ${user.fullname}</p>
+            <p><strong>Correo:</strong> ${user.email}</p>
+            <p><strong>Teléfono:</strong> ${user.phone || 'No especificado'}</p>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2>Seguridad</h2></div>
+            <button class="btn btn-secondary" onclick="app.showChangePasswordModal()">Cambiar Contraseña</button>
+        </div>
             <div class="card">
-                <div class="card-header">
-                    <h2>Mis Datos</h2>
-                    <button class="btn btn-outline" onclick="app.showEditUserModal()"><svg class="icon"><use href="#icon-edit"></use></svg> Editar</button>
-                </div>
-                <p><strong>Nombre:</strong> ${user.fullname}</p>
-                <p><strong>Correo:</strong> ${user.email}</p>
-                <p><strong>Teléfono:</strong> ${user.phone || 'No especificado'}</p>
+            <div class="card-header">
+                <h2>Datos del Negocio</h2>
+                <button class="btn btn-outline" onclick="app.showEditBusinessModal()"><svg class="icon"><use href="#icon-edit"></use></svg> Editar</button>
             </div>
-            <div class="card">
-                <div class="card-header"><h2>Seguridad</h2></div>
-                <button class="btn btn-secondary" onclick="app.showChangePasswordModal()">Cambiar Contraseña</button>
-            </div>
-             <div class="card">
-                <div class="card-header">
-                    <h2>Datos del Negocio</h2>
-                    <button class="btn btn-outline" onclick="app.showEditBusinessModal()"><svg class="icon"><use href="#icon-edit"></use></svg> Editar</button>
-                </div>
-                <p><strong>Nombre:</strong> ${business.name}</p>
-                <p><strong>Categoría:</strong> ${business.category || 'No especificada'}</p>
-            </div>
-        `;
-    },
+            <p><strong>Nombre:</strong> ${business.name}</p>
+            <p><strong>Categoría:</strong> ${business.category || 'No especificada'}</p>
+        </div>
+    `;
+},
 
     showEditUserModal() {
         const user = this.state.user;
@@ -998,14 +1019,29 @@ initUserMenu() {
         };
     },
 
-    saveUser() {
-        this.state.user.fullname = document.getElementById('user-fullname').value.trim();
-        this.state.user.phone = document.getElementById('user-phone').value.trim();
-        this.saveState();
+    async saveUser() {
+    const uid = auth.currentUser.uid;
+    if (!uid) return;
+
+    const updatedUserData = {
+        fullname: document.getElementById('user-fullname').value.trim(),
+        phone: document.getElementById('user-phone').value.trim()
+    };
+
+    try {
+        await db.collection('users').doc(uid).update(updatedUserData);
+        // Actualizamos el estado local para que la UI se refresque
+        this.state.user.fullname = updatedUserData.fullname;
+        this.state.user.phone = updatedUserData.phone;
         this.showToast('Datos actualizados con éxito.');
         this.closeModal();
-        this.renderProfileTab(); // Para refrescar la vista
-    },
+        this.renderProfileTab();
+        this.initUserMenu(); // Actualiza el menú del header
+    } catch (error) {
+        console.error("Error al actualizar datos de usuario:", error);
+        this.showToast('No se pudieron guardar los cambios.', 'error');
+    }
+},
 
     showChangePasswordModal() {
         const content = `
@@ -1037,30 +1073,45 @@ initUserMenu() {
         };
     },
     
-    changePassword() {
-        const currentPass = document.getElementById('current-password').value;
-        const newPass = document.getElementById('new-password').value;
-        const confirmPass = document.getElementById('confirm-password').value;
-        const errorEl = document.getElementById('password-error');
+    async changePassword() {
+    const currentPass = document.getElementById('current-password').value;
+    const newPass = document.getElementById('new-password').value;
+    const confirmPass = document.getElementById('confirm-password').value;
+    const errorEl = document.getElementById('password-error');
+    errorEl.textContent = '';
 
-        if (btoa(currentPass) !== this.state.user.password) {
-            errorEl.textContent = 'La contraseña actual es incorrecta.';
-            return;
-        }
-        if (newPass.length < 6) {
-            errorEl.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
-            return;
-        }
-        if (newPass !== confirmPass) {
-            errorEl.textContent = 'Las nuevas contraseñas no coinciden.';
-            return;
-        }
+    if (newPass.length < 6) {
+        errorEl.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
+        return;
+    }
+    if (newPass !== confirmPass) {
+        errorEl.textContent = 'Las nuevas contraseñas no coinciden.';
+        return;
+    }
 
-        this.state.user.password = btoa(newPass);
-        this.saveState();
+    const user = auth.currentUser;
+    // Creamos la credencial para re-autenticar al usuario
+    const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+
+    try {
+        // 1. Re-autenticar al usuario para confirmar su identidad
+        await user.reauthenticateWithCredential(credential);
+        
+        // 2. Si la re-autenticación es exitosa, actualizamos la contraseña
+        await user.updatePassword(newPass);
+        
         this.showToast('Contraseña actualizada con éxito.');
         this.closeModal();
-    },
+
+    } catch (error) {
+        console.error("Error al cambiar contraseña:", error);
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            errorEl.textContent = 'La contraseña actual es incorrecta.';
+        } else {
+            errorEl.textContent = 'Ocurrió un error. Intenta cerrar y volver a abrir sesión.';
+        }
+    }
+},
 
     showEditBusinessModal() {
         const business = this.state.business;
@@ -1109,26 +1160,97 @@ initUserMenu() {
         };
     },
 
-    saveBusiness() {
-        this.state.business.name = document.getElementById('business-name').value.trim();
-        if (this._tempData.newLogoDataUrl) {
-            this.state.business.logoDataUrl = this._tempData.newLogoDataUrl;
+    async saveBusiness() {
+    const uid = auth.currentUser.uid;
+    if (!uid) return;
+
+    const updatedBusinessData = {
+        'business.name': document.getElementById('business-name').value.trim()
+    };
+    if (this._tempData.newLogoDataUrl) {
+        updatedBusinessData['business.logoDataUrl'] = this._tempData.newLogoDataUrl;
+    }
+
+    try {
+        await db.collection('businesses').doc(uid).update(updatedBusinessData);
+        // Actualizamos el estado local
+        this.state.business.name = updatedBusinessData['business.name'];
+        if(updatedBusinessData['business.logoDataUrl']) {
+           this.state.business.logoDataUrl = updatedBusinessData['business.logoDataUrl'];
         }
-        this.saveState();
         this.showToast('Datos del negocio actualizados.');
         this.closeModal();
-        this.renderProfileTab(); // Refrescar vista de perfil
-        this.renderAppUI(); // Refrescar la UI general para que se vea el nuevo nombre/logo
-    },
+        this.renderProfileTab();
+        this.renderAppUI();
+        this._tempData = {}; // Limpiamos la data temporal del logo
+    } catch (error) {
+        console.error("Error al actualizar datos del negocio:", error);
+        this.showToast('No se pudieron guardar los cambios.', 'error');
+    }
+},
 
     init() {
-        this.state = this.getInitialState();
-        this.initTheme();
-        this.attachAuthEventListeners();
-        this.handlePreloader();
-        this.initHeaderDashboard();
+    this.state = this.getInitialState();
+    this.initTheme();
+    this.attachAuthEventListeners();
+    this.initHeaderDashboard();
+    
+    // El observador de estado de autenticación
+    
+auth.onAuthStateChanged(async (user) => {
+        const preloader = document.getElementById('preloader');
+        const appShell = document.getElementById('app-shell');
         
-        const now = new Date();
+        if (user) {
+            // --- USUARIO ESTÁ CONECTADO ---
+            console.log("Usuario conectado:", user.uid);
+            // Mostrar app y ocultar pantalla de login inmediatamente
+            document.getElementById('auth-container').style.display = 'none';
+            if (appShell) appShell.style.display = 'flex';
+            document.body.classList.add('app-loaded');
+            document.body.classList.remove('auth-visible');
+            if (preloader) { preloader.style.opacity = '0'; preloader.style.pointerEvents = 'none'; }
+            
+            try {
+                // Cargamos datos desde Firestore
+                await this.loadState(user.uid);
+            } catch (err) {
+                console.error("Error en loadState:", err);
+                this.showToast('No se pudieron cargar los datos. Revisa tu conexión o permisos.', 'error');
+            }
+            try {
+                this.renderUI();
+            } catch (err) {
+                console.error("Error en renderUI:", err);
+                this.showToast('Error al renderizar la interfaz.', 'error');
+            }
+        } else {
+            // --- USUARIO NO ESTÁ CONECTADO ---
+            console.log("No hay usuario conectado.");
+            // Mostramos la pantalla de login y ocultamos la app y el preloader
+            if (appShell) appShell.style.display = 'none';
+            document.body.classList.add('auth-visible');
+            if (preloader) { preloader.style.opacity = '0'; preloader.style.pointerEvents = 'none'; }
+            document.getElementById('auth-container').style.display = 'flex';
+        }
+    });
+        
+        // Watchdog anti-bloqueo del preloader (por si el observador nunca dispara)
+        setTimeout(() => {
+            const pre = document.getElementById('preloader');
+            const app = document.getElementById('app-shell');
+            const authCont = document.getElementById('auth-container');
+            const body = document.body;
+            const preVisible = pre && getComputedStyle(pre).opacity !== '0';
+            if (preVisible && !body.classList.contains('app-loaded')) {
+                console.warn('[Watchdog] Forzando salida del preloader.');
+                if (app) app.style.display = 'none';
+                body.classList.add('auth-visible');
+                pre.style.opacity = '0'; pre.style.pointerEvents = 'none';
+                if (authCont) authCont.style.display = 'flex';
+            }
+        }, 8000);
+const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
         const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
         const toLocalISOString = date => {
@@ -1139,22 +1261,73 @@ initUserMenu() {
         document.getElementById('report-end-date').value = toLocalISOString(todayEnd);
     },
 
-    saveState() {
-        if (!this.state.loggedIn || !this.state.user) return;
-        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        const accountIndex = accounts.findIndex(acc => acc.user.email === this.state.user.email);
-        
-        const stateToSave = { ...this.state };
-        delete stateToSave.currentUserType;
-        delete stateToSave.currentWorker;
+    async loadState(uid) {
+    try {
+        const businessDoc = await db.collection('businesses').doc(uid).get();
+        const userDoc = await db.collection('users').doc(uid).get();
 
-        if (accountIndex > -1) {
-            accounts[accountIndex] = stateToSave;
+        if (businessDoc.exists && userDoc.exists) {
+    const businessData = businessDoc.data();
+    const userData = userDoc.data();
+    const initialState = this.getInitialState(); // Obtenemos la estructura base
+
+    // Reconstruimos el estado de la aplicación de forma segura
+    this.state = {
+        ...initialState,          // Empezamos con la estructura limpia y por defecto
+        ...businessData,          // Sobrescribimos con los datos del negocio desde Firestore
+        user: userData,           // Añadimos los datos del usuario
+        loggedIn: true,
+        currentUserType: 'admin'  // Asumimos que es admin
+    };
+    
+    // ✅ LÍNEA CRÍTICA: Nos aseguramos de que 'caja' NUNCA sea undefined.
+    // Si no vino nada de la base de datos, usamos la 'caja' por defecto.
+    if (!this.state.caja) {
+        this.state.caja = initialState.caja;
+    }
+
+    console.log("Estado cargado desde Firestore de forma segura.");
+}
         } else {
-            accounts.push(stateToSave);
+            // Esto no debería pasar en un flujo normal, pero es bueno tener un fallback.
+            console.error("No se encontraron datos para el usuario:", uid);
+            this.showToast('Error al cargar tus datos.', 'error');
+            this.logout();
         }
-        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
-    },
+    } catch (error) {
+        console.error("Error al cargar estado desde Firestore:", error);
+        this.showToast('Hubo un problema de conexión.', 'error');
+    }
+},
+
+// Función modificada para guardar en Firestore
+async saveState() {
+    // Verificamos que tengamos un usuario conectado con un UID
+    if (!auth.currentUser || !auth.currentUser.uid) {
+        console.warn("Intento de guardar sin usuario autenticado.");
+        return;
+    }
+
+    const uid = auth.currentUser.uid;
+    
+    // Preparamos el objeto de datos del negocio para guardarlo
+    const businessData = { ...this.state };
+    
+    // Eliminamos datos que no queremos persistir en el documento del negocio
+    delete businessData.user;
+    delete businessData.loggedIn;
+    delete businessData.currentUserType;
+    delete businessData.currentWorker;
+
+    try {
+        // Usamos set con { merge: true } para actualizar o crear el documento sin borrar campos no incluidos
+        await db.collection('businesses').doc(uid).set(businessData, { merge: true });
+        console.log("Estado guardado en Firestore.");
+    } catch (error) {
+        console.error("Error al guardar en Firestore:", error);
+        this.showToast('No se pudo guardar el cambio.', 'error');
+    }
+},
 
     uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
 
@@ -1191,12 +1364,6 @@ initUserMenu() {
         themeToggleMobile.addEventListener('change', toggleTheme);
     },
 
-    handlePreloader() {
-        setTimeout(() => {
-            document.body.classList.add('auth-visible');
-            document.getElementById('auth-container').style.display = 'flex';
-        }, 2800);
-    },
 
  attachAuthEventListeners() { 
     document.getElementById('show-login-btn').addEventListener('click', () => this.showLoginModal()); 
@@ -1242,27 +1409,39 @@ initUserMenu() {
         document.getElementById('login-error').textContent = ''; 
     },
 
-    showWorkerLoginModal() {
-        document.getElementById('auth-container').style.display = 'none';
-        const modal = document.getElementById('worker-login-modal');
-        modal.style.display = 'flex';
-        document.getElementById('worker-login-error').textContent = '';
+    async showWorkerLoginModal() {
+    document.getElementById('auth-container').style.display = 'none';
+    const modal = document.getElementById('worker-login-modal');
+    modal.style.display = 'flex';
+    document.getElementById('worker-login-error').textContent = '';
 
-        const select = document.getElementById('business-select');
-        select.innerHTML = '<option value="">Cargando...</option>';
-        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        if (accounts.length === 0) {
+    const select = document.getElementById('business-select');
+    select.innerHTML = '<option value="">Cargando negocios...</option>';
+    select.disabled = true;
+
+    try {
+        const businessesSnapshot = await db.collection('businesses').get();
+        if (businessesSnapshot.empty) {
             select.innerHTML = '<option value="">No hay negocios registrados</option>';
-        } else {
-            select.innerHTML = '<option value="" disabled selected>Selecciona un negocio</option>';
-            accounts.forEach(acc => {
-                const option = document.createElement('option');
-                option.value = acc.user.email;
-                option.textContent = acc.business.name;
-                select.appendChild(option);
-            });
+            return;
         }
-    },
+        
+        select.innerHTML = '<option value="" disabled selected>Selecciona un negocio</option>';
+        businessesSnapshot.forEach(doc => {
+            const business = doc.data().business;
+            const option = document.createElement('option');
+            // Usamos el ID del documento (que es el UID del dueño) como valor
+            option.value = doc.id; 
+            option.textContent = business.name;
+            select.appendChild(option);
+        });
+        select.disabled = false;
+
+    } catch (error) {
+        console.error("Error cargando negocios:", error);
+        select.innerHTML = '<option value="">Error al cargar</option>';
+    }
+},
     
     showRegisterModal() { 
         document.getElementById('auth-container').style.display = 'none'; 
@@ -1285,133 +1464,183 @@ initUserMenu() {
         reader.readAsDataURL(file);
     },
 
-    registerUser() {
-        const fullname = document.getElementById('reg-fullname').value.trim();
-        const email = document.getElementById('reg-email').value.trim();
-        const password = document.getElementById('reg-password').value;
-        const barname = document.getElementById('reg-barname').value.trim();
-        const role = document.getElementById('reg-role').value;
-        const errorEl = document.getElementById('register-error');
-        
-        if (!fullname || !email || !password || !barname || !role) {
-            errorEl.textContent = 'Por favor, completa todos los campos obligatorios.';
-            return;
-        }
-        
-        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        if (accounts.some(acc => acc.user.email === email)) {
-            errorEl.textContent = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
-            return;
-        }
+    // --- CÓDIGO MODIFICADO ---
+async registerUser() {
+    const fullname = document.getElementById('reg-fullname').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const barname = document.getElementById('reg-barname').value.trim();
+    const role = document.getElementById('reg-role').value;
+    const errorEl = document.getElementById('register-error');
+    errorEl.textContent = '';
 
-        this._tempData.newAccount = this.getInitialState();
-        this._tempData.newAccount.user = {
-            id: this.uid(),
-            fullname,
-            phone: document.getElementById('reg-phone').value.trim(),
-            email,
-            password: btoa(password),
-            role,
-        };
-        this._tempData.newAccount.business = {
-            id: this.uid(),
-            name: barname,
-            logoDataUrl: this._tempData.logoDataUrl || null,
-            category: null
-        };
+    if (!fullname || !email || !password || !barname || !role) {
+        errorEl.textContent = 'Por favor, completa todos los campos obligatorios.';
+        return;
+    }
+    if (password.length < 6) {
+        errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+        return;
+    }
 
-        document.getElementById('register-modal').style.display = 'none';
-        this.showCategoryModal();
-    },
-    
-    showCategoryModal() {
-        document.getElementById('category-modal').style.display = 'flex';
-    },
+    // Guardamos los datos temporalmente para usarlos después de crear el usuario
+    this._tempData.newAccount = this.getInitialState();
+    this._tempData.newAccount.user = {
+        fullname,
+        phone: document.getElementById('reg-phone').value.trim(),
+        email,
+        role
+    };
+    this._tempData.newAccount.business = {
+        name: barname,
+        logoDataUrl: this._tempData.logoDataUrl || null,
+        category: null
+    };
+    // Guardamos la contraseña para usarla en el siguiente paso
+    this._tempData.password = password;
 
-    selectCategory(category) {
+    document.getElementById('register-modal').style.display = 'none';
+    this.showCategoryModal();
+},
+
+async selectCategory(category) {
     this._tempData.newAccount.business.category = category;
     document.getElementById('category-modal').style.display = 'none';
 
-    // Lógica que guarda la cuenta y transiciona a la app.
+    const { newAccount, password } = this._tempData;
+    const email = newAccount.user.email;
+    const errorEl = document.getElementById('register-error'); // Reutilizamos el campo de error
+
     try {
-        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        accounts.push(this._tempData.newAccount);
-        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
+        // 1. Crear el usuario en Firebase Authentication
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
 
-        this.state = this._tempData.newAccount;
-        this.state.loggedIn = true;
-        this.state.currentUserType = 'admin';
-        this._tempData = {};
+        // 2. Guardar los datos del usuario y del negocio en Firestore
+        // Usamos el UID del usuario como ID para ambos documentos para unirlos fácilmente
+        const businessData = {
+            ...newAccount,
+            // Quitamos la data de usuario, ya que se almacena en el documento de usuario
+            user: null, 
+            // Añadimos el ID del dueño para futuras referencias
+            ownerId: user.uid 
+        };
+        // Borramos user del objeto principal para no duplicar datos.
+        delete businessData.user; 
+        
+        // Creamos una transacción para asegurar que ambos documentos se creen correctamente
+        const batch = db.batch();
+        const userDocRef = db.collection('users').doc(user.uid);
+        const businessDocRef = db.collection('businesses').doc(user.uid);
+        
+        batch.set(userDocRef, newAccount.user);
+        batch.set(businessDocRef, businessData);
+        
+        await batch.commit();
 
-        this.showToast('¡Bienvenido! Tu cuenta ha sido activada.', 'success');
-        this.transitionToApp();
-    } catch (e) {
-        console.error("Error al guardar la nueva cuenta:", e);
-        this.showToast('Hubo un error al crear tu cuenta.', 'error');
-        this.showAuthHome();
+        this.showToast('¡Bienvenido! Tu cuenta ha sido creada.', 'success');
+        
+        // El observador de auth (que añadiremos en el paso 5) se encargará
+        // de hacer el resto (cargar datos y mostrar la app).
+        
+    } catch (error) {
+        console.error("Error en el registro con Firebase:", error);
+        // Traducir errores comunes de Firebase
+        if (error.code === 'auth/email-already-in-use') {
+            errorEl.textContent = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+        } else {
+            errorEl.textContent = 'Ocurrió un error inesperado al crear tu cuenta.';
+        }
+        document.getElementById('register-modal').style.display = 'flex'; // Volver a mostrar el modal de registro
+    } finally {
+        this._tempData = {}; // Limpiar datos temporales
     }
 },
     
-    login() {
-        const email = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const errorEl = document.getElementById('login-error');
+async login() {
+    const email = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.textContent = '';
 
-        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        const foundAccount = accounts.find(acc => acc.user.email === email);
-
-        if (!foundAccount) {
-            errorEl.textContent = 'No se encontró ninguna cuenta con ese correo.';
-            return;
-        }
+    try {
+        // 1. Iniciar sesión con Firebase Auth
+        await auth.signInWithEmailAndPassword(email, password);
         
-        if (foundAccount.user.password === btoa(password)) {
-            this.state = foundAccount;
-            this.state.loggedIn = true;
-            this.state.currentUserType = 'admin';
-            this.transitionToApp();
-        } else {
+        // 2. Si es exitoso, Firebase activa el observador onAuthStateChanged
+        // que se encargará de cargar los datos y mostrar la app.
+        // Ya no necesitamos hacer nada más aquí.
+        
+    } catch (error) {
+        console.error("Error de inicio de sesión:", error);
+        // Traducir errores comunes
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
             errorEl.textContent = 'Correo o contraseña incorrectos.';
+        } else {
+            errorEl.textContent = 'Ocurrió un error al intentar iniciar sesión.';
         }
-    },
+    }
+},
 
-    loginWorker() {
-        const businessEmail = document.getElementById('business-select').value;
-        const workerCode = document.getElementById('worker-code').value;
-        const errorEl = document.getElementById('worker-login-error');
 
-        if (!businessEmail || !workerCode) {
-            errorEl.textContent = 'Debes seleccionar un negocio e ingresar tu código.';
-            return;
-        }
+    async loginWorker() {
+    const businessId = document.getElementById('business-select').value; // Ahora es el UID
+    const workerCode = document.getElementById('worker-code').value;
+    const errorEl = document.getElementById('worker-login-error');
+    errorEl.textContent = '';
 
-        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
-        const foundAccount = accounts.find(acc => acc.user.email === businessEmail);
+    if (!businessId || !workerCode) {
+        errorEl.textContent = 'Debes seleccionar un negocio e ingresar tu código.';
+        return;
+    }
 
-        if (!foundAccount) {
+    try {
+        const businessDoc = await db.collection('businesses').doc(businessId).get();
+        const userDoc = await db.collection('users').doc(businessId).get(); // También cargamos los datos del dueño
+
+        if (!businessDoc.exists || !userDoc.exists) {
             errorEl.textContent = 'Error: No se encontró el negocio seleccionado.';
             return;
         }
 
-        const foundWorker = foundAccount.trabajadores.find(t => t.loginCode === workerCode);
+        const businessData = businessDoc.data();
+        const userData = userDoc.data();
+        const trabajadores = businessData.trabajadores || [];
+        const foundWorker = trabajadores.find(t => t.loginCode === workerCode);
 
         if (foundWorker) {
-            this.state = foundAccount;
-            this.state.loggedIn = true;
-            this.state.currentUserType = 'worker';
-            this.state.currentWorker = foundWorker;
+            // Reconstruimos el estado como si fuéramos el administrador, pero marcamos el tipo de usuario
+            this.state = {
+                ...this.getInitialState(),
+                ...businessData,
+                user: userData,
+                loggedIn: true,
+                currentUserType: 'worker',
+                currentWorker: foundWorker
+            };
             this.transitionToApp();
         } else {
             errorEl.textContent = 'Código de acceso incorrecto para este negocio.';
         }
-    },
+    } catch (error) {
+        console.error("Error en login de trabajador:", error);
+        errorEl.textContent = 'Ocurrió un error al verificar el acceso.';
+    }
+},
 
     logout() {
-        this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => {
-            this.state = this.getInitialState();
+    this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", async () => {
+        try {
+            await auth.signOut();
+            // El observador de auth se activará y nos llevará a la pantalla de login.
+            // Recargar la página es una buena práctica para limpiar todo el estado.
             window.location.reload();
-        });
-    },
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+            this.showToast('No se pudo cerrar la sesión.', 'error');
+        }
+    });
+},
     
     transitionToApp() { 
         document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
@@ -1434,39 +1663,50 @@ initUserMenu() {
     changeTab(tabId) { this.state.activeTab = tabId; this.state.currentTurnoView = { type: 'dashboard', workerId: null }; this.renderAppUI(); },
 
     renderAppUI() {
-      this.initUserMenu();
-        document.getElementById('header-bar-name').textContent = this.state.business.name;
-        const headerLogoContainer = document.getElementById('header-logo-container');
+    // ✅ INICIO: BLOQUE DE SEGURIDAD
+    // Esta comprobación es CRUCIAL. Si los datos aún no se han cargado,
+    // detenemos la función para evitar el error de "leer propiedades de null".
+    if (!this.state || !this.state.user || !this.state.business) {
+        console.error("Intento de renderizar la UI sin datos cargados. Deteniendo.");
+        this.showToast("Hubo un problema al cargar tus datos.", "error");
+        this.logout(); // Forzamos el cierre de sesión para evitar un estado inconsistente.
+        return; 
+    }
+    // ✅ FIN: BLOQUE DE SEGURIDAD
 
-        document.getElementById('sidebar-bar-name').textContent = this.state.business.name;
-        const logoContainer = document.getElementById('sidebar-logo-container');
-        if (this.state.business.logoDataUrl) {
-            const logoHTML = `<img src="${this.state.business.logoDataUrl}" alt="Logo del negocio" class="sidebar-logo">`;
-            logoContainer.innerHTML = logoHTML;
-            headerLogoContainer.innerHTML = logoHTML;
-        } else {
-            const placeholderHTML = `<svg class="sidebar-logo-placeholder"><use href="#icon-logo"></use></svg>`;
-            logoContainer.innerHTML = placeholderHTML;
-            headerLogoContainer.innerHTML = placeholderHTML;
-        }
+    this.initUserMenu();
+    document.getElementById('header-bar-name').textContent = this.state.business.name;
+    const headerLogoContainer = document.getElementById('header-logo-container');
 
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll(`.nav-tab[data-tab="${this.state.activeTab}"]`).forEach(t => t.classList.add('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === this.state.activeTab));
-        
-        document.getElementById('app-nav').onclick = (e) => { 
-            const tab = e.target.closest('.nav-tab');
-            if (tab) this.changeTab(tab.dataset.tab); 
-        };
+    document.getElementById('sidebar-bar-name').textContent = this.state.business.name;
+    const logoContainer = document.getElementById('sidebar-logo-container');
+    if (this.state.business.logoDataUrl) {
+        const logoHTML = `<img src="${this.state.business.logoDataUrl}" alt="Logo del negocio" class="sidebar-logo">`;
+        logoContainer.innerHTML = logoHTML;
+        headerLogoContainer.innerHTML = logoHTML;
+    } else {
+        const placeholderHTML = `<svg class="sidebar-logo-placeholder"><use href="#icon-logo"></use></svg>`;
+        logoContainer.innerHTML = placeholderHTML;
+        headerLogoContainer.innerHTML = placeholderHTML;
+    }
 
-        switch (this.state.activeTab) {
-            case 'turnos': this.renderTurnosTab(); break;
-            case 'caja': this.renderCajaTab(); break;
-            case 'inventario': this.renderInventario(); break;
-            case 'historial': this.renderHistorialTab(); break;
-            case 'reportes': this.renderReportUI(); break;
-        }
-    },
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll(`.nav-tab[data-tab="${this.state.activeTab}"]`).forEach(t => t.classList.add('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === this.state.activeTab));
+    
+    document.getElementById('app-nav').onclick = (e) => { 
+        const tab = e.target.closest('.nav-tab');
+        if (tab) this.changeTab(tab.dataset.tab); 
+    };
+
+    switch (this.state.activeTab) {
+        case 'turnos': this.renderTurnosTab(); break;
+        case 'caja': this.renderCajaTab(); break;
+        case 'inventario': this.renderInventario(); break;
+        case 'historial': this.renderHistorialTab(); break;
+        case 'reportes': this.renderReportUI(); break;
+    }
+},
 
     renderWorkerView() {
         const worker = this.state.currentWorker;
@@ -1527,20 +1767,26 @@ initUserMenu() {
         }
     },
     calcularResumenCaja(cajaData = this.state.caja) {
-        const saldoInicial = cajaData.saldoInicialDia;
-        let totalIngresos = 0;
-        let totalEgresos = 0;
-        cajaData.transacciones.forEach(tx => {
-            if (tx.tipo === 'ingreso') totalIngresos += tx.monto;
-            else totalEgresos += tx.monto;
-        });
-        const saldoActual = saldoInicial + totalIngresos - totalEgresos;
-        return { saldoInicial, totalIngresos, totalEgresos, saldoActual };
-    },
+    // ✅ LÍNEA DE SEGURIDAD: Si por alguna razón cajaData es inválido, devuelve ceros.
+    if (!cajaData || !cajaData.transacciones) {
+        return { saldoInicial: 0, totalIngresos: 0, totalEgresos: 0, saldoActual: 0 };
+    }
+
+    const saldoInicial = cajaData.saldoInicialDia;
+    let totalIngresos = 0;
+    // ... el resto de la función queda igual
+    let totalEgresos = 0;
+    cajaData.transacciones.forEach(tx => {
+        if (tx.tipo === 'ingreso') totalIngresos += tx.monto;
+        else totalEgresos += tx.monto;
+    });
+    const saldoActual = saldoInicial + totalIngresos - totalEgresos;
+    return { saldoInicial, totalIngresos, totalEgresos, saldoActual };
+},
     showIniciarDiaModal() {
         this.showModal(`<h2>Iniciar Flujo de Caja</h2><p>Ingresa el monto de dinero con el que inicias el día.</p><form id="iniciar-dia-form"><div class="form-group"><label for="saldo-inicial">Dinero en Caja</label><input type="number" id="saldo-inicial" min="0" step="1000" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Iniciar Día</button></div></form>`);
-        document.getElementById('iniciar-dia-form').onsubmit = (e) => {
-            e.preventDefault();
+        document.getElementById('iniciar-dia-form').onsubmit = async (e) => { // <-- Cambio aquí
+    e.preventDefault();
             const saldo = parseFloat(document.getElementById('saldo-inicial').value);
             if (isNaN(saldo) || saldo < 0) {
                 this.showToast('Por favor, ingresa un monto válido.', 'error');
@@ -1549,7 +1795,7 @@ initUserMenu() {
             this.state.caja.saldoInicialDia = saldo;
             this.state.caja.transacciones = [];
             this.state.caja.fechaActual = this.getTodayDateString();
-            this.saveState();
+            await this.saveState(); // <-- Cambio aquí
             this.renderCajaTab();
             this.closeModal();
             this.showToast('Caja iniciada con éxito.');
@@ -1578,7 +1824,7 @@ initUserMenu() {
         };
         document.getElementById('tx-monto').focus();
     },
-    addTransaccionCaja(tipo, monto, descripcion) {
+    async addTransaccionCaja(tipo, monto, descripcion) {
         this.state.caja.transacciones.push({
             id: this.uid(),
             tipo: tipo,
@@ -1586,15 +1832,15 @@ initUserMenu() {
             descripcion: descripcion,
             timestamp: new Date().toISOString()
         });
-        this.saveState();
+        await this.saveState(); // <-- Cambio aquí
         if (this.state.activeTab === 'caja') {
             this.renderCajaTab();
         }
     },
     deleteTransaccionCaja(txId) {
-        this.showConfirmationModal('¿Eliminar este movimiento de la caja?', () => {
+    this.showConfirmationModal('¿Eliminar...?', async () => { // <-- Cambio aquí
             this.state.caja.transacciones = this.state.caja.transacciones.filter(tx => tx.id !== txId);
-            this.saveState();
+            await this.saveState(); // <-- Cambio aquí
             this.renderCajaTab();
             this.showToast('Movimiento eliminado.', 'error');
         });
@@ -1619,7 +1865,7 @@ initUserMenu() {
         this.showModal(content);
     },
 
-    confirmCierreCaja() {
+    async confirmCierreCaja() {
         const resumenCierre = {
             id: this.uid(),
             fecha: this.state.caja.fechaActual,
@@ -1635,7 +1881,7 @@ initUserMenu() {
             fechaActual: null
         };
 
-        this.saveState();
+        await this.saveState();
         this.closeModal();
         this.renderCajaTab();
         this.showToast('La caja ha sido cerrada y archivada con éxito.');
@@ -1691,12 +1937,12 @@ initUserMenu() {
         const pago_final_al_trabajador = total_fichas + pago_base_turno - total_prestamos;
         return { total_ingresos, total_fichas, total_prestamos, pago_base_turno, pago_final_al_trabajador };
     },
-    startShift(workerId) { 
+    async startShift(workerId) {
         if(this.state.trabajadores.length === 0){ this.showToast('Primero debe registrar trabajadores en Configuración.', 'error'); return; } 
         const trab = this.state.trabajadores.find(t => t.id === workerId); 
         if(this.state.turnosActivos.some(t => t.trabajador.id === workerId)) { this.showToast('Este trabajador ya tiene un turno activo.', 'error'); return; } 
         this.state.turnosActivos.push({ id: this.uid(), trabajador: trab, fecha_inicio: new Date().toISOString(), transacciones: [], liquidado: false, pago_base_turno: 0 }); 
-        this.saveState(); 
+        await this.saveState();
         if (this.state.currentUserType === 'admin') {
             this.viewWorkerDetail(workerId);
         } else {
@@ -1706,19 +1952,19 @@ initUserMenu() {
     endShift(turnoId) {
         const turno = this.state.turnosActivos.find(t => t.id === turnoId);
         if (!turno.liquidado) { this.showToast('Debe liquidar el turno antes de finalizarlo.', 'error'); return; }
-        this.showConfirmationModal("¿Finalizar y archivar este turno liquidado?", () => {
+        this.showConfirmationModal("¿Finalizar y archivar este turno liquidado?", async () => { // <-- AÑADIR ASYNC
             const idx = this.state.turnosActivos.findIndex(t => t.id === turnoId);
             const turnoFinalizado = this.state.turnosActivos[idx];
             turnoFinalizado.fecha_fin = new Date().toISOString();
             turnoFinalizado.summary = this.calculateSummary(turnoFinalizado);
             this.state.historial.push(turnoFinalizado);
             this.state.turnosActivos.splice(idx, 1);
-            this.saveState();
+            await this.saveState(); // <-- AÑADIR AWAIT
             this.viewTurnoDashboard();
             this.showToast('Turno archivado con éxito');
         });
     },
-    confirmDispatch() { 
+    async confirmDispatch() {
         const cant = parseInt(document.getElementById('input-cantidad').value); 
         const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId); 
         const prod = this.state.productos.find(p => p.id === this._tempData.productoId); 
@@ -1727,20 +1973,20 @@ initUserMenu() {
         prod.stock_actual -= cant; 
         turno.transacciones.push({ tipo: 'DESPACHO', productoId: this._tempData.productoId, cantidad: cant, timestamp: new Date().toISOString() }); 
         this.closeModal(); 
-        this.saveState(); 
+        await this.saveState();
         this.renderUI(); 
     },
-    confirmLoan() { 
+    async confirmLoan() {
         const monto = parseFloat(document.getElementById('input-monto').value); 
         const desc = document.getElementById('input-descripcion').value.trim(); 
         if (!monto || monto <= 0 || !desc) { this.showToast("Todos los campos son obligatorios.", 'error'); return; } 
         const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId); 
         turno.transacciones.push({ tipo: 'PRESTAMO', monto: monto, descripcion: desc, timestamp: new Date().toISOString() }); 
         this.closeModal(); 
-        this.saveState(); 
+        await this.saveState();
         this.renderUI(); 
     },
-    confirmLiquidacion() {
+    async confirmLiquidacion() {
         const monto = parseFloat(document.getElementById('input-pago-base').value);
         if (isNaN(monto) || monto < 0) { this.showToast("Debe ingresar un pago base válido (puede ser 0).", 'error'); return; }
         const turno = this.state.turnosActivos.find(t => t.id === this._tempData.turnoId);
@@ -1752,7 +1998,7 @@ initUserMenu() {
         turno.pago_base_turno = monto;
         turno.liquidado = true;
         this.closeModal();
-        this.saveState();
+        await this.saveState();
         this.renderUI();
         this.showToast('Turno liquidado y movimientos registrados en caja.');
     },
@@ -1830,7 +2076,7 @@ renderInventario() { this.renderBodega(); this.renderBarra(); },
     },
     renderBarra() { const c = document.getElementById('barra-table-container'); const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v); if (this.state.productos.length === 0) { c.innerHTML = `<div class="empty-state">No hay productos definidos para la venta.</div>`; return; } let tbl = `<table class="management-table"><thead><tr><th>Producto en Barra</th><th>Stock Actual</th><th>P. Venta</th><th>P. Costo Unit.</th><th>Valor Inventario</th></tr></thead><tbody>`; this.state.productos.forEach(p => { const v = p.stock_actual * p.precio_costo_unitario; tbl += `<tr><td data-label="Producto">${p.nombre}</td><td data-label="Stock" style="font-weight:bold;">${p.stock_actual}</td><td data-label="P. Venta">${cur(p.precio_venta)}</td><td data-label="P. Costo">${cur(p.precio_costo_unitario)}</td><td data-label="Valor">${cur(v)}</td></tr>`; }); c.innerHTML = tbl + '</tbody></table>'; },
     deletePurchaseRecord(id) {
-        this.showConfirmationModal('¿Eliminar este registro de compra permanentemente? Esta acción es irreversible.', () => {
+        this.showConfirmationModal('¿Eliminar este registro de compra permanentemente?', async () => { // <-- AÑADIR ASYNC
             let found = false;
             let initialLength = this.state.lotes_bodega.length;
             this.state.lotes_bodega = this.state.lotes_bodega.filter(l => l.id !== id);
@@ -1843,7 +2089,7 @@ renderInventario() { this.renderBodega(); this.renderBarra(); },
             }
 
             if(found) {
-                this.saveState();
+                await this.saveState();
                 this.renderInventario();
                 this.closeModal();
                 this.showToast('Registro de compra eliminado.', 'error');
@@ -1898,7 +2144,7 @@ renderInventario() { this.renderBodega(); this.renderBarra(); },
         document.getElementById('traslado-unidades').value = lote.unidades_disponibles;
         document.getElementById('traslado-empaques').dispatchEvent(new Event('input'));
     },
-    confirmTraslado() {
+    async confirmTraslado() {
         const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
         const producto = this.state.productos.find(p => p.id === lote.id_producto_asociado);
         const numEmpaques = parseInt(document.getElementById('traslado-empaques').value) || 0;
@@ -1922,7 +2168,9 @@ renderInventario() { this.renderBodega(); this.renderBarra(); },
         } else {
             this.showToast(`${totalATrasladar} unidades trasladadas a la barra.`);
         }
-        this.saveState(); this.renderInventario(); this.closeModal();
+        await this.saveState();
+      this.renderInventario();
+      this.closeModal();
     },
     renderHistorialTab() {
         this.renderHistorialTurnos();
@@ -1977,7 +2225,7 @@ renderInventario() { this.renderBodega(); this.renderBarra(); },
             </details>`;
         }).join('');
     },
-    deleteHistoryEntry(turnoId) { this.showConfirmationModal('¿Está seguro de que desea eliminar este turno del historial? Esta acción es permanente y no se puede deshacer.', () => { const index = this.state.historial.findIndex(t => t.id === turnoId); if (index > -1) { this.state.historial.splice(index, 1); this.saveState(); this.renderHistorialTab(); this.showToast('Turno eliminado del historial.', 'error'); } }); },
+    deleteHistoryEntry(turnoId) { this.showConfirmationModal('¿Está seguro de que desea eliminar este turno del historial? Esta acción es permanente y no se puede deshacer.', async () => { const index = this.state.historial.findIndex(t => t.id === turnoId); if (index > -1) { this.state.historial.splice(index, 1); await this.saveState(); this.renderHistorialTab(); this.showToast('Turno eliminado del historial.', 'error'); } }); },
     renderReportUI() { 
         document.getElementById('report-container').innerHTML = '<p style="color:var(--secondary-color)">Seleccione un rango de fechas y horas y presione "Generar Reporte".</p>'; 
         document.getElementById('report-export-buttons').style.display = 'none';
@@ -2155,7 +2403,7 @@ renderInventario() { this.renderBodega(); this.renderBarra(); },
      document.getElementById('purchase-form').onsubmit = (e) => { e.preventDefault(); this.savePurchase(); };
 },
 
-savePurchase() {
+async savePurchase() {
     const purchaseName = document.getElementById('purchase-nombre').value.trim();
     const proveedorId = document.getElementById('purchase-proveedor').value;
     const totalAmountPaid = parseFloat(document.getElementById('purchase-monto-pagado').value) || 0;
@@ -2253,7 +2501,7 @@ savePurchase() {
         this.addTransaccionCaja('egreso', totalAmountPaid, `Pago compra '${purchaseName}'`);
     }
 
-    this.saveState();
+    await this.saveState();
     this.renderInventario();
     this.closeModal();
     const toastMessage = `Compra con ${newLotesData.length} producto(s) registrada. 
@@ -2382,7 +2630,7 @@ _updatePurchaseSummary() {
         document.getElementById('w-form').onsubmit = (e) => { e.preventDefault(); this.saveWorker(id); }; 
         document.getElementById('w-name').focus(); 
     },
-    saveWorker(id) { 
+    async saveWorker(id) {
         const name = document.getElementById('w-name').value.trim();
         const role = document.getElementById('w-role').value.trim();
         const loginCode = document.getElementById('w-code').value.trim();
@@ -2400,10 +2648,10 @@ _updatePurchaseSummary() {
             this.state.trabajadores.push({id: this.uid(), nombre: name, rol: role, loginCode: loginCode}); 
             this.showToast('Trabajador creado con éxito'); 
         } 
-        this.saveState(); 
+        await this.saveState(); 
         this.showWorkerManagementModal(); 
     },
-    deleteWorker(id) { this.showConfirmationModal('¿Eliminar a este trabajador? No se podrá deshacer.', () => { this.state.trabajadores = this.state.trabajadores.filter(t => t.id !== id); this.saveState(); this.showWorkerManagementModal(); this.showToast('Trabajador eliminado', 'error'); }); },
+    deleteWorker(id) { this.showConfirmationModal('¿Eliminar a este trabajador? No se podrá deshacer.', async () => { this.state.trabajadores = this.state.trabajadores.filter(t => t.id !== id); await this.saveState(); this.showWorkerManagementModal(); this.showToast('Trabajador eliminado', 'error'); }); },
     showProductManagementModal() {
         const c = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
         let listHTML = this.state.productos.map(p => {
@@ -2441,8 +2689,8 @@ _updatePurchaseSummary() {
         this.showModal(`<h2>Plantillas de Productos Vendibles</h2><div id="product-list-container">${listHTML}</div><div class="actions" style="justify-content:space-between; margin-top:1.5rem;"><button class="btn btn-secondary" onclick="app.closeModal()">Cerrar</button><button class="btn btn-primary" onclick="app.showProductModal()">+ Añadir Producto</button></div>`, 'large');
     },
     showProductModal(id=null) { const p = id ? this.state.productos.find(pr=>pr.id===id) : null; this.showModal(`<h2>${p ? 'Editar':'Añadir'} Producto</h2><form id="p-form"><div class="form-group"><label>Nombre</label><input id="p-name" value="${p ? p.nombre : ''}" required></div><div class="form-group"><label>Precio Venta</label><input id="p-venta" type="number" value="${p ? p.precio_venta : ''}" required></div><div class="form-group"><label>Costo Unitario</label><input id="p-costo" type="number" value="${p ? p.precio_costo_unitario : ''}" required></div><div class="form-group"><label>Valor Ficha</label><input id="p-ficha" type="number" value="${p ? p.valor_ficha : ''}" required></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn btn-secondary" type="button" onclick="app.showProductManagementModal()">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form>`); document.getElementById('p-form').onsubmit = (e) => { e.preventDefault(); this.saveProduct(id); }; document.getElementById('p-name').focus(); },
-    saveProduct(id) { const n=document.getElementById('p-name').value.trim(), v=parseFloat(document.getElementById('p-venta').value), c=parseFloat(document.getElementById('p-costo').value), f=parseFloat(document.getElementById('p-ficha').value); if(!n || isNaN(v) || isNaN(c) || isNaN(f)) { this.showToast("Datos inválidos. Todos los campos son obligatorios.", "error"); return; } const data = {nombre:n, precio_venta:v, precio_costo_unitario:c, valor_ficha:f}; if (id) { Object.assign(this.state.productos.find(p=>p.id===id), data); this.showToast('Producto actualizado'); } else { this.state.productos.push({...data, id: this.uid(), stock_actual: 0}); this.showToast('Producto creado con éxito'); } this.saveState(); this.showProductManagementModal(); },
-    deleteProduct(id) { this.showConfirmationModal('¿Eliminar esta plantilla de producto? Esto podría afectar lotes y reportes antiguos.', () => { this.state.productos = this.state.productos.filter(p => p.id !== id); this.saveState(); this.showProductManagementModal(); this.showToast('Producto eliminado', 'error'); }); },
+    async saveProduct(id) { const n=document.getElementById('p-name').value.trim(), v=parseFloat(document.getElementById('p-venta').value), c=parseFloat(document.getElementById('p-costo').value), f=parseFloat(document.getElementById('p-ficha').value); if(!n || isNaN(v) || isNaN(c) || isNaN(f)) { this.showToast("Datos inválidos. Todos los campos son obligatorios.", "error"); return; } const data = {nombre:n, precio_venta:v, precio_costo_unitario:c, valor_ficha:f}; if (id) { Object.assign(this.state.productos.find(p=>p.id===id), data); this.showToast('Producto actualizado'); } else { this.state.productos.push({...data, id: this.uid(), stock_actual: 0}); this.showToast('Producto creado con éxito'); } await this.saveState(); this.showProductManagementModal(); },
+    deleteProduct(id) { this.showConfirmationModal('¿Eliminar esta plantilla de producto? Esto podría afectar lotes y reportes antiguos.', async () => { this.state.productos = this.state.productos.filter(p => p.id !== id); await this.saveState(); this.showProductManagementModal(); this.showToast('Producto eliminado', 'error'); }); },
     showLoanModal: function(turnoId) { this._tempData = { turnoId }; this.showModal(`<h2>Registrar Préstamo</h2><form id="loan-form"><div class="form-group"><label>Monto</label><input type="number" id="input-monto" min="1" required></div><div class="form-group"><label>Descripción</label><textarea id="input-descripcion" rows="3" required></textarea></div><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar</button></div></form>`); document.getElementById('loan-form').onsubmit = (e) => { e.preventDefault(); this.confirmLoan(); }; document.getElementById('input-monto').focus(); },
 
     showSupplierManagementModal() {
@@ -2492,7 +2740,7 @@ _updatePurchaseSummary() {
         document.getElementById('s-form').onsubmit = (e) => { e.preventDefault(); this.saveSupplier(id); };
         document.getElementById('s-name').focus();
     },
-    saveSupplier(id) {
+    async saveSupplier(id) {
         const nombre = document.getElementById('s-name').value.trim();
         if (!nombre) { this.showToast('El nombre es obligatorio.', 'error'); return; }
         const data = {
@@ -2507,13 +2755,13 @@ _updatePurchaseSummary() {
             this.state.proveedores.push({ ...data, id: this.uid() });
             this.showToast('Proveedor creado con éxito');
         }
-        this.saveState();
+        await this.saveState();
         this.showSupplierManagementModal();
     },
     deleteSupplier(id) {
-        this.showConfirmationModal('¿Eliminar este proveedor? Las compras asociadas no se eliminarán.', () => {
+        this.showConfirmationModal('¿Eliminar este proveedor? Las compras asociadas no se eliminarán.', async () => {
             this.state.proveedores = this.state.proveedores.filter(s => s.id !== id);
-            this.saveState();
+            await this.saveState();
             this.showSupplierManagementModal();
             this.showToast('Proveedor eliminado', 'error');
         });
@@ -2577,7 +2825,7 @@ _updatePurchaseSummary() {
             </form>`);
         document.getElementById('payment-form').onsubmit = (e) => { e.preventDefault(); this.confirmPayment(); };
     },
-    confirmPayment() {
+    async confirmPayment() {
         const lote = this.state.lotes_bodega.find(l => l.id === this._tempData.loteId);
         const monto = parseFloat(document.getElementById('payment-amount').value);
 
@@ -2597,7 +2845,7 @@ _updatePurchaseSummary() {
         });
 
         this.addTransaccionCaja('egreso', monto, `Abono a compra '${lote.nombre}'`);
-        this.saveState();
+        await this.saveState();
         this.showToast('Abono registrado con éxito.');
         this.renderInventario();
         this.showLoteDetailModal(lote.id);
