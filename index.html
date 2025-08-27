@@ -1122,39 +1122,11 @@ initUserMenu() {
     },
 
     init() {
-    this.state = this.getInitialState();
-    this.initTheme();
-    this.attachAuthEventListeners();
-    this.initHeaderDashboard();
-
-    // --- INICIO DE LA NUEVA LÓGICA DE FIREBASE ---
-    // auth.onAuthStateChanged es el "oyente" que se ejecuta al cargar la página y cada vez que alguien inicia o cierra sesión.
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            // Si Firebase nos dice que hay un 'user'... significa que alguien está conectado.
-            console.log("Usuario conectado:", user.uid);
-
-            // Llamamos a la función para cargar sus datos desde la base de datos Firestore usando su ID único (uid).
-            await this.loadData(user.uid); 
-
-            // Actualizamos el estado interno de la app.
-            this.state.loggedIn = true;
-            this.state.currentUserType = 'admin'; // Asumimos que es administrador por ahora.
-
-            // Finalmente, hacemos la transición para mostrar la interfaz principal de la aplicación.
-            this.transitionToApp(); 
-        } else {
-            // Si Firebase nos dice que 'user' es nulo... significa que nadie está conectado.
-            console.log("No hay usuario conectado.");
-
-            // Reseteamos el estado de la app a sus valores iniciales.
-            this.state = this.getInitialState(); 
-
-            // Ejecutamos la animación de carga y LUEGO mostramos la pantalla de autenticación.
-            this.handlePreloader();
-        }
-    });
-    // --- FIN DE LA NUEVA LÓGICA ---
+        this.state = this.getInitialState();
+        this.initTheme();
+        this.attachAuthEventListeners();
+        this.handlePreloader();
+        this.initHeaderDashboard();
         
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
@@ -1167,54 +1139,22 @@ initUserMenu() {
         document.getElementById('report-end-date').value = toLocalISOString(todayEnd);
     },
 
-    async saveState() {
-    // Verificamos que haya un usuario de Firebase conectado.
-    if (!auth.currentUser) {
-        console.error("Intento de guardar sin un usuario conectado.");
-        return;
-    }
+    saveState() {
+        if (!this.state.loggedIn || !this.state.user) return;
+        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        const accountIndex = accounts.findIndex(acc => acc.user.email === this.state.user.email);
+        
+        const stateToSave = { ...this.state };
+        delete stateToSave.currentUserType;
+        delete stateToSave.currentWorker;
 
-    const uid = auth.currentUser.uid; // Obtenemos el ID único del usuario.
-
-    // Preparamos los datos a guardar, quitando datos temporales de la UI.
-    const stateToSave = { ...this.state };
-    delete stateToSave.loggedIn;
-    delete stateToSave.currentUserType;
-    delete stateToSave.currentWorker;
-
-    try {
-        // Guardamos todo el estado en el documento del usuario en Firestore.
-        // Si el documento no existe, .set() lo crea. Si existe, lo sobrescribe.
-        await db.collection('users').doc(uid).set(stateToSave);
-        console.log("Estado guardado en Firestore.");
-    } catch (error) {
-        console.error("Error al guardar el estado:", error);
-    }
-},
-      // Pega este bloque completo después de la función saveState()
-async loadData(uid) {
-    try {
-        // Creamos una referencia al documento del usuario usando su UID.
-        const docRef = db.collection('users').doc(uid);
-        // Le pedimos a Firestore que nos traiga los datos de ese documento.
-        const docSnap = await docRef.get();
-
-        if (docSnap.exists()) {
-            // Si el documento existe en la base de datos...
-            console.log("Datos cargados desde Firestore.");
-            const loadedState = docSnap.data();
-            // ...cargamos sus datos en el estado de nuestra aplicación.
-            this.state = { ...this.getInitialState(), ...loadedState };
+        if (accountIndex > -1) {
+            accounts[accountIndex] = stateToSave;
         } else {
-            // Esto es un caso raro, pero podría pasar si el registro falla a la mitad.
-            console.warn("No se encontró documento para el usuario, se usará estado inicial.");
-            this.state = this.getInitialState();
+            accounts.push(stateToSave);
         }
-    } catch (error) {
-        console.error("Error al cargar los datos:", error);
-        this.showToast('No se pudieron cargar tus datos.', 'error');
-    }
-},
+        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
+    },
 
     uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
 
@@ -1345,55 +1285,95 @@ async loadData(uid) {
         reader.readAsDataURL(file);
     },
 
-    async selectCategory(category) {
-    // Verificamos que los datos del paso anterior aún existan.
-    if (!this._tempData.uid || !this._tempData.newAccount) {
-        console.error("Faltan datos temporales para finalizar el registro.");
-        this.showToast('Ha ocurrido un error, por favor intenta de nuevo.', 'error');
-        return;
-    }
+    registerUser() {
+        const fullname = document.getElementById('reg-fullname').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const barname = document.getElementById('reg-barname').value.trim();
+        const role = document.getElementById('reg-role').value;
+        const errorEl = document.getElementById('register-error');
+        
+        if (!fullname || !email || !password || !barname || !role) {
+            errorEl.textContent = 'Por favor, completa todos los campos obligatorios.';
+            return;
+        }
+        
+        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        if (accounts.some(acc => acc.user.email === email)) {
+            errorEl.textContent = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+            return;
+        }
+
+        this._tempData.newAccount = this.getInitialState();
+        this._tempData.newAccount.user = {
+            id: this.uid(),
+            fullname,
+            phone: document.getElementById('reg-phone').value.trim(),
+            email,
+            password: btoa(password),
+            role,
+        };
+        this._tempData.newAccount.business = {
+            id: this.uid(),
+            name: barname,
+            logoDataUrl: this._tempData.logoDataUrl || null,
+            category: null
+        };
+
+        document.getElementById('register-modal').style.display = 'none';
+        this.showCategoryModal();
+    },
     
-    // Añadimos la categoría elegida a los datos del negocio.
+    showCategoryModal() {
+        document.getElementById('category-modal').style.display = 'flex';
+    },
+
+    selectCategory(category) {
     this._tempData.newAccount.business.category = category;
-    
+    document.getElementById('category-modal').style.display = 'none';
+
+    // Lógica que guarda la cuenta y transiciona a la app.
     try {
-        // (NUEVO) ¡Aquí ocurre la magia!
-        // Le decimos a Firestore: "en la colección 'users', crea un nuevo documento
-        // cuyo nombre (ID) sea el UID de nuestro usuario, y guarda dentro
-        // todo el objeto 'newAccount' que preparamos".
-        await db.collection('users').doc(this._tempData.uid).set(this._tempData.newAccount);
+        let accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        accounts.push(this._tempData.newAccount);
+        localStorage.setItem('InventaProAccounts', JSON.stringify(accounts));
 
-        console.log("Datos del usuario guardados en Firestore.");
-        
-        // Limpiamos los datos temporales, ya no los necesitamos.
-        this._tempData = {}; 
-        
-        // Cerramos la ventana modal. El listener 'onAuthStateChanged' que configuramos en el Paso 1
-        // detectará que hay un nuevo usuario autenticado y se encargará de mostrar la app.
-        document.getElementById('category-modal').style.display = 'none';
+        this.state = this._tempData.newAccount;
+        this.state.loggedIn = true;
+        this.state.currentUserType = 'admin';
+        this._tempData = {};
 
-    } catch (error) {
-        console.error("Error al guardar en Firestore:", error);
-        this.showToast('Hubo un error finalizando tu registro.', 'error');
+        this.showToast('¡Bienvenido! Tu cuenta ha sido activada.', 'success');
+        this.transitionToApp();
+    } catch (e) {
+        console.error("Error al guardar la nueva cuenta:", e);
+        this.showToast('Hubo un error al crear tu cuenta.', 'error');
+        this.showAuthHome();
     }
 },
     
-    async login() {
-    const email = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const errorEl = document.getElementById('login-error');
-    errorEl.textContent = '';
+    login() {
+        const email = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorEl = document.getElementById('login-error');
 
-    try {
-        // Le pedimos a Firebase que intente iniciar sesión con las credenciales.
-        await auth.signInWithEmailAndPassword(email, password);
-        // Si tiene éxito, el listener 'onAuthStateChanged' que ya configuramos
-        // se activará y hará todo el trabajo de cargar datos y mostrar la app.
-    } catch (error) {
-        console.error("Error de inicio de sesión:", error);
-        errorEl.textContent = "Correo o contraseña incorrectos.";
-    }
-},
+        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        const foundAccount = accounts.find(acc => acc.user.email === email);
+
+        if (!foundAccount) {
+            errorEl.textContent = 'No se encontró ninguna cuenta con ese correo.';
+            return;
+        }
+        
+        if (foundAccount.user.password === btoa(password)) {
+            this.state = foundAccount;
+            this.state.loggedIn = true;
+            this.state.currentUserType = 'admin';
+            this.transitionToApp();
+        } else {
+            errorEl.textContent = 'Correo o contraseña incorrectos.';
+        }
+    },
 
     loginWorker() {
         const businessEmail = document.getElementById('business-select').value;
@@ -1427,13 +1407,11 @@ async loadData(uid) {
     },
 
     logout() {
-    this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => {
-        // Le decimos a Firebase que cierre la sesión activa.
-        auth.signOut();
-        // El listener 'onAuthStateChanged' detectará esto y mostrará
-        // la pantalla de login automáticamente, sin recargar la página.
-    });
-},
+        this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => {
+            this.state = this.getInitialState();
+            window.location.reload();
+        });
+    },
     
     transitionToApp() { 
         document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
