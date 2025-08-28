@@ -59,19 +59,25 @@ const firebaseConfig = {
 } catch (_) {}
 
 
-    // Allowlist: allowed_users/{uid}.active == true
-    async function isAllowed(uid) { 
-      try { 
-        const doc = await db.doc(`allowed_users/${uid}`).get();
-        return !!(doc.exists && doc.get('active') === true);
-      } catch (e) { return false; }
-    }
+   // Allowlist: allowed_users/{uid}.active == true
+async function isAllowed(user) {
+  try {
+    const uid = user && user.uid;
+    if (!uid) return false;
+    const doc = await db.doc(`allowed_users/${uid}`).get();
+    return !!(doc.exists && doc.get('active') === true);
+  } catch (e) {
+    console.warn('Allowlist check warn:', e);
+    return false;
+  }
+}
+
 
     auth.onAuthStateChanged(async (user) => { 
       const msg = document.getElementById('msg');
       const ok = document.getElementById('ok');
       if (user) { 
-        const allowed = await isAllowed(user.uid);
+        const allowed = await isAllowed(user);
         if (!allowed) { 
           msg.textContent = 'Tu usuario no está autorizado.'; 
           try { await auth.signOut(); } catch(_ ) {}
@@ -93,7 +99,7 @@ const firebaseConfig = {
       try { 
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.signInWithEmailAndPassword(email, pass);
-        const allowed = await isAllowed(cred.user.uid);
+        const allowed = await isAllowed(cred.user);
         if (!allowed) { 
           msg.textContent = 'No autorizado. Consulta con el administrador.';
           await auth.signOut(); 
@@ -101,6 +107,7 @@ const firebaseConfig = {
         }
         ok.textContent = 'Acceso concedido. Redirigiendo…';
         window.location.href = 'app.html';
+        
       } catch (err) {
         msg.textContent = toUserError(err);
       }
