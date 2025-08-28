@@ -1,142 +1,121 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Acceso | SEB 365 PRO</title>
-  <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#0b0f1a;color:#eef;}
-    .card{width:100%;max-width:380px;background:#121828;border:1px solid #1d2540;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.35);padding:28px}
-    h1{font-size:1.25rem;margin:0 0 12px}
-    .muted{opacity:.8;margin-top:4px;font-size:.9rem}
-    label{display:block;font-size:.85rem;margin:.5rem 0 .25rem}
-    input{width:100%;padding:.7rem .8rem;border-radius:10px;border:1px solid #2b3558;background:#0e1324;color:#eef;outline:none}
-    button{width:100%;margin-top:14px;padding:.8rem;border-radius:12px;border:0;cursor:pointer;font-weight:600}
-    .primary{background:#4f7cff;color:#fff}
-    .error{color:#ff6b6b;margin-top:10px;min-height:20px}
-    .ok{color:#2ad3a7;margin-top:10px;min-height:20px}
-    .foot{margin-top:12px;font-size:.8rem;opacity:.8;text-align:center}
-    .brand{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-    .dot{width:10px;height:10px;background:#2ad3a7;border-radius:50%}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockFlow Neon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
 </head>
 <body>
-  <div class="card">
-    <div class="brand"><div class="dot"></div><strong>SEB 360 PRO</strong></div>
-    <h1>Acceder</h1>
-    <div class="muted">Solo usuarios autorizados.</div>
-    <form id="auth-form">
-      <label for="email">Correo electrónico</label>
-      <input id="email" type="email" autocomplete="username" required />
-      <label for="password">Contraseña</label>
-      <input id="password" type="password" autocomplete="current-password" required />
-      <button class="primary" id="btn-login" type="submit">Ingresar</button>
-      <div id="msg" class="error"></div>
-      <div id="ok" class="ok"></div>
-      <div class="foot">¿Problemas? Contacta al administrador.</div>
-    </form>
-  </div>
 
-  <!-- Firebase SDKs (compat 9.6.1, tal como usas) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <!-- Firestore compat se puede dejar cargado; la allowlist usa REST para evitar errores de transporte -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <div id="loader" class="loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
 
-  <script>
-  // --- TU CONFIG ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
-    authDomain: "seb360-pro.firebaseapp.com",
-    projectId: "seb360-pro",
-    storageBucket: "seb360-pro.firebasestorage.app",
-    messagingSenderId: "750401346580",
-    appId: "1:750401346580:web:a682fd6ae09292ff589b01"
-  };
+    <div id="toast-container"></div>
 
-  // Init
-  if (typeof firebase !== 'undefined') {
-    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
-  }
-  const auth = firebase.auth();
-  const db   = firebase.firestore(); // tu app.html lo usará; aquí NO llamamos db.settings() para evitar warnings
+    <!-- Contenedor de Autenticación -->
+    <div id="auth-container" class="view">
+        <div class="auth-box">
+            <h1>StockFlow</h1>
+            <p class="neon-text-secondary">Inventario con energía Neon</p>
+            <div id="login-view">
+                <h2>Iniciar Sesión</h2>
+                <form id="login-form">
+                    <input type="email" id="login-email" placeholder="Correo electrónico" required>
+                    <input type="password" id="login-password" placeholder="Contraseña" required>
+                    <button type="submit">Ingresar</button>
+                </form>
+                <button id="google-login-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    <span>Entrar con Google</span>
+                </button>
+                <p>¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
+            </div>
+            <div id="register-view" style="display: none;">
+                <h2>Registro</h2>
+                <form id="register-form">
+                    <input type="text" id="register-name" placeholder="Nombre completo" required>
+                    <input type="email" id="register-email" placeholder="Correo electrónico" required>
+                    <input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required>
+                    <button type="submit">Crear Cuenta</button>
+                </form>
+                <p>¿Ya tienes cuenta? <a href="#" id="show-login-link">Inicia sesión</a></p>
+            </div>
+        </div>
+    </div>
 
-  // ====== ALLOWLIST POR UID usando REST (evita WebChannel/unavailable) ======
-  const PROJECT_ID = firebase.app().options.projectId;
+    <!-- Contenedor Principal de la App -->
+    <div id="app-container" class="view" style="display: none;">
+        <header>
+            <button id="menu-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h1 class="neon-text-main">StockFlow</h1>
+            <div class="user-info">
+                <span id="user-email"></span>
+                <button id="logout-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </div>
+        </header>
+        <main>
+            <nav id="main-nav">
+                <a href="#" class="nav-link active" data-view="dashboard-view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M12 8V4M6 20v-4M18 20v-2M6 12V4M18 14V4"/></svg>
+                    <span>Reportes</span>
+                </a>
+                <a href="#" class="nav-link" data-view="shifts-view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Turnos y Ventas</span>
+                </a>
+                <a href="#" class="nav-link" data-view="inventory-view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                    <span>Inventario</span>
+                </a>
+                <a href="#" class="nav-link" data-view="cashflow-view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    <span>Flujo de Caja</span>
+                </a>
+                <a href="#" class="nav-link" data-view="products-view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    <span>Productos</span>
+                </a>
+                <a href="#" class="nav-link" data-view="providers-view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                    <span>Proveedores</span>
+                </a>
+                <a href="#" class="nav-link admin-only" data-view="workers-view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Trabajadores</span>
+                </a>
+            </nav>
+            <div id="content">
+                <!-- VISTAS DE CONTENIDO (Se inyectan aquí) -->
+            </div>
+        </main>
+    </div>
 
-  async function isAllowed(user) {
-  try {
-    const uid   = user && user.uid;
-    const email = (user && user.email ? user.email : '').toLowerCase();
+    <script>
+        window.__FIREBASE_CONFIG__ = {
+            apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
+            authDomain: "seb360-pro.firebaseapp.com",
+            projectId: "seb360-pro",
+            storageBucket: "seb360-pro.appspot.com",
+            messagingSenderId: "750401346580",
+            appId: "1:750401346580:web:a682fd6ae09292ff589b01"
+        };
+    </script>
+    
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    
+    <script type="module" src="app.js"></script>
 
-    // 1) Por UID (tu flujo actual)
-    if (uid) {
-      const byUid = await db.doc(`allowed_users/${uid}`).get();
-      if (byUid.exists && byUid.get('active') === true) return true;
-    }
-    // 2) Por email (nuevo)
-    if (email) {
-      const byEmail = await db.doc(`allowed_emails/${email}`).get();
-      if (byEmail.exists && byEmail.get('active') === true) return true;
-    }
-    return false;
-  } catch (e) {
-    console.warn('Allowlist check warn:', e);
-    return false;
-  }
-}
-
-  // =========================================================================
-
-  auth.onAuthStateChanged(async (user) => {
-    const msg = document.getElementById('msg');
-    const ok  = document.getElementById('ok');
-    if (user) {
-      const allowed = await isAllowed(user);
-      if (!allowed) {
-        msg.textContent = 'Tu usuario no está autorizado.';
-        try { await auth.signOut(); } catch(_) {}
-        return;
-      }
-      try { localStorage.setItem('inv_user_type','admin'); } catch(_) {}
-      ok.textContent = 'Acceso concedido. Redirigiendo…';
-      window.location.href = 'app.html'; // asegúrate de que exista con ese nombre exacto
-    }
-  });
-
-  document.getElementById('auth-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById('msg');
-    const ok  = document.getElementById('ok');
-    msg.textContent = ''; ok.textContent = '';
-
-    const email = document.getElementById('email').value.trim();
-    const pass  = document.getElementById('password').value;
-
-    try {
-      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-      const cred = await auth.signInWithEmailAndPassword(email, pass);
-      const allowed = await isAllowed(cred.user);
-      if (!allowed) {
-        msg.textContent = 'No autorizado. Consulta con el administrador.';
-        await auth.signOut();
-        return;
-      }
-      ok.textContent = 'Acceso concedido. Redirigiendo…';
-      window.location.href = 'app.html';
-    } catch (err) {
-      msg.textContent = toUserError(err);
-    }
-  });
-
-  function toUserError(err) {
-    const code = (err && err.code) || '';
-    if (code.includes('user-not-found')) return 'Usuario no encontrado.';
-    if (code.includes('wrong-password')) return 'Contraseña incorrecta.';
-    if (code.includes('invalid-email')) return 'Correo inválido.';
-    if (code.includes('too-many-requests')) return 'Demasiados intentos, intenta más tarde.';
-    return err && err.message ? err.message : 'Error de acceso.';
-  }
-  </script>
 </body>
 </html>
