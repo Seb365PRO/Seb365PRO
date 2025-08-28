@@ -37,12 +37,14 @@
     </form>
   </div>
 
-  <!-- Firebase SDKs (compat 9.6.1 como ya usas) -->
+  <!-- Firebase SDKs (compat 9.6.1, tal como usas) -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <!-- Firestore compat se puede dejar cargado; la allowlist usa REST para evitar errores de transporte -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
+  // --- TU CONFIG ---
   const firebaseConfig = {
     apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
     authDomain: "seb360-pro.firebaseapp.com",
@@ -52,38 +54,43 @@
     appId: "1:750401346580:web:a682fd6ae09292ff589b01"
   };
 
+  // Init
   if (typeof firebase !== 'undefined') {
     if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
   }
   const auth = firebase.auth();
-  const db   = firebase.firestore();
+  const db   = firebase.firestore(); // tu app.html lo usará; aquí NO llamamos db.settings() para evitar warnings
 
-  /* ===== FIX de transporte Firestore (redes estrictas) =====
-     Deja SOLO esta llamada a settings en el archivo.
-     Fuerza long-polling y desactiva fetch streams para evitar 400/unavailable.
-  */
-  try {
-    db.settings({ experimentalForceLongPolling: true, useFetchStreams: false, merge: true });
-  } catch (_) {
-    try {
-      // Fallback (por si "merge" no existe en 9.6.1)
-      db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
-    } catch (__) {}
-  }
-  /* ======================================================== */
+  // ====== ALLOWLIST POR UID usando REST (evita WebChannel/unavailable) ======
+  const PROJECT_ID = firebase.app().options.projectId;
 
-  // Allowlist por UID: allowed_users/{uid}.active == true
   async function isAllowed(user) {
     try {
-      const uid = user && user.uid;
-      if (!uid) return false;
-      const doc = await db.doc(`allowed_users/${uid}`).get();
-      return !!(doc.exists && doc.get('active') === true);
+      if (!user || !user.uid) return false;
+      // 1) Intento con SDK (rápido). Si la red bloquea, hacemos fallback REST.
+      try {
+        const snap = await db.doc(`allowed_users/${user.uid}`).get();
+        return !!(snap.exists && snap.get('active') === true);
+      } catch (e) {
+        // 2) Fallback REST con idToken (robusto en redes estrictas)
+        const token = await user.getIdToken(/* forceRefresh */ true);
+        const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/allowed_users/${user.uid}`;
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.status === 404) return false;
+        if (!res.ok) return false;
+        const data = await res.json();
+        const active =
+          data && data.fields && data.fields.active && data.fields.active.booleanValue === true;
+        return !!active;
+      }
     } catch (e) {
-      console.warn('Allowlist check warn:', e);
+      console.warn('Allowlist check failed:', e);
       return false;
     }
   }
+  // =========================================================================
 
   auth.onAuthStateChanged(async (user) => {
     const msg = document.getElementById('msg');
@@ -97,7 +104,7 @@
       }
       try { localStorage.setItem('inv_user_type','admin'); } catch(_) {}
       ok.textContent = 'Acceso concedido. Redirigiendo…';
-      window.location.href = 'app.html';  // asegúrate que exista exactamente este archivo
+      window.location.href = 'app.html'; // asegúrate de que exista con ese nombre exacto
     }
   });
 
