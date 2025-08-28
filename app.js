@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const authContainer = document.getElementById('auth-container');
     const appContainer = document.getElementById('app-container');
+    const contentContainer = document.getElementById('content');
     
     // --- LÓGICA DE NAVEGACIÓN Y MENÚ MÓVIL ---
     const mainNav = document.getElementById('main-nav');
@@ -64,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mainNav.addEventListener('click', (e) => {
         const navLink = e.target.closest('.nav-link');
         if (navLink) {
+            e.preventDefault();
             mainNav.classList.remove('open');
             const viewId = navLink.dataset.view;
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -74,13 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE AUTENTICACIÓN ---
     onAuthStateChanged(auth, async (user) => {
-        showLoader(true);
+        // No mostrar loader aquí para una carga optimista
         try {
             if (user) {
                 const userDocRef = doc(collections.users, user.uid);
                 let userDoc = await getDoc(userDocRef);
                 
                 if (!userDoc.exists()) {
+                    showLoader(true); // Mostrar loader solo si se crea un nuevo usuario
                     const usersQuery = query(collection(db, "users"), limit(1));
                     const usersSnapshot = await getDocs(usersQuery);
                     const isFirstUser = usersSnapshot.empty;
@@ -93,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: serverTimestamp(),
                     });
                     userDoc = await getDoc(userDocRef);
+                    showLoader(false);
                 }
                 
                 appState.user = user;
@@ -102,8 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 authContainer.style.display = 'none';
                 appContainer.style.display = 'block';
-                document.querySelector('.nav-link[data-view="dashboard-view"]').click();
+                
                 initRealtimeListeners();
+                document.querySelector('.nav-link[data-view="dashboard-view"]').click();
             } else {
                 appState.unsubscribeListeners.forEach(unsub => unsub());
                 appState.inventoryUnsubscribers.forEach(unsub => unsub());
@@ -114,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error during auth UI handling:", error);
             showToast("Ocurrió un error crítico. Intente recargar.", "error");
-        } finally {
             showLoader(false);
         }
     });
@@ -159,51 +163,110 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('show-register-link').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('login-view').style.display = 'none'; document.getElementById('register-view').style.display = 'block'; });
     document.getElementById('show-login-link').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('register-view').style.display = 'none'; document.getElementById('login-view').style.display = 'block'; });
 
+    // --- DELEGACIÓN DE EVENTOS PARA TODA LA APP ---
+    contentContainer.addEventListener('click', (e) => {
+        const target = e.target;
+        
+        // Botones de edición
+        if (target.matches('.btn-edit[data-id]')) {
+            const id = target.dataset.id;
+            const type = target.dataset.type;
+            if (type === 'product') window.app.editProduct(id);
+            if (type === 'provider') window.app.editProvider(id);
+            if (type === 'worker') window.app.editWorker(id);
+        }
+
+        // Botón de liquidación de proveedor
+        if (target.matches('.btn-settle[data-id]')) {
+            window.app.prepareProviderSettlement(target.dataset.id);
+        }
+        
+        // Botón para pagar liquidación
+        if (target.id === 'settle-provider-btn') {
+            handleProviderSettlement(target.dataset.providerId);
+        }
+
+        // Botón de cerrar turno
+        if (target.id === 'close-shift-btn') {
+            handleCloseShift();
+        }
+
+        // Botón de cargar datos de demo
+        if (target.id === 'seed-data-btn') {
+            handleSeedData();
+        }
+    });
+
+    contentContainer.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formId = e.target.id;
+
+        switch(formId) {
+            case 'product-form': handleProductFormSubmit(e.target); break;
+            case 'provider-form': handleProviderFormSubmit(e.target); break;
+            case 'worker-form': handleWorkerFormSubmit(e.target); break;
+            case 'purchase-form': handlePurchaseFormSubmit(e.target); break;
+            case 'transfer-form': handleTransferFormSubmit(e.target); break;
+            case 'cashflow-form': handleCashflowFormSubmit(e.target); break;
+            case 'open-shift-form': handleOpenShiftFormSubmit(e.target); break;
+            case 'sale-form': handleSaleFormSubmit(e.target); break;
+            case 'loan-form': handleLoanFormSubmit(e.target); break;
+        }
+    });
+
     // --- LÓGICA DE NEGOCIO Y CRUD (en namespace global 'app') ---
     window.app = {};
 
     app.editProduct = (id) => {
         const p = appState.products.find(p => p.id === id);
         if (!p) return;
-        document.getElementById('product-id').value = p.id;
-        document.getElementById('product-nombre').value = p.nombre;
-        document.getElementById('product-precioVenta').value = p.precioVenta;
-        document.getElementById('product-precioCompra').value = p.precioCompra;
-        document.getElementById('product-precioFicha').value = p.precioFicha;
-        document.getElementById('product-unidadesPorCaja').value = p.unidadesPorCaja;
-        document.getElementById('product-unidadesPorCanasta').value = p.unidadesPorCanasta;
-        document.getElementById('product-activo').checked = p.activo;
+        const form = document.getElementById('product-form');
+        form.querySelector('#product-id').value = p.id;
+        form.querySelector('#product-nombre').value = p.nombre;
+        form.querySelector('#product-precioVenta').value = p.precioVenta;
+        form.querySelector('#product-precioCompra').value = p.precioCompra;
+        form.querySelector('#product-precioFicha').value = p.precioFicha;
+        form.querySelector('#product-unidadesPorCaja').value = p.unidadesPorCaja;
+        form.querySelector('#product-unidadesPorCanasta').value = p.unidadesPorCanasta;
+        form.querySelector('#product-activo').checked = p.activo;
+        form.scrollIntoView({ behavior: 'smooth' });
     };
 
     app.editProvider = (id) => { 
         const p = appState.providers.find(p => p.id === id); 
         if (!p) return; 
-        document.getElementById('provider-id').value = p.id; 
-        document.getElementById('provider-nombre').value = p.nombre; 
-        document.getElementById('provider-contacto').value = p.contacto; 
-        document.getElementById('provider-consignacion').checked = p.consignacion; 
+        const form = document.getElementById('provider-form');
+        form.querySelector('#provider-id').value = p.id; 
+        form.querySelector('#provider-nombre').value = p.nombre; 
+        form.querySelector('#provider-contacto').value = p.contacto; 
+        form.querySelector('#provider-consignacion').checked = p.consignacion; 
+        form.scrollIntoView({ behavior: 'smooth' });
     };
     
     app.prepareProviderSettlement = (providerId) => {
         const provider = appState.providers.find(p => p.id === providerId);
+        const detailsDiv = document.getElementById('settlement-details');
         if (!provider || provider.saldoPendiente <= 0) {
             showToast('Este proveedor no tiene saldo pendiente para liquidar.', 'error');
-            document.getElementById('settlement-details').classList.add('hidden');
+            detailsDiv.classList.add('hidden');
             return;
         }
         document.getElementById('settlement-provider-name').textContent = provider.nombre;
         document.getElementById('settlement-provider-balance').textContent = formatCurrency(provider.saldoPendiente);
         document.getElementById('settle-provider-btn').dataset.providerId = providerId;
-        document.getElementById('settlement-details').classList.remove('hidden');
+        detailsDiv.classList.remove('hidden');
+        detailsDiv.scrollIntoView({ behavior: 'smooth' });
     };
 
     app.editWorker = (id) => { 
         const w = appState.workers.find(w => w.id === id); 
         if (!w) return; 
-        document.getElementById('worker-id').value = w.id; 
-        document.getElementById('worker-nombre').value = w.nombre; 
-        document.getElementById('worker-pagoBase').value = w.pagoBase; 
-        document.getElementById('worker-activo').checked = w.activo; 
+        const form = document.getElementById('worker-form');
+        form.querySelector('#worker-id').value = w.id; 
+        form.querySelector('#worker-nombre').value = w.nombre; 
+        form.querySelector('#worker-pagoBase').value = w.pagoBase; 
+        form.querySelector('#worker-activo').checked = w.activo; 
+        form.scrollIntoView({ behavior: 'smooth' });
     };
 
 }); // Fin del DOMContentLoaded
@@ -217,42 +280,34 @@ function initRealtimeListeners() {
     appState.inventoryUnsubscribers = [];
 
     const addListener = (unsub) => appState.unsubscribeListeners.push(unsub);
+    const rerenderCurrentView = () => {
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) renderView(activeLink.dataset.view);
+    };
 
     addListener(onSnapshot(query(collections.products, orderBy('nombre')), snap => { 
         appState.products = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-        const activeView = document.querySelector('.nav-link.active');
-        if (activeView) renderView(activeView.dataset.view);
+        rerenderCurrentView();
         initInventoryListeners();
     }));
 
-    addListener(onSnapshot(query(collections.providers, orderBy('nombre')), snap => { 
-        appState.providers = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-        const activeView = document.querySelector('.nav-link.active');
-        if (activeView) renderView(activeView.dataset.view);
-    }));
-    addListener(onSnapshot(query(collections.workers, orderBy('nombre')), snap => { 
-        appState.workers = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-        const activeView = document.querySelector('.nav-link.active');
-        if (activeView) renderView(activeView.dataset.view);
-    }));
-    addListener(onSnapshot(query(collections.cashflow_entries, orderBy('date', 'desc')), snap => { 
-        appState.cashflow = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-        const activeView = document.querySelector('.nav-link.active');
-        if (activeView) renderView(activeView.dataset.view);
-    }));
+    addListener(onSnapshot(query(collections.providers, orderBy('nombre')), snap => { appState.providers = snap.docs.map(d => ({ id: d.id, ...d.data() })); rerenderCurrentView(); }));
+    addListener(onSnapshot(query(collections.workers, orderBy('nombre')), snap => { appState.workers = snap.docs.map(d => ({ id: d.id, ...d.data() })); rerenderCurrentView(); }));
+    addListener(onSnapshot(query(collections.cashflow_entries, orderBy('date', 'desc')), snap => { appState.cashflow = snap.docs.map(d => ({ id: d.id, ...d.data() })); rerenderCurrentView(); }));
     
     const qShifts = query(collections.shifts, where('estado', '==', 'abierto'));
     addListener(onSnapshot(qShifts, (snapshot) => {
         if (!snapshot.empty) {
             const shiftDoc = snapshot.docs[0];
-            appState.activeShift = { id: shiftDoc.id, ...shiftDoc.data(), sales: [], loans: [] };
-            addListener(onSnapshot(query(collection(db, 'shifts', shiftDoc.id, 'sales')), s => { if(appState.activeShift) appState.activeShift.sales = s.docs.map(d => d.data()); const activeView = document.querySelector('.nav-link.active'); if (activeView) renderView(activeView.dataset.view); }));
-            addListener(onSnapshot(query(collection(db, 'shifts', shiftDoc.id, 'loans')), l => { if(appState.activeShift) appState.activeShift.loans = l.docs.map(d => d.data()); const activeView = document.querySelector('.nav-link.active'); if (activeView) renderView(activeView.dataset.view); }));
+            if (appState.activeShift?.id !== shiftDoc.id) {
+                appState.activeShift = { id: shiftDoc.id, ...shiftDoc.data(), sales: [], loans: [] };
+                addListener(onSnapshot(query(collection(db, 'shifts', shiftDoc.id, 'sales')), s => { if(appState.activeShift) appState.activeShift.sales = s.docs.map(d => d.data()); rerenderCurrentView(); }));
+                addListener(onSnapshot(query(collection(db, 'shifts', shiftDoc.id, 'loans')), l => { if(appState.activeShift) appState.activeShift.loans = l.docs.map(d => d.data()); rerenderCurrentView(); }));
+            }
         } else {
             appState.activeShift = null;
         }
-        const activeView = document.querySelector('.nav-link.active');
-        if (activeView) renderView(activeView.dataset.view);
+        rerenderCurrentView();
     }));
 }
 
@@ -267,8 +322,8 @@ function initInventoryListeners() {
                 if (!appState.inventory[product.id]) appState.inventory[product.id] = {};
                 appState.inventory[product.id][doc.id] = doc.data();
             });
-            const activeView = document.querySelector('.nav-link.active');
-            if (activeView) renderView(activeView.dataset.view);
+            const activeLink = document.querySelector('.nav-link.active');
+            if (activeLink) renderView(activeLink.dataset.view);
         });
         appState.inventoryUnsubscribers.push(unsub);
     });
@@ -290,7 +345,6 @@ const renderView = (viewId) => {
         case 'workers-view': html = getWorkersHTML(); break;
     }
     contentContainer.innerHTML = html;
-    attachEventListeners(viewId);
 };
 
 // --- PLANTILLAS HTML PARA CADA VISTA ---
@@ -302,7 +356,7 @@ function getDashboardHTML() {
     const salesToday = appState.activeShift?.sales.reduce((sum, s) => sum + s.totalVenta, 0) || 0;
     
     return `
-        <div class="content-view active">
+        <div class="content-view">
             <h2>Panel de Control</h2>
             <div class="dashboard-grid">
                 <div class="card"><h3 class="neon-text-secondary">Saldo en Caja</h3><p>${formatCurrency(appState.cashBalance)}</p></div>
@@ -321,11 +375,11 @@ function getProductsHTML() {
             <td>${formatCurrency(p.precioVenta)}</td>
             <td>${formatCurrency(p.precioCompra)}</td>
             <td>${p.activo ? '✅' : '❌'}</td>
-            <td class="actions">${appState.role === 'admin' ? `<button class="btn-edit" onclick="app.editProduct('${p.id}')">Editar</button>` : ''}</td>
+            <td class="actions">${appState.role === 'admin' ? `<button class="btn-edit" data-type="product" data-id="${p.id}">Editar</button>` : ''}</td>
         </tr>`).join('');
     
     return `
-        <div class="content-view active">
+        <div class="content-view">
             <h2>Gestión de Productos</h2>
             <form id="product-form" class="${appState.role === 'admin' ? '' : 'hidden'}">
                 <h3>Añadir / Editar Producto</h3>
@@ -362,7 +416,7 @@ function getInventoryHTML() {
     const providerOptions = appState.providers.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
 
     return `
-        <div class="content-view active">
+        <div class="content-view">
             <h2>Inventario y Compras</h2>
             <div class="form-grid">
                 <form id="purchase-form">
@@ -412,7 +466,7 @@ function getCashflowHTML() {
         </tr>`).join('');
 
     return `
-        <div class="content-view active">
+        <div class="content-view">
             <h2>Flujo de Caja</h2>
             <form id="cashflow-form">
                 <h3>Registrar Movimiento Manual</h3>
@@ -442,11 +496,11 @@ function getProvidersHTML() {
             <td>${p.nombre}</td>
             <td>${p.consignacion ? '✅' : '❌'}</td>
             <td>${formatCurrency(p.saldoPendiente || 0)}</td>
-            <td class="actions">${appState.role === 'admin' ? `<button class="btn-edit" onclick="app.editProvider('${p.id}')">Editar</button><button onclick="app.prepareProviderSettlement('${p.id}')">Liquidar</button>` : ''}</td>
+            <td class="actions">${appState.role === 'admin' ? `<button class="btn-edit" data-type="provider" data-id="${p.id}">Editar</button><button class="btn-settle" data-id="${p.id}">Liquidar</button>` : ''}</td>
         </tr>`).join('');
 
     return `
-        <div class="content-view active">
+        <div class="content-view">
             <h2>Proveedores y Liquidaciones</h2>
             <form id="provider-form" class="${appState.role === 'admin' ? '' : 'hidden'}">
                 <h3>Añadir / Editar Proveedor</h3>
@@ -483,13 +537,13 @@ function getWorkersHTML() {
             <td>${w.nombre}</td>
             <td>${formatCurrency(w.pagoBase || 0)}</td>
             <td>${w.activo ? '✅' : '❌'}</td>
-            <td class="actions"><button class="btn-edit" onclick="app.editWorker('${w.id}')">Editar</button></td>
+            <td class="actions"><button class="btn-edit" data-type="worker" data-id="${w.id}">Editar</button></td>
         </tr>`).join('');
 
     return `
-        <div class="content-view active">
+        <div class="content-view">
             <h2>Gestión de Trabajadores</h2>
-            <form id="worker-form">
+            <form id="worker-form" class="${appState.role === 'admin' ? '' : 'hidden'}">
                 <h3>Añadir / Editar Trabajador</h3>
                 <input type="hidden" id="worker-id">
                 <input type="text" id="worker-nombre" placeholder="Nombre completo" required>
@@ -516,7 +570,7 @@ function getShiftsHTML() {
         const productOptions = appState.products.filter(p => p.activo).map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
         
         return `
-            <div class="content-view active">
+            <div class="content-view">
                 <h2>Turno Activo: <span class="neon-text-main">${worker?.nombre || '...'}</span></h2>
                 <div class="form-grid">
                     <form id="sale-form">
@@ -544,7 +598,7 @@ function getShiftsHTML() {
     } else {
         const workerOptions = appState.workers.filter(w => w.activo).map(w => `<option value="${w.id}">${w.nombre}</option>`).join('');
         return `
-            <div class="content-view active">
+            <div class="content-view">
                 <h2>Turnos y Ventas</h2>
                 <form id="open-shift-form">
                     <h3>Abrir Nuevo Turno</h3>
@@ -556,209 +610,238 @@ function getShiftsHTML() {
 }
 
 
-// --- ASIGNACIÓN DE EVENT LISTENERS ---
-const attachEventListeners = (viewId) => {
-    const toUnidades = (qty, unit, prod) => prod ? (unit === 'cajas' ? qty * prod.unidadesPorCaja : (unit === 'canastas' ? qty * prod.unidadesPorCanasta : qty)) : qty;
+// --- MANEJADORES DE FORMULARIOS ---
+async function handleProductFormSubmit(form) {
+    const id = form.querySelector('#product-id').value;
+    const data = {
+        nombre: form.querySelector('#product-nombre').value,
+        precioVenta: parseFloat(form.querySelector('#product-precioVenta').value),
+        precioCompra: parseFloat(form.querySelector('#product-precioCompra').value),
+        precioFicha: parseFloat(form.querySelector('#product-precioFicha').value) || 0,
+        unidadesPorCaja: parseInt(form.querySelector('#product-unidadesPorCaja').value) || 1,
+        unidadesPorCanasta: parseInt(form.querySelector('#product-unidadesPorCanasta').value) || 1,
+        activo: form.querySelector('#product-activo').checked,
+    };
+    showLoader(true);
+    try {
+        if (id) {
+            await setDoc(doc(collections.products, id), data, { merge: true });
+        } else {
+            const newDocRef = await addDoc(collections.products, data);
+            const batch = writeBatch(db);
+            batch.set(doc(db, 'inventory', newDocRef.id, 'stock', 'bodega'), { unidades: 0 });
+            batch.set(doc(db, 'inventory', newDocRef.id, 'stock', 'barra'), { unidades: 0 });
+            await batch.commit();
+        }
+        showToast('Producto guardado');
+        form.reset();
+        form.querySelector('#product-id').value = '';
+    } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
+}
 
-    if (viewId === 'dashboard-view') {
-        const seedBtn = document.getElementById('seed-data-btn');
-        if (seedBtn) seedBtn.addEventListener('click', async () => {
-            if (appState.role !== 'admin' || !confirm('¿Cargar datos de ejemplo? Esto borrará datos existentes.')) return;
-            showLoader(true);
-            try {
-                // Lógica para limpiar y sembrar datos...
-                showToast('Datos de demo cargados', 'success');
-            } catch(e){showToast(e.message, 'error');} finally {showLoader(false);}
+async function handleProviderFormSubmit(form) {
+    const id = form.querySelector('#provider-id').value;
+    const data = {
+        nombre: form.querySelector('#provider-nombre').value,
+        contacto: form.querySelector('#provider-contacto').value,
+        consignacion: form.querySelector('#provider-consignacion').checked,
+    };
+    showLoader(true);
+    try {
+        if (id) {
+            await setDoc(doc(collections.providers, id), data, { merge: true });
+        } else {
+            await addDoc(collections.providers, { ...data, saldoPendiente: 0 });
+        }
+        showToast('Proveedor guardado');
+        form.reset();
+        form.querySelector('#provider-id').value = '';
+    } catch(e) { showToast(e.message, 'error'); } finally { showLoader(false); }
+}
+
+async function handleWorkerFormSubmit(form) {
+    const id = form.querySelector('#worker-id').value;
+    const data = {
+        nombre: form.querySelector('#worker-nombre').value,
+        pagoBase: parseFloat(form.querySelector('#worker-pagoBase').value) || 0,
+        activo: form.querySelector('#worker-activo').checked,
+    };
+    showLoader(true);
+    try {
+        if (id) {
+            await setDoc(doc(collections.workers, id), data, { merge: true });
+        } else {
+            await addDoc(collections.workers, data);
+        }
+        showToast('Trabajador guardado');
+        form.reset();
+        form.querySelector('#worker-id').value = '';
+    } catch(e) { showToast(e.message, 'error'); } finally { showLoader(false); }
+}
+
+async function handlePurchaseFormSubmit(form) {
+    const providerId = form.querySelector('#purchase-provider').value;
+    const productId = form.querySelector('#purchase-product').value;
+    const cantidad = parseInt(form.querySelector('#purchase-quantity').value);
+    const tipo = form.querySelector('#purchase-type').value;
+    const product = appState.products.find(p => p.id === productId);
+    if (!product || !providerId || isNaN(cantidad)) return showToast('Datos inválidos', 'error');
+    const cantidadUnidades = (form.querySelector('#purchase-unit').value === 'cajas' ? cantidad * product.unidadesPorCaja : (form.querySelector('#purchase-unit').value === 'canastas' ? cantidad * product.unidadesPorCanasta : cantidad));
+    const costoTotal = cantidadUnidades * product.precioCompra;
+
+    showLoader(true);
+    try {
+        const batch = writeBatch(db);
+        batch.set(doc(collections.purchases), { providerId, productId, fecha: serverTimestamp(), tipo, cantidadUnidades, costoTotal });
+        batch.update(doc(db, 'inventory', productId, 'stock', 'bodega'), { unidades: increment(cantidadUnidades) });
+        if (tipo === 'consignacion') {
+            batch.update(doc(collections.providers, providerId), { saldoPendiente: increment(costoTotal) });
+        } else {
+            batch.set(doc(collections.cashflow_entries), { type: 'egreso', amount: costoTotal, description: `Compra contado: ${cantidadUnidades}x ${product.nombre}`, date: serverTimestamp() });
+        }
+        await batch.commit();
+        showToast('Compra registrada');
+        form.reset();
+    } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
+}
+
+async function handleTransferFormSubmit(form) {
+    const productId = form.querySelector('#transfer-product').value;
+    const cantidad = parseInt(form.querySelector('#transfer-quantity').value);
+    const product = appState.products.find(p => p.id === productId);
+    if (!product || isNaN(cantidad)) return showToast('Datos inválidos', 'error');
+    const cantidadUnidades = (form.querySelector('#transfer-unit').value === 'cajas' ? cantidad * product.unidadesPorCaja : (form.querySelector('#transfer-unit').value === 'canastas' ? cantidad * product.unidadesPorCanasta : cantidad));
+    
+    showLoader(true);
+    try {
+        await runTransaction(db, async (t) => {
+            const bodegaRef = doc(db, 'inventory', productId, 'stock', 'bodega');
+            const bodegaDoc = await t.get(bodegaRef);
+            if (!bodegaDoc.exists() || bodegaDoc.data().unidades < cantidadUnidades) throw new Error('Stock insuficiente en bodega.');
+            t.update(bodegaRef, { unidades: increment(-cantidadUnidades) });
+            t.update(doc(db, 'inventory', productId, 'stock', 'barra'), { unidades: increment(cantidadUnidades) });
         });
-    }
+        showToast('Traslado exitoso');
+        form.reset();
+    } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
+}
 
-    if (viewId === 'products-view') {
-        const form = document.getElementById('product-form');
-        if (form) form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('product-id').value;
-            const data = {
-                nombre: document.getElementById('product-nombre').value,
-                precioVenta: parseFloat(document.getElementById('product-precioVenta').value),
-                precioCompra: parseFloat(document.getElementById('product-precioCompra').value),
-                precioFicha: parseFloat(document.getElementById('product-precioFicha').value) || 0,
-                unidadesPorCaja: parseInt(document.getElementById('product-unidadesPorCaja').value) || 1,
-                unidadesPorCanasta: parseInt(document.getElementById('product-unidadesPorCanasta').value) || 1,
-                activo: document.getElementById('product-activo').checked,
-            };
-            showLoader(true);
-            try {
-                if (id) {
-                    await setDoc(doc(collections.products, id), data, { merge: true });
-                } else {
-                    const newDocRef = await addDoc(collections.products, data);
-                    const batch = writeBatch(db);
-                    batch.set(doc(db, 'inventory', newDocRef.id, 'stock', 'bodega'), { unidades: 0 });
-                    batch.set(doc(db, 'inventory', newDocRef.id, 'stock', 'barra'), { unidades: 0 });
-                    await batch.commit();
-                }
-                showToast('Producto guardado');
-                form.reset();
-                document.getElementById('product-id').value = '';
-            } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
+async function handleCashflowFormSubmit(form) {
+    const data = {
+        type: form.querySelector('#cashflow-type').value,
+        amount: parseFloat(form.querySelector('#cashflow-amount').value),
+        description: form.querySelector('#cashflow-description').value,
+        date: serverTimestamp(),
+        manual: true,
+        userId: appState.user.uid,
+    };
+    if (isNaN(data.amount) || !data.description) return showToast('Datos inválidos', 'error');
+    showLoader(true);
+    try {
+        await addDoc(collections.cashflow_entries, data);
+        showToast('Movimiento de caja registrado');
+        form.reset();
+    } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
+}
+
+async function handleOpenShiftFormSubmit(form) {
+    const workerId = form.querySelector('#shift-worker').value;
+    if (!workerId) return;
+    const worker = appState.workers.find(w => w.id === workerId);
+    showLoader(true);
+    try {
+        await addDoc(collections.shifts, { workerId, pagoBase: worker.pagoBase || 0, inicio: serverTimestamp(), estado: 'abierto' });
+        showToast(`Turno para ${worker.nombre} iniciado.`);
+    } catch(e) { showToast(e.message, 'error'); } finally { showLoader(false); }
+}
+
+async function handleSaleFormSubmit(form) {
+    if (!appState.activeShift) return;
+    const productId = form.querySelector('#sale-product').value;
+    const unidades = parseInt(form.querySelector('#sale-quantity').value);
+    const product = appState.products.find(p => p.id === productId);
+    if (!product || isNaN(unidades) || unidades <= 0) return showToast('Venta inválida', 'error');
+    
+    showLoader(true);
+    try {
+        await runTransaction(db, async (t) => {
+            const barraRef = doc(db, 'inventory', productId, 'stock', 'barra');
+            const barraDoc = await t.get(barraRef);
+            if (!barraDoc.exists() || barraDoc.data().unidades < unidades) throw new Error(`Stock insuficiente para ${product.nombre}.`);
+            t.update(barraRef, { unidades: increment(-unidades) });
+            t.set(doc(collection(db, 'shifts', appState.activeShift.id, 'sales')), { productId, unidades, precioUnitVenta: product.precioVenta, precioFicha: product.precioFicha, totalVenta: unidades * product.precioVenta, totalFichas: unidades * product.precioFicha, fecha: serverTimestamp() });
         });
-    }
+        showToast('Venta registrada');
+        form.reset();
+    } catch(err) { showToast(err.message, 'error'); } finally { showLoader(false); }
+}
 
-    if (viewId === 'inventory-view') {
-        const purchaseForm = document.getElementById('purchase-form');
-        if (purchaseForm) purchaseForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const providerId = document.getElementById('purchase-provider').value;
-            const productId = document.getElementById('purchase-product').value;
-            const cantidad = parseInt(document.getElementById('purchase-quantity').value);
-            const tipo = document.getElementById('purchase-type').value;
-            const product = appState.products.find(p => p.id === productId);
-            if (!product || !providerId || isNaN(cantidad)) return showToast('Datos inválidos', 'error');
-            const cantidadUnidades = toUnidades(cantidad, document.getElementById('purchase-unit').value, product);
-            const costoTotal = cantidadUnidades * product.precioCompra;
+async function handleLoanFormSubmit(form) {
+    if (!appState.activeShift) return;
+    const valor = parseFloat(form.querySelector('#loan-value').value);
+    const descripcion = form.querySelector('#loan-description').value;
+    if (isNaN(valor) || !descripcion) return;
+    showLoader(true);
+    try {
+        await addDoc(collection(db, 'shifts', appState.activeShift.id, 'loans'), { descripcion, valor, fecha: serverTimestamp() });
+        showToast('Préstamo registrado.');
+        form.reset();
+    } catch(e) { showToast(e.message, 'error'); } finally { showLoader(false); }
+}
 
-            showLoader(true);
-            try {
-                const batch = writeBatch(db);
-                batch.set(doc(collections.purchases), { providerId, productId, fecha: serverTimestamp(), tipo, cantidadUnidades, costoTotal });
-                batch.update(doc(db, 'inventory', productId, 'stock', 'bodega'), { unidades: increment(cantidadUnidades) });
-                if (tipo === 'consignacion') {
-                    batch.update(doc(collections.providers, providerId), { saldoPendiente: increment(costoTotal) });
-                } else {
-                    batch.set(doc(collections.cashflow_entries), { type: 'egreso', amount: costoTotal, description: `Compra contado: ${cantidadUnidades}x ${product.nombre}`, date: serverTimestamp() });
-                }
-                await batch.commit();
-                showToast('Compra registrada');
-                e.target.reset();
-            } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
-        });
+async function handleCloseShift() {
+    if (!appState.activeShift || !confirm('¿Cerrar y liquidar turno?')) return;
+    showLoader(true);
+    const shift = appState.activeShift;
+    const worker = appState.workers.find(w => w.id === shift.workerId);
+    const ingresosBrutos = shift.sales.reduce((s, sale) => s + sale.totalVenta, 0);
+    const fichasGanadas = shift.sales.reduce((s, sale) => s + sale.totalFichas, 0);
+    const prestamos = shift.loans.reduce((s, loan) => s + loan.valor, 0);
+    const totalAPagar = (shift.pagoBase || 0) + fichasGanadas - prestamos;
 
-        const transferForm = document.getElementById('transfer-form');
-        if (transferForm) transferForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const productId = document.getElementById('transfer-product').value;
-            const cantidad = parseInt(document.getElementById('transfer-quantity').value);
-            const product = appState.products.find(p => p.id === productId);
-            if (!product || isNaN(cantidad)) return showToast('Datos inválidos', 'error');
-            const cantidadUnidades = toUnidades(cantidad, document.getElementById('transfer-unit').value, product);
-            
-            showLoader(true);
-            try {
-                await runTransaction(db, async (t) => {
-                    const bodegaRef = doc(db, 'inventory', productId, 'stock', 'bodega');
-                    const bodegaDoc = await t.get(bodegaRef);
-                    if (!bodegaDoc.exists() || bodegaDoc.data().unidades < cantidadUnidades) throw new Error('Stock insuficiente en bodega.');
-                    t.update(bodegaRef, { unidades: increment(-cantidadUnidades) });
-                    t.update(doc(db, 'inventory', productId, 'stock', 'barra'), { unidades: increment(cantidadUnidades) });
-                });
-                showToast('Traslado exitoso');
-                e.target.reset();
-            } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
-        });
-    }
+    try {
+        const batch = writeBatch(db);
+        batch.update(doc(collections.shifts, shift.id), { estado: 'cerrado', fin: serverTimestamp() });
+        batch.set(doc(collections.workerSettlements), { workerId: shift.workerId, shiftId: shift.id, ingresosBrutos, fichasGanadas, prestamos, pagoBase: shift.pagoBase || 0, totalAPagar, fecha: serverTimestamp() });
+        batch.set(doc(collections.cashflow_entries), { type: 'ingreso', amount: ingresosBrutos, description: `Cierre turno ${worker?.nombre || ''}`, date: serverTimestamp() });
+        if (totalAPagar > 0) {
+            batch.set(doc(collections.cashflow_entries), { type: 'egreso', amount: totalAPagar, description: `Pago liquidación ${worker?.nombre || ''}`, date: serverTimestamp() });
+        }
+        await batch.commit();
+        showToast('Turno cerrado y liquidado');
+    } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
+}
 
-    if (viewId === 'cashflow-view') {
-        const form = document.getElementById('cashflow-form');
-        if (form) form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = {
-                type: document.getElementById('cashflow-type').value,
-                amount: parseFloat(document.getElementById('cashflow-amount').value),
-                description: document.getElementById('cashflow-description').value,
-                date: serverTimestamp(),
-                manual: true,
-                userId: appState.user.uid,
-            };
-            if (isNaN(data.amount) || !data.description) return showToast('Datos inválidos', 'error');
-            showLoader(true);
-            try {
-                await addDoc(collections.cashflow_entries, data);
-                showToast('Movimiento de caja registrado');
-                e.target.reset();
-            } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
-        });
-    }
+async function handleProviderSettlement(providerId) {
+    const provider = appState.providers.find(p => p.id === providerId);
+    if (!provider || !confirm(`¿Pagar ${formatCurrency(provider.saldoPendiente)} a ${provider.nombre}?`)) return;
+    
+    showLoader(true);
+    try {
+        const batch = writeBatch(db);
+        batch.set(doc(collections.providerSettlements), { providerId, montoPagado: provider.saldoPendiente, fecha: serverTimestamp() });
+        batch.update(doc(collections.providers, providerId), { saldoPendiente: 0 });
+        batch.set(doc(collections.cashflow_entries), { type: 'egreso', amount: provider.saldoPendiente, description: `Pago liquidación a proveedor: ${provider.nombre}`, date: serverTimestamp() });
+        await batch.commit();
+        showToast('Proveedor liquidado');
+        document.getElementById('settlement-details').classList.add('hidden');
+    } catch (err) { showToast(err.message, 'error'); } finally { showLoader(false); }
+}
 
-    if (viewId === 'providers-view') {
-        const form = document.getElementById('provider-form');
-        if (form) form.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('provider-id').value; try { if (id) await setDoc(doc(collections.providers, id), { nombre: document.getElementById('provider-nombre').value, contacto: document.getElementById('provider-contacto').value, consignacion: document.getElementById('provider-consignacion').checked }, { merge: true }); else await addDoc(collections.providers, { nombre: document.getElementById('provider-nombre').value, contacto: document.getElementById('provider-contacto').value, consignacion: document.getElementById('provider-consignacion').checked, saldoPendiente: 0 }); showToast('Proveedor guardado'); e.target.reset(); document.getElementById('provider-id').value = '' } catch(e) {showToast(e.message, 'error');} });
-        
-        const settleBtn = document.getElementById('settle-provider-btn');
-        if(settleBtn) settleBtn.addEventListener('click', async (e) => {
-            const providerId = e.target.dataset.providerId;
-            const provider = appState.providers.find(p => p.id === providerId);
-            if (!provider || !confirm(`¿Pagar ${formatCurrency(provider.saldoPendiente)} a ${provider.nombre}?`)) return;
-            
-            showLoader(true);
-            try {
-                const batch = writeBatch(db);
-                batch.set(doc(collections.providerSettlements), { providerId, montoPagado: provider.saldoPendiente, fecha: serverTimestamp() });
-                batch.update(doc(collections.providers, providerId), { saldoPendiente: 0 });
-                batch.set(doc(collections.cashflow_entries), { type: 'egreso', amount: provider.saldoPendiente, description: `Pago liquidación a proveedor: ${provider.nombre}`, date: serverTimestamp() });
-                await batch.commit();
-                showToast('Proveedor liquidado');
-                document.getElementById('settlement-details').classList.add('hidden');
-            } catch (err) { showToast(err.message, 'error'); } finally { showLoader(false); }
-        });
-    }
-
-    if (viewId === 'workers-view') {
-        const form = document.getElementById('worker-form');
-        if(form) form.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('worker-id').value; try { if (id) await setDoc(doc(collections.workers, id), { nombre: document.getElementById('worker-nombre').value, pagoBase: parseFloat(document.getElementById('worker-pagoBase').value) || 0, activo: document.getElementById('worker-activo').checked }, { merge: true }); else await addDoc(collections.workers, { nombre: document.getElementById('worker-nombre').value, pagoBase: parseFloat(document.getElementById('worker-pagoBase').value) || 0, activo: document.getElementById('worker-activo').checked }); showToast('Trabajador guardado'); e.target.reset(); document.getElementById('worker-id').value = '' } catch(e) {showToast(e.message, 'error');} });
-    }
-
-    if (viewId === 'shifts-view') {
-        const openShiftForm = document.getElementById('open-shift-form');
-        if (openShiftForm) openShiftForm.addEventListener('submit', async (e) => { e.preventDefault(); const workerId = document.getElementById('shift-worker').value; if(!workerId) return; const worker = appState.workers.find(w=>w.id === workerId); await addDoc(collections.shifts, { workerId, pagoBase: worker.pagoBase || 0, inicio: serverTimestamp(), estado: 'abierto' }); });
-        
-        const saleForm = document.getElementById('sale-form');
-        if (saleForm) saleForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!appState.activeShift) return;
-            const productId = document.getElementById('sale-product').value;
-            const unidades = parseInt(document.getElementById('sale-quantity').value);
-            const product = appState.products.find(p => p.id === productId);
-            if (!product || isNaN(unidades) || unidades <= 0) return showToast('Venta inválida', 'error');
-            
-            showLoader(true);
-            try {
-                await runTransaction(db, async (t) => {
-                    const barraRef = doc(db, 'inventory', productId, 'stock', 'barra');
-                    const barraDoc = await t.get(barraRef);
-                    if (!barraDoc.exists() || barraDoc.data().unidades < unidades) throw new Error(`Stock insuficiente para ${product.nombre}.`);
-                    t.update(barraRef, { unidades: increment(-unidades) });
-                    t.set(doc(collection(db, 'shifts', appState.activeShift.id, 'sales')), { productId, unidades, precioUnitVenta: product.precioVenta, precioFicha: product.precioFicha, totalVenta: unidades * product.precioVenta, totalFichas: unidades * product.precioFicha, fecha: serverTimestamp() });
-                });
-                showToast('Venta registrada');
-                e.target.reset();
-            } catch(err) { showToast(err.message, 'error'); } finally { showLoader(false); }
-        });
-
-        const loanForm = document.getElementById('loan-form');
-        if (loanForm) loanForm.addEventListener('submit', async (e) => { e.preventDefault(); if (!appState.activeShift) return; const valor = parseFloat(document.getElementById('loan-value').value); if(isNaN(valor) || !document.getElementById('loan-description').value) return; await addDoc(collection(db, 'shifts', appState.activeShift.id, 'loans'), {descripcion: document.getElementById('loan-description').value, valor, fecha: serverTimestamp()}); e.target.reset(); });
-        
-        const closeShiftBtn = document.getElementById('close-shift-btn');
-        if (closeShiftBtn) closeShiftBtn.addEventListener('click', async () => {
-            if (!appState.activeShift || !confirm('¿Cerrar y liquidar turno?')) return;
-            showLoader(true);
-            const shift = appState.activeShift;
-            const worker = appState.workers.find(w => w.id === shift.workerId);
-            const ingresosBrutos = shift.sales.reduce((s, sale) => s + sale.totalVenta, 0);
-            const fichasGanadas = shift.sales.reduce((s, sale) => s + sale.totalFichas, 0);
-            const prestamos = shift.loans.reduce((s, loan) => s + loan.valor, 0);
-            const totalAPagar = (shift.pagoBase || 0) + fichasGanadas - prestamos;
-
-            try {
-                const batch = writeBatch(db);
-                batch.update(doc(collections.shifts, shift.id), { estado: 'cerrado', fin: serverTimestamp() });
-                batch.set(doc(collections.workerSettlements), { workerId: shift.workerId, shiftId: shift.id, ingresosBrutos, fichasGanadas, prestamos, pagoBase: shift.pagoBase || 0, totalAPagar, fecha: serverTimestamp() });
-                batch.set(doc(collections.cashflow_entries), { type: 'ingreso', amount: ingresosBrutos, description: `Cierre turno ${worker?.nombre || ''}`, date: serverTimestamp() });
-                if (totalAPagar > 0) {
-                    batch.set(doc(collections.cashflow_entries), { type: 'egreso', amount: totalAPagar, description: `Pago liquidación ${worker?.nombre || ''}`, date: serverTimestamp() });
-                }
-                await batch.commit();
-                showToast('Turno cerrado y liquidado');
-            } catch (error) { showToast(error.message, 'error'); } finally { showLoader(false); }
-        });
-    }
-};
+async function handleSeedData() {
+    if (appState.role !== 'admin' || !confirm('¿Cargar datos de ejemplo?')) return;
+    showLoader(true);
+    try {
+        const batch = writeBatch(db);
+        const providerRef = doc(collections.providers);
+        batch.set(providerRef, { nombre: "Distribuciones XYZ", consignacion: true, saldoPendiente: 0, contacto: "demo@xyz.com" });
+        const workerRef = doc(collections.workers);
+        batch.set(workerRef, { nombre: "María Pérez", activo: true, pagoBase: 30000 });
+        const productRef = doc(collections.products);
+        batch.set(productRef, { nombre: "Cerveza 330ml", precioVenta: 8000, precioCompra: 2000, precioFicha: 1000, unidadesPorCaja: 24, unidadesPorCanasta: 12, activo: true });
+        batch.set(doc(db, 'inventory', productRef.id, 'stock', 'bodega'), { unidades: 0 });
+        batch.set(doc(db, 'inventory', productRef.id, 'stock', 'barra'), { unidades: 0 });
+        await batch.commit();
+        showToast('Datos de demo cargados', 'success');
+    } catch(e){showToast(e.message, 'error');} finally {showLoader(false);}
+}
