@@ -2843,413 +2843,157 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- =========================  BLOQUE DE CONEXIÓN A FIREBASE (PEGAR ANTES DE </body>)  ========================= -->
 <script>
-/* 1) Inicialización segura: usa el firebaseConfig que ya tienes en el archivo */
 (function () {
-  // Evita doble inicialización.
-  if (!window.firebase || !firebase.apps) {
-    console.error("[Firebase] No se encontró el SDK. Verifica las etiquetas <script> de firebase*.js compat.");
-    return;
-  }
+  if (!window.firebase) { console.error("Firebase SDK no cargado."); return; }
   try {
-    // Si ya existe firebaseConfig en el scope global, úsalo. Si no, intenta leerlo desde window.__FBCONFIG
-    var __cfg = (typeof firebaseConfig !== "undefined" && firebaseConfig)
-                || (typeof window.__FBCONFIG !== "undefined" && window.__FBCONFIG);
+    var __cfg = (typeof firebaseConfig !== "undefined" && firebaseConfig) || (typeof window.__FBCONFIG !== "undefined" && window.__FBCONFIG);
+    if (!__cfg) { console.error("No hay firebaseConfig en la página."); return; }
+    if (firebase.apps.length === 0) firebase.initializeApp(__cfg);
+  } catch(e) { console.error(e); }
 
-    if (!__cfg) {
-      console.error("[Firebase] No se encontró firebaseConfig. Asegúrate de que tus llaves estén declaradas como 'const firebaseConfig = { ... }' antes de este bloque.");
-      return;
-    }
-    if (firebase.apps.length === 0) {
-      firebase.initializeApp(__cfg);
-    }
-  } catch (e) {
-    console.error("[Firebase] Error al inicializar:", e);
-  }
-
-  // Aliases (Compat)
   const auth = firebase.auth();
   const db   = firebase.firestore();
-  /* 2-bis) Bootstrap para sesión de vendedor (sin Auth) tras recarga */
-  function bootstrapWorkerIfNeeded() {
-    try {
-      const asWorker = localStorage.getItem("inv_user_type") === "worker";
-      const bizId = localStorage.getItem("inv_current_business_id");
-      const hideCat = localStorage.getItem("inv_hide_category") === "1";
-      if (asWorker && bizId) {
-        // Recuperar el negocio y lanzar la app
-        db.collection("businesses").doc(bizId).get().then((doc) => {
-          if (doc.exists) {
-            document.body.classList.add("user-type-worker");
-      try { localStorage.setItem("inv_user_type", "worker"); } catch(_) {}
-            document.body.classList.remove("auth-visible");
-            hide(mdCategory);
-            showApp();
-            fillBusinessHeader(doc.data());
-            // Seguridad extra: no volver a mostrar categoría
-            try { localStorage.setItem("inv_hide_category", "1"); } catch(_) {}
-          } else if (!hideCat) {
-            show(mdCategory);
-          }
-        }).catch(console.error);
-      }
-    } catch (e) { console.error(e); }
-  }
 
+  // Persistencia + offline (multi-dispositivo / multi-pestaña)
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+  (async()=>{ try { await db.enablePersistence({ synchronizeTabs:true }); } catch(e) {
+    if (e && e.code === 'failed-precondition') console.info("[Firestore] Persistence no disponible (múltiples pestañas activas).");
+    else if (e && e.code === 'unimplemented') console.info("[Firestore] Persistence no soportada en este navegador.");
+  } })();
 
-  /* 2) Utilidades DOM */
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-  const show = (el) => el && (el.style.display = (el.classList.contains("modal") ? "flex" : "block"));
-  const hide = (el) => el && (el.style.display = "none");
+  // Helpers DOM seguros
+  const $ = (s)=>document.querySelector(s);
+  const $$ = (s)=>Array.from(document.querySelectorAll(s));
+  const show = (el)=> el && (el.style.display = (el.classList?.contains("modal") ? "flex" : "block"));
+  const hide = (el)=> el && (el.style.display = "none");
 
-  /* 3) Referencias de UI ya existentes en tu HTML */
-  const elPreloader      = $("#preloader");
-  const elAuthContainer  = $("#auth-container");
-  const elAppShell       = $("#app-shell");
+  // Referencias opcionales (no fallan si no existen)
+  const elAuthContainer = $("#auth-container");
+  const elAppShell      = $("#app-shell");
+  const mdLogin         = $("#login-modal");
+  const mdRegister      = $("#register-modal");
+  const mdWorkerLogin   = $("#worker-login-modal");
+  const mdCategory      = $("#category-modal");
 
-  // Modales
-  const mdLogin          = $("#login-modal");
-  const mdWorkerLogin    = $("#worker-login-modal");
-  const mdRegister       = $("#register-modal");
-  const mdCategory       = $("#category-modal");
-
-  // Botones home auth
-  const btnAdmin     = $("#show-login-btn");
-  const btnWorker    = $("#show-worker-login-btn");
-  const btnRegister  = $("#show-register-btn");
-
-  // Formularios
-  const frmLogin     = $("#login-form");
-  const frmWorker    = $("#worker-login-form");
-  const frmRegister  = $("#register-form");
-
-  // Errores
-  const errLogin     = $("#login-error");
-  const errWorker    = $("#worker-login-error");
-  const errRegister  = $("#register-error");
-
-  // Header/Sidebar fill
-  const headerBar   = $("#header-bar-name");
-  const sideBarName = $("#sidebar-bar-name");
-  const headerLogoC = $("#header-logo-container");
-  const sideLogoC   = $("#sidebar-logo-container");
-
-  // Theme toggles (desktop y opcional móvil)
-  const themeToggleDesktop = $("#theme-toggle-desktop");
-
-  // User menu
-  const userMenuTrigger = $("#user-menu-trigger");
-  const userMenu        = $("#user-menu");
-  const userMenuName    = $("#user-menu-name");
-  const userMenuEmail   = $("#user-menu-email");
-
-  // Worker selector
-  const selBusiness  = $("#business-select");
-  const inpWCode     = $("#worker-code");
-
-  // Tabs / Dashboard quick menu
-  const navTabs      = $$("#app-nav .nav-tab");
-  const dashMenu     = $("#dashboard-menu");
-  const headerLeft   = $(".header-left");
-
-  // Helpers UI
-  function fillLogo(containerEl, logoUrl) {
-    if (!containerEl) return;
-    containerEl.innerHTML = "";
-    if (logoUrl) {
-      const img = document.createElement("img");
-      img.className = "sidebar-logo";
-      img.src = logoUrl;
-      img.alt = "Logo";
-      containerEl.appendChild(img);
-    } else {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.classList.add("sidebar-logo-placeholder");
-      const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-      use.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#icon-logo");
-      svg.appendChild(use);
-      containerEl.appendChild(svg);
-    }
-  }
-
-  function setTheme(dark) {
-    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-    if (themeToggleDesktop) themeToggleDesktop.checked = !!dark;
-    try { localStorage.setItem("inv_theme_dark", dark ? "1" : "0"); } catch (_) {}
-  }
-  // Arranque de tema desde cache
-  try { setTheme(localStorage.getItem("inv_theme_dark") === "1"); } catch (_) {}
-
-  themeToggleDesktop && themeToggleDesktop.addEventListener("change", (e) => setTheme(e.target.checked));
-
-  // Toggle menú de usuario
-  userMenuTrigger && userMenuTrigger.addEventListener("click", () => {
-    if (!userMenu) return;
-    userMenu.classList.toggle("active");
-    document.addEventListener("click", closeUserMenuOnce, { once: true });
-  });
-  function closeUserMenuOnce(ev) {
-    if (!userMenu.contains(ev.target) && ev.target !== userMenuTrigger) {
-      userMenu.classList.remove("active");
-    }
-  }
-
-  // Mostrar menú dashboard (cabecera)
-  headerLeft && headerLeft.addEventListener("click", () => {
-    if (!dashMenu) return;
-    dashMenu.classList.toggle("active");
-  });
-  dashMenu && dashMenu.addEventListener("click", (e) => {
-    const t = e.target.closest(".dashboard-menu-item");
-    if (!t) return;
-    const tab = t.dataset.tab;
-    if (!tab) return;
-    selectTab(tab);
-    dashMenu.classList.remove("active");
-  });
-
-  function selectTab(tabId) {
-    $$(".tab-content").forEach(el => el.classList.remove("active"));
-    const pane = document.getElementById(tabId);
-    if (pane) pane.classList.add("active");
-    navTabs.forEach(b => {
-      b.classList.toggle("active", b.dataset.tab === tabId);
-    });
-    try { localStorage.setItem("inv_last_tab", tabId); } catch (_) {}
-  });
-  }
-
-  // Navegación lateral
-  navTabs.forEach(btn => {
-    btn.addEventListener("click", () => selectTab(btn.dataset.tab));
-  });
-
-  // Estado de carga visual
-  function setAppLoaded(loaded) {
-    document.body.classList.toggle("app-loaded", !!loaded);
-  }
-  function showAuth() {
-    hide(elAppShell);
-    show(elAuthContainer);
-    document.body.classList.add("auth-visible");
-  }
+  function setAppLoaded(loaded) { document.body.classList.toggle("app-loaded", !!loaded); }
   function showApp() {
-    hide(elAuthContainer);
-    show(elAppShell);
+    hide(elAuthContainer); show(elAppShell);
     document.body.classList.remove("auth-visible");
     setAppLoaded(true);
-    // Selecciona pestaña restaurando del cache si existe
-    let defaultTab = "turnos";
-    try {
-      const saved = localStorage.getItem("inv_last_tab");
-      if (saved && document.getElementById(saved)) defaultTab = saved;
-    } catch (_) {}
+    // Restaurar pestaña
+    let defTab = "turnos";
+    try { const saved = localStorage.getItem("inv_last_tab"); if (saved && document.getElementById(saved)) defTab = saved; } catch(_) {}
     if (!document.querySelector(".tab-content.active")) {
-      selectTab(defaultTab);
+      const sel = (id)=>{ $$(".tab-content").forEach(x=>x.classList.remove("active")); const p = document.getElementById(id); if(p) p.classList.add("active"); $$("#app-nav .nav-tab").forEach(b=>b.classList.toggle("active", b.dataset.tab===id)); };
+      sel(defTab);
     }
   }
-  }
 
-  // Exponer logout sin pisar tu objeto app existente
+  // Tiempo real utilidades (doc/colección) + CRUD atajos
+  const RT = { unsubs: {} };
+  function bindDoc(path, onData) {
+    if (RT.unsubs[path]) RT.unsubs[path]();
+    const unsub = db.doc(path).onSnapshot((snap)=>{ onData && onData(snap.exists ? { id:snap.id, ...snap.data() } : null, snap); }, console.error);
+    RT.unsubs[path] = unsub; return unsub;
+  }
+  function bindCollection(path, queryFn, onData) {
+    const key = "col:"+path;
+    if (RT.unsubs[key]) RT.unsubs[key]();
+    let ref = db.collection(path); if (typeof queryFn === "function") ref = queryFn(ref);
+    const unsub = ref.onSnapshot((qs)=>{ const list=[]; qs.forEach(d=>list.push({ id:d.id, ...d.data() })); onData && onData(list, qs); }, console.error);
+    RT.unsubs[key] = unsub; return unsub;
+  }
+  async function dbAdd(path, payload) {
+    const ref = db.collection(path);
+    const out = await ref.add({ ...payload, _ts: firebase.firestore.FieldValue.serverTimestamp() });
+    return out.id;
+  }
+  async function dbSet(docPath, payload, merge = true) {
+    const ref = db.doc(docPath);
+    await ref.set({ ...payload, _ts: firebase.firestore.FieldValue.serverTimestamp() }, { merge });
+    return true;
+  }
+  async function dbUpdate(docPath, payload) {
+    const ref = db.doc(docPath);
+    await ref.update({ ...payload, _ts: firebase.firestore.FieldValue.serverTimestamp() });
+    return true;
+  }
+  async function dbDelete(docPath) {
+    const ref = db.doc(docPath);
+    await ref.delete();
+    return true;
+  }
   window.app = window.app || {};
-  window.app.logout = async function () {
-    try { await auth.signOut(); } catch (e) { console.error(e); }
-  };
-  window.app.showAuthHome = function () {
-    [mdLogin, mdWorkerLogin, mdRegister, mdCategory].forEach(hide);
-    show(elAuthContainer);
-  };
-  window.app.selectCategory = async function (cat) {
-    // Se guarda de forma temporal en localStorage para completar el onboarding
-    try { localStorage.setItem("inv_category", cat || "Otro"); } catch(_) {}
-    hide(mdCategory);
-    // Regresa al flujo de la app
-    show(elAuthContainer);
-  };
+  Object.assign(window.app, { RT, bindDoc, bindCollection, dbAdd, dbSet, dbUpdate, dbDelete });
 
-  /* 4) Home Auth: botones */
-  btnAdmin && btnAdmin.addEventListener("click", () => {
-    hide(elAuthContainer); show(mdLogin);
-  });
-  btnWorker && btnWorker.addEventListener("click", async () => {
-    hide(elAuthContainer);
-    await ensureBusinessOptions();
-    show(mdWorkerLogin);
-  });
-  btnRegister && btnRegister.addEventListener("click", () => {
-    hide(elAuthContainer); show(mdRegister);
-  });
-
-  /* 5) Registro de cuenta + negocio */
-  frmRegister && frmRegister.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (errRegister) errRegister.textContent = "";
-    const fullName = document.querySelector("#reg-fullname")?.value?.trim();
-    const phone    = document.querySelector("#reg-phone")?.value?.trim();
-    const email    = document.querySelector("#reg-email")?.value?.trim();
-    const pass     = document.querySelector("#reg-password")?.value;
-    const barname  = document.querySelector("#reg-barname")?.value?.trim();
-    const role     = document.querySelector("#reg-role")?.value;
-    const logoFile = document.querySelector("#reg-logo")?.files?.[0] || null;
-
-    if (!email || !pass || !fullName || !barname) {
-      if (errRegister) errRegister.textContent = "Completa los campos requeridos.";
-      return;
-    }
-
-    let logoDataUrl = null;
-    if (logoFile) {
-      logoDataUrl = await fileToDataURL(logoFile);
-    }
-
+  // Presencia multi-dispositivo (latido)
+  async function heartbeatPresence(user) {
+    if (!user) return;
     try {
-      // Crear usuario
-      const cred = await auth.createUserWithEmailAndPassword(email, pass);
-      await cred.user.updateProfile({ displayName: fullName });
-
-      // Crear negocio
-      const bizRef = db.collection("businesses").doc();
-      const bizDoc = {
-        id: bizRef.id,
-        name: barname,
-        ownerUid: cred.user.uid,
-        ownerEmail: email,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        phone: phone || null,
-        logo: logoDataUrl || null,
-        category: (localStorage.getItem("inv_category") || "Otro"),
-        workerAccessMode: "code" // modo básico
-      };
-      await bizRef.set(bizDoc);
-
-      // Perfil de usuario
-      await db.collection("users").doc(cred.user.uid).set({
-        uid: cred.user.uid,
-        email: email,
-        displayName: fullName,
-        role: role || "propietario",
-        businessId: bizRef.id,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      const pRef = db.collection("users").doc(user.uid).collection("presence").doc("current");
+      await pRef.set({
+        uid: user.uid,
+        email: user.email || null,
+        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+        userAgent: navigator.userAgent || "",
+        online: true
       }, { merge: true });
+    } catch (_) {}
+  }
+  let hbIv=null; function startPresence(user){ clearInterval(hbIv); heartbeatPresence(user); hbIv=setInterval(()=>heartbeatPresence(user), 30000); }
+  function stopPresence(){ if(hbIv){ clearInterval(hbIv); hbIv=null; } }
 
-      // UI tras registro
-      hide(mdRegister);
-      showApp();
-      await hydrateBusinessUI(cred.user.uid);
-    } catch (err) {
-      console.error(err);
-      if (errRegister) errRegister.textContent = toUserError(err);
+  // Relleno encabezado (nombre/logo negocio)
+  async function fillBusinessHeader(biz) {
+    const headerBar   = $("#header-bar-name");
+    const sideBarName = $("#sidebar-bar-name");
+    const headerLogoC = $("#header-logo-container");
+    const sideLogoC   = $("#sidebar-logo-container");
+    const fillLogo = (containerEl, logoUrl)=>{ if(!containerEl) return; containerEl.innerHTML=""; if(logoUrl){ const img=document.createElement("img"); img.className="sidebar-logo"; img.src=logoUrl; img.alt="Logo"; containerEl.appendChild(img);} else { const svg=document.createElementNS("http://www.w3.org/2000/svg","svg"); svg.classList.add("sidebar-logo-placeholder"); containerEl.appendChild(svg);} };
+    if (biz) {
+      if (headerBar) headerBar.textContent = biz.name || "Negocio";
+      if (sideBarName) sideBarName.textContent = biz.name || "Negocio";
+      fillLogo(headerLogoC, biz.logo || "");
+      fillLogo(sideLogoC,   biz.logo || "");
     }
-  });
-
-  function fileToDataURL(file) {
-    return new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result);
-      reader.onerror = rej;
-      reader.readAsDataURL(file);
-    });
   }
 
-  /* 6) Login administrador (correo/contraseña) */
-  frmLogin && frmLogin.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (errLogin) errLogin.textContent = "";
-    const email = document.querySelector("#username")?.value?.trim();
-    const pass  = document.querySelector("#password")?.value;
-    if (!email || !pass) {
-      if (errLogin) errLogin.textContent = "Ingresa tu correo y contraseña.";
-      return;
-    }
-    try {
-      setAppLoaded(false);
-      await auth.signInWithEmailAndPassword(email, pass);
-      // onAuthStateChanged se encargará del resto
-    } catch (err) {
-      console.error(err);
-      if (errLogin) errLogin.textContent = toUserError(err);
-      setAppLoaded(true);
-    }
-  });
+  async function hydrateBusinessUI(uid) {
+    let hideCategoryFlag = false; try { hideCategoryFlag = (localStorage.getItem("inv_hide_category")==="1"); } catch(_) {}
+    let businessDoc = null;
 
-  /* 7) Login vendedor (por negocio + código) — modo básico */
-  frmWorker && frmWorker.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (errWorker) errWorker.textContent = "";
-    const bizId = selBusiness?.value;
-    const code  = inpWCode?.value?.trim();
-
-    if (!bizId || !code) {
-      if (errWorker) errWorker.textContent = "Selecciona un negocio e ingresa tu código.";
-      return;
+    const userDoc = await db.collection("users").doc(uid).get().catch(()=>null);
+    const prefBizId = userDoc && userDoc.exists ? userDoc.data().businessId : null;
+    if (prefBizId) businessDoc = await db.collection("businesses").doc(prefBizId).get().catch(()=>null);
+    if (!businessDoc || !businessDoc.exists) {
+      const q = await db.collection("businesses").where("ownerUid","==",uid).limit(1).get().catch(()=>null);
+      businessDoc = (q && !q.empty) ? q.docs[0] : null;
     }
 
-    try {
-      // Implementación básica: tabla 'workers' subcolección con { code: '1234', name, active:true }
-      const snap = await db.collection("businesses").doc(bizId)
-                    .collection("workers")
-                    .where("code", "==", code)
-                    .where("active", "==", true)
-                    .limit(1)
-                    .get();
-
-      if (snap.empty) {
-        if (errWorker) errWorker.textContent = "Código inválido o inactivo.";
-        return;
-      }
-
-      // Modo vendedor: no requiere sesión de Auth; se usa vista restringida
-      document.body.classList.add("user-type-worker");
-      try { localStorage.setItem("inv_user_type", "worker"); } catch(_) {}
-      document.body.classList.remove("auth-visible");
-      showApp();
-      hide(mdWorkerLogin);
-      // Rellenar encabezados con datos del negocio
-      const bizDoc = await db.collection("businesses").doc(bizId).get();
-      await fillBusinessHeader(bizDoc.data());
-      try { localStorage.setItem("inv_hide_category", "1"); localStorage.setItem("inv_current_business_id", bizId); } catch(_) {}
+    if (businessDoc && businessDoc.exists) {
+      await fillBusinessHeader(businessDoc.data());
+      try { localStorage.setItem("inv_current_business_id", businessDoc.id || businessDoc.data().id || ""); localStorage.setItem("inv_user_type","admin"); localStorage.setItem("inv_hide_category","1"); } catch(_) {}
       hide(mdCategory);
-    } catch (err) {
-      console.error(err);
-      if (errWorker) errWorker.textContent = "No se pudo validar el código. Intenta de nuevo.";
+      try { bindDoc(`businesses/${businessDoc.id}`, (biz)=>{ if(biz) fillBusinessHeader(biz); }); } catch(_) {}
+    } else {
+      if (!hideCategoryFlag) show(mdCategory); else { hide(mdCategory); showApp(); }
     }
-  });
-
-  async function ensureBusinessOptions() {
-    if (!selBusiness) return;
-    selBusiness.innerHTML = '<option value="">Cargando negocios...</option>';
-    const q = await db.collection("businesses").orderBy("name").limit(100).get();
-    if (q.empty) {
-      selBusiness.innerHTML = '<option value="">No hay negocios disponibles</option>';
-      return;
-    }
-    selBusiness.innerHTML = '<option value="">Selecciona un negocio...</option>';
-    q.forEach(doc => {
-      const opt = document.createElement("option");
-      opt.value = doc.id;
-      opt.textContent = doc.data().name || "Negocio";
-      selBusiness.appendChild(opt);
-    });
   }
 
-  /* 8) onAuthStateChanged: controla UI y rellena datos */
+  // Logout global → redirige a auth.html
+  window.app = window.app || {};
+  window.app.logout = async function(){ try { await auth.signOut(); } catch(e){ console.error(e); } finally { window.location.href="auth.html"; } };
+
+  // Auth guard + flujos
   auth.onAuthStateChanged(async (user) => {
     try {
       if (user) {
-        // UI
+        startPresence(user);
         hide(mdLogin); hide(mdRegister); hide(mdWorkerLogin); hide(elAuthContainer);
         showApp();
-
-        // Perfil y negocio
         await hydrateBusinessUI(user.uid);
-
-        // Usuario en menú
-        if (userMenuName) userMenuName.textContent = user.displayName || "Usuario";
-        if (userMenuEmail) userMenuEmail.textContent = user.email || "";
       } else {
-        // No logueado
-        // Si hay sesión de vendedor persistida, arrancar como vendedor sin mostrar auth
-        const asWorker = (localStorage.getItem("inv_user_type") === "worker");
+        const asWorker = (localStorage.getItem("inv_user_type")==="worker");
         const bizId = localStorage.getItem("inv_current_business_id");
         if (asWorker && bizId) {
           document.body.classList.add("user-type-worker");
@@ -3258,93 +3002,27 @@ document.addEventListener('DOMContentLoaded', () => {
           db.collection("businesses").doc(bizId).get().then((doc)=>{
             if (doc.exists) {
               fillBusinessHeader(doc.data());
-              try { localStorage.setItem("inv_hide_category", "1"); } catch(_) {}
+              try { localStorage.setItem("inv_hide_category","1"); } catch(_) {}
               hide(mdCategory);
               showApp();
-            } else {
-              showAuth();
-            }
-          }).catch((e)=>{ console.error(e); showAuth(); });
+            } else { window.location.href = "auth.html"; }
+          }).catch(()=>{ window.location.href = "auth.html"; });
         } else {
-          showAuth();
+          window.location.href = "auth.html";
         }
         setAppLoaded(true);
-        // Resetea vista trabajador si no aplica
         if (!asWorker) document.body.classList.remove("user-type-worker");
+        stopPresence();
       }
-    } catch (e) {
+    } catch(e) {
       console.error(e);
-      showAuth();
-      setAppLoaded(true);
+      stopPresence();
+      window.location.href = "auth.html";
     }
   });
 
-  
-  async function hydrateBusinessUI(uid) {
-    // Flag local para decidir si mostramos el modal de categoría.
-    let hideCategoryFlag = false;
-    try { hideCategoryFlag = (localStorage.getItem("inv_hide_category") === "1"); } catch(_) {}
-
-    // Buscar negocio por ownerUid o por perfil
-    let businessDoc = null;
-
-    // Opción A: por perfil de usuario
-    const userDoc = await db.collection("users").doc(uid).get().catch(() => null);
-    const prefBizId = userDoc?.exists ? userDoc.data().businessId : null;
-
-    if (prefBizId) {
-      businessDoc = await db.collection("businesses").doc(prefBizId).get().catch(() => null);
-    }
-
-    // Opción B: por ownerUid
-    if (!businessDoc || !businessDoc.exists) {
-      const q = await db.collection("businesses").where("ownerUid", "==", uid).limit(1).get().catch(() => null);
-      businessDoc = (q && !q.empty) ? q.docs[0] : null;
-    }
-
-    if (businessDoc && businessDoc.exists) {
-      await fillBusinessHeader(businessDoc.data());
-      try { localStorage.setItem("inv_current_business_id", businessDoc.id || businessDoc.data().id || ""); localStorage.setItem("inv_user_type", "admin"); } catch(_) {}
-      // Marcar que ya hay negocio; no volver a mostrar el modal de categoría
-      try { localStorage.setItem("inv_hide_category", "1"); } catch(_) {}
-      hide(mdCategory);
-    } else {
-      // Solo mostrar el modal de categoría si NO está marcado para ocultarse
-      if (!hideCategoryFlag) {
-        show(mdCategory);
-      } else {
-        hide(mdCategory);
-        // Si está oculto por bandera pero no hay negocio, mantenemos la app visible sin bloquear
-        showApp();
-      }
-    }
-  }
-async function fillBusinessHeader(biz) {
-    if (!biz) return;
-    if (headerBar)   headerBar.textContent = biz.name || "InventaPro";
-    if (sideBarName) sideBarName.textContent = biz.name || "InventaPro";
-    fillLogo(headerLogoC, biz.logo || "");
-    fillLogo(sideLogoC,   biz.logo || "");
-  }
-
-  /* 9) Utilidades de error user-friendly */
-  function toUserError(err) {
-    if (!err) return "Ha ocurrido un error.";
-    const code = (err.code || "").toString();
-    if (code.includes("auth/invalid-email")) return "Correo inválido.";
-    if (code.includes("auth/user-not-found")) return "Usuario no encontrado.";
-    if (code.includes("auth/wrong-password")) return "Contraseña incorrecta.";
-    if (code.includes("auth/email-already-in-use")) return "Ese correo ya está registrado.";
-    if (code.includes("auth/weak-password")) return "Contraseña débil (mínimo 6 caracteres).";
-    return (err.message || "Error desconocido.");
-  }
-
-  /* 10) Precarga visual */
-  window.addEventListener("load", () => {
-    // Mueve el preloader al modo compacto cuando la app está lista
-    setTimeout(() => { setAppLoaded(true); bootstrapWorkerIfNeeded(); }, 400);
-  });
-
+  // Preloader listo
+  window.addEventListener("load", () => { setTimeout(()=>setAppLoaded(true), 300); });
 })();
 </script>
 <!-- =========================  /BLOQUE DE CONEXIÓN A FIREBASE  ========================= -->
