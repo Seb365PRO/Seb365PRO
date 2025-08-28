@@ -1286,53 +1286,43 @@ initUserMenu() {
     },
 
     registerUser() {
-      const fullname = document.getElementById('reg-fullname').value.trim();
-      const email = document.getElementById('reg-email').value.trim();
-      const password = document.getElementById('reg-password').value;
-      const barname = document.getElementById('reg-barname').value.trim();
-      const role = document.getElementById('reg-role').value;
-      const phone = document.getElementById('reg-phone').value.trim();
-      const errorEl = document.getElementById('register-error');
-
-      if (!fullname || !email || !password || !barname || !role) {
-        errorEl.textContent = 'Por favor, completa todos los campos obligatorios.';
-        return;
-      }
-
-      (async () => {
-        try {
-          // Crear usuario en Firebase Auth
-          const cred = await auth.createUserWithEmailAndPassword(email, password);
-          const uid = cred.user.uid;
-
-          // Crear negocio
-          const bizRef = db.collection('businesses').doc();
-          await bizRef.set({
-            name: barname,
-            logoDataUrl: (this._tempData && this._tempData.logoDataUrl) ? this._tempData.logoDataUrl : null,
-            category: null,
-            ownerUid: uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          // Crear perfil de usuario
-          await db.collection('users').doc(uid).set({
-            fullname, phone, role, businessId: bizRef.id, email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          // Cierra modal y notifica; onAuthStateChanged llevará el flujo
-          document.getElementById('register-modal').style.display = 'none';
-          this._tempData = {};
-          this.showToast('¡Cuenta creada! Iniciando sesión...', 'success');
-
-        } catch (e) {
-          console.error('Error registrando:', e);
-          errorEl.textContent = e && e.message ? e.message : 'No se pudo crear la cuenta.';
+        const fullname = document.getElementById('reg-fullname').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const barname = document.getElementById('reg-barname').value.trim();
+        const role = document.getElementById('reg-role').value;
+        const errorEl = document.getElementById('register-error');
+        
+        if (!fullname || !email || !password || !barname || !role) {
+            errorEl.textContent = 'Por favor, completa todos los campos obligatorios.';
+            return;
         }
-      })();
-    },
+        
+        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        if (accounts.some(acc => acc.user.email === email)) {
+            errorEl.textContent = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+            return;
+        }
 
+        this._tempData.newAccount = this.getInitialState();
+        this._tempData.newAccount.user = {
+            id: this.uid(),
+            fullname,
+            phone: document.getElementById('reg-phone').value.trim(),
+            email,
+            password: btoa(password),
+            role,
+        };
+        this._tempData.newAccount.business = {
+            id: this.uid(),
+            name: barname,
+            logoDataUrl: this._tempData.logoDataUrl || null,
+            category: null
+        };
+
+        document.getElementById('register-modal').style.display = 'none';
+        this.showCategoryModal();
+    },
     
     showCategoryModal() {
         document.getElementById('category-modal').style.display = 'flex';
@@ -1361,23 +1351,29 @@ initUserMenu() {
         this.showAuthHome();
     }
 },
-
+    
     login() {
-      const email = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('login-error');
+        const email = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorEl = document.getElementById('login-error');
 
-      (async () => {
-        try {
-          await auth.signInWithEmailAndPassword(email, password);
-          // onAuthStateChanged hará el resto
-        } catch (e) {
-          console.error('Error login:', e);
-          errorEl.textContent = 'Correo o contraseña incorrectos.';
+        const accounts = JSON.parse(localStorage.getItem('InventaProAccounts')) || [];
+        const foundAccount = accounts.find(acc => acc.user.email === email);
+
+        if (!foundAccount) {
+            errorEl.textContent = 'No se encontró ninguna cuenta con ese correo.';
+            return;
         }
-      })();
+        
+        if (foundAccount.user.password === btoa(password)) {
+            this.state = foundAccount;
+            this.state.loggedIn = true;
+            this.state.currentUserType = 'admin';
+            this.transitionToApp();
+        } else {
+            errorEl.textContent = 'Correo o contraseña incorrectos.';
+        }
     },
-
 
     loginWorker() {
         const businessEmail = document.getElementById('business-select').value;
@@ -1411,16 +1407,11 @@ initUserMenu() {
     },
 
     logout() {
-      this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", async () => {
-        try {
-          await auth.signOut();
-        } catch (e) {
-          console.error('Error signOut:', e);
-          this.showToast('No se pudo cerrar sesión.', 'error');
-        }
-      });
+        this.showConfirmationModal("¿Está seguro que desea cerrar sesión?", () => {
+            this.state = this.getInitialState();
+            window.location.reload();
+        });
     },
-
     
     transitionToApp() { 
         document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
@@ -2845,525 +2836,9 @@ generateConsolidatedReceipt(compraId) {
 
 };
 
-
-// === Sesión Firebase → UI ===
-auth.onAuthStateChanged(async (fbUser) => {
-  try {
-    // Espera a que 'app' exista
-    if (typeof app === 'undefined') return;
-    if (fbUser) {
-      const userSnap = await db.collection('users').doc(fbUser.uid).get();
-      if (!userSnap.exists) {
-        await auth.signOut();
-        return;
-      }
-      const user = userSnap.data();
-      let biz = {name:'Mi negocio', logoDataUrl:null, category:null};
-      if (user.businessId) {
-        const bizSnap = await db.collection('businesses').doc(user.businessId).get();
-        if (bizSnap.exists) biz = bizSnap.data();
-      }
-      app.state = app.getInitialState();
-      app.state.loggedIn = true;
-      app.state.currentUserType = (user.role === 'admin') ? 'admin' : 'worker';
-      app.state.user = {
-        id: fbUser.uid,
-        fullname: user.fullname || '',
-        phone: user.phone || '',
-        email: fbUser.email || user.email || '',
-        role: user.role || 'admin'
-      };
-      app.state.business = {
-        id: user.businessId || null,
-        name: biz.name || 'Mi negocio',
-        logoDataUrl: biz.logoDataUrl || null,
-        category: biz.category || null
-      };
-      app.transitionToApp();
-    } else {
-      if (typeof app !== 'undefined') {
-        app.state = app.getInitialState();
-        app.showAuthHome();
-      }
-    }
-  } catch (err) {
-    console.error('Error en onAuthStateChanged:', err);
-    if (typeof app !== 'undefined') app.showToast('Hubo un problema con la sesión.', 'error');
-  }
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     app.init();
 });
-</script>
-
-<!-- FIREBASE_INTEGRATION_START -->
-<script>
-// === Firebase Integration (Auth + Firestore + Storage) ===
-// Requiere que firebase.initializeApp(...) ya esté ejecutado en este archivo.
-// Usa los elementos existentes (IDs) de tu UI.
-
-(function(){
-  try {
-    if (!window.firebase || firebase.apps.length === 0) {
-      console.warn("Firebase aún no está inicializado. Asegúrate de tener tu firebaseConfig y firebase.initializeApp(...) en el archivo.");
-      return;
-    }
-    // Instancias (reutiliza si ya existen)
-    var auth = firebase.auth();
-    var db = firebase.firestore();
-    var storage = (firebase.storage && firebase.storage()) || null;
-
-    // Persistencia: LOCAL en sitios propios, SESSION si está en iframe (CodePen, etc.)
-    try {
-      var inIframe = (window.self !== window.top);
-      var mode = inIframe ? firebase.auth.Auth.Persistence.SESSION : firebase.auth.Auth.Persistence.LOCAL;
-      auth.setPersistence(mode);
-    } catch (e) { console.warn("setPersistence:", e); }
-
-    // Helpers de UI (aprovechamos funciones ya existentes si las definiste)
-    function showAuth() {
-      if (window.app && typeof app.showAuthHome === "function") app.showAuthHome();
-      var ac = document.getElementById("auth-container"); if (ac) ac.style.display = "flex";
-      document.body.classList.add("auth-visible");
-    }
-    function showApp() {
-      if (window.app && typeof app.transitionToApp === "function") app.transitionToApp();
-      var ac = document.getElementById("auth-container"); if (ac) ac.style.display = "none";
-      document.body.classList.remove("auth-visible");
-    }
-    function setText(id, v){ var el=document.getElementById(id); if(el) el.textContent=v; }
-    function setSrc(id, v){ var el=document.getElementById(id); if(el) el.src=v || ""; }
-    function toast(msg){ try{ 
-      var el=document.getElementById('toast-container'); 
-      if(el){el.innerHTML='<div class="toast success">'+msg+'</div>';}
-    }catch(_){} }
-
-    // onAuthStateChanged: carga perfil y negocio y pinta datos básicos
-    
-
-auth.onAuthStateChanged(async function(fbUser){
-  try {
-    if (!fbUser) { showAuth(); return; }
-
-    // ========== ENTRADA OPTIMISTA ==========
-    // Forzamos estado mínimo para pasar cualquier gating de UI y ENTRAR YA.
-    try {
-      window.app = window.app || {};
-      // Prepara estado base de la app si existe ese patrón
-      if (typeof app.getInitialState === 'function') {
-        app.state = app.getInitialState();
-      } else {
-        app.state = app.state || {};
-      }
-      app.state.loggedIn = true;
-      app.state.currentUserType = app.state.currentUserType || 'admin';
-      app.state.user = app.state.user || { id: fbUser.uid, fullname: fbUser.displayName || 'Usuario', email: fbUser.email || '' };
-      app.state.business = app.state.business || { id: null, name: 'Mi negocio', logoDataUrl: null, category: null };
-
-      if (typeof app.transitionToApp === 'function') {
-        app.transitionToApp();
-      } else {
-        showApp();
-      }
-    } catch (e) { console.warn('Optimistic entry warning:', e); }
-
-    // ========== PROVISIONAMIENTO EN BACKGROUND ==========
-    async function ensureUserAndBusiness() {
-      const userRef = db.collection('users').doc(fbUser.uid);
-      let userSnap = await userRef.get();
-      let uid = fbUser.uid;
-      let user, biz, bizId;
-
-      if (!userSnap.exists) {
-        const bizRef = db.collection('businesses').doc();
-        bizId = bizRef.id;
-        await bizRef.set({
-          name: 'Mi negocio',
-          ownerUid: uid,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        await userRef.set({
-          fullname: fbUser.displayName || 'Usuario',
-          phone: '',
-          role: 'admin',
-          businessId: bizId,
-          email: fbUser.email || '',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        user = (await userRef.get()).data();
-        biz  = (await bizRef.get()).data();
-      } else {
-        user = userSnap.data();
-        bizId = user.businessId;
-        const bizRef = db.collection('businesses').doc(bizId);
-        const bizSnap = await bizRef.get();
-        if (!bizSnap.exists) {
-          await bizRef.set({
-            name: 'Mi negocio',
-            ownerUid: uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
-        biz = (await db.collection('businesses').doc(bizId).get()).data();
-      }
-      return { user, biz, bizId };
-    }
-
-    try {
-      const { user, biz, bizId } = await ensureUserAndBusiness();
-      // Refresca UI con datos reales
-      setText('sidebar-bar-name', (biz && biz.name) ? biz.name : 'Mi negocio');
-      setText('header-bar-name',  (biz && biz.name) ? biz.name : 'Mi negocio');
-      setText('user-menu-name',   user.fullname || '');
-      setText('user-menu-email',  fbUser.email || '');
-      setSrc('biz-logo',          (biz && biz.logoUrl) ? biz.logoUrl : '');
-      window.__SEB360__ = { uid: fbUser.uid, businessId: bizId };
-    } catch (bgErr) {
-      console.warn('Background provisioning failed (verifica reglas Firestore CREATE en /businesses):', bgErr);
-    }
-
-  } catch (err) {
-    console.error('onAuthStateChanged fatal:', err);
-    showAuth();
-  }
-});
-
-  // === Registro: crea Auth user + negocio + perfil; sube logo si corresponde ===
-    async function _registerUser(){
-      var fullname = (document.getElementById('reg-fullname')||{}).value?.trim();
-      var phone    = (document.getElementById('reg-phone')||{}).value?.trim();
-      var email    = (document.getElementById('reg-email')||{}).value?.trim();
-      var password = (document.getElementById('reg-password')||{}).value;
-      var barname  = (document.getElementById('reg-barname')||{}).value?.trim();
-      var role     = (document.getElementById('reg-role')||{}).value || 'admin';
-      var errEl    = document.getElementById('register-error');
-
-      if (errEl) errEl.textContent = '';
-
-      if (!fullname || !email || !password || !barname || !role) {
-        if (errEl) errEl.textContent = 'Por favor, completa todos los campos obligatorios.';
-        return;
-      }
-      try {
-        var cred = await auth.createUserWithEmailAndPassword(email, password);
-        var uid = cred.user.uid;
-
-        // Crear negocio
-        var bizRef = db.collection('businesses').doc();
-        var bizId = bizRef.id;
-        await bizRef.set({
-          name: barname,
-          ownerUid: uid,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // Subir logo si fue seleccionado
-        var fileInput = document.getElementById('reg-logo');
-        if (fileInput && fileInput.files && fileInput.files[0] && storage) {
-          var file = fileInput.files[0];
-          var path = 'businesses/'+bizId+'/logo/'+file.name;
-          var ref  = storage.ref().child(path);
-          await ref.put(file);
-          var url = await ref.getDownloadURL();
-          await bizRef.update({ logoUrl: url });
-        }
-
-        // Crear perfil
-        await db.collection('users').doc(uid).set({
-          fullname: fullname, phone: phone || '', role: (role === 'administrador' ? 'admin' : role),
-          businessId: bizId, email: email,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        toast('¡Cuenta creada! Iniciando sesión...');
-        // onAuthStateChanged se encargará del resto.
-      } catch(e) {
-        if (e && e.code === 'auth/email-already-in-use') {
-          try {
-            await auth.signInWithEmailAndPassword(email, password);
-            toast('Bienvenido de nuevo. Iniciando sesión...');
-          } catch (loginErr) {
-            if (errEl) errEl.textContent = 'Este correo ya existe. Inicia sesión o usa "Olvidé mi contraseña".';
-          }
-        } else {
-          console.error('Error registrando:', e);
-          if (errEl) errEl.textContent = (e && e.message) ? e.message : 'No se pudo crear la cuenta.';
-        }
-      }
-    }
-
-    // === Login / Logout ===
-    async function _login(){
-      var email = (document.getElementById('username')||{}).value?.trim();
-      var password = (document.getElementById('password')||{}).value;
-      var errEl = document.getElementById('login-error');
-      if (errEl) errEl.textContent = '';
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch(e) {
-        if (errEl) errEl.textContent = 'Correo o contraseña incorrectos.';
-      }
-    }
-    async function _logout(){
-      try { await auth.signOut(); } catch(e){ console.error('signOut:', e); }
-    }
-
-    // Inyecta en tu objeto app si existe, si no, define globales
-    window.app = window.app || {};
-    app.registerUser = _registerUser;
-    app.login = _login;
-    app.logout = _logout;
-
-    // Enlaza formularios existentes si están en el DOM
-    var regForm = document.getElementById('register-form');
-    if (regForm && !regForm.__seb360_bound) {
-      regForm.addEventListener('submit', function(e){ e.preventDefault(); _registerUser(); });
-      regForm.__seb360_bound = true;
-    }
-    var loginForm = document.getElementById('login-form');
-    if (loginForm && !loginForm.__seb360_bound) {
-      loginForm.addEventListener('submit', function(e){ e.preventDefault(); _login(); });
-      loginForm.__seb360_bound = true;
-    }
-    var logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn && !logoutBtn.__seb360_bound) {
-      logoutBtn.addEventListener('click', function(){ _logout(); });
-      logoutBtn.__seb360_bound = true;
-    }
-
-  } catch (err) {
-    console.error('Firebase Integration fatal:', err);
-  }
-})();
-</script>
-<!-- FIREBASE_INTEGRATION_END -->
-
-
-<!-- === AUTH OVERLAY (Email/Password) === -->
-<style>
-  .auth-overlay{position:fixed;inset:0;display:none;place-items:center;background:rgba(2,6,23,.6);backdrop-filter:blur(6px);z-index:9999}
-  .auth-card{width:min(520px,94vw);background:#0b1220;border:1px solid rgba(148,163,184,.28);border-radius:16px;padding:18px 18px 20px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
-  .auth-tabs{display:flex;margin-bottom:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px;overflow:hidden}
-  .auth-tabs button{flex:1;padding:10px 12px;background:transparent;color:#cbd5e1;border:0;cursor:pointer}
-  .auth-tabs button.active{background:#111827;font-weight:700;color:#e5e7eb}
-  .auth-row{display:grid;gap:10px;margin:10px 0}
-  .auth-row.two{grid-template-columns:1fr 1fr}
-  .auth-row label{font-size:.85rem;color:#94a3b8}
-  .auth-row input,.auth-row select{padding:10px 12px;background:#0f172a;border:1px solid rgba(148,163,184,.25);border-radius:10px;color:#e5e7eb;outline:none}
-  .auth-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
-  .link{color:#60a5fa;cursor:pointer}
-  .small{font-size:.85rem;color:#94a3b8}
-  .full{width:100%}
-  .hidden{display:none!important}
-  .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
-  .btn.primary{background:#3b82f6;color:white}
-  .btn.ghost{background:transparent;border:1px solid rgba(148,163,184,.35);color:#e5e7eb}
-  .err-text{color:#ef4444;min-height:1.1rem}
-</style>
-
-<div id="authOverlay" class="auth-overlay">
-  <div class="auth-card">
-    <div class="auth-tabs">
-      <button id="tabLogin" class="active">Iniciar sesión</button>
-      <button id="tabRegister">Crear cuenta</button>
-    </div>
-
-    <!-- LOGIN -->
-    <div id="paneLogin">
-      <div class="auth-row">
-        <label>Correo electrónico</label>
-        <input id="login-email" type="email" placeholder="correo@dominio.com"/>
-      </div>
-      <div class="auth-row">
-        <label>Contraseña</label>
-        <input id="login-pass" type="password" placeholder="••••••••"/>
-      </div>
-      <div class="auth-row two">
-        <label class="small"><input type="checkbox" id="rememberMe"/> Recordarme</label>
-        <div class="small" style="text-align:right"><span id="forgotLink" class="link">¿Olvidaste tu contraseña?</span></div>
-      </div>
-      <div id="login-error2" class="err-text"></div>
-      <div class="auth-actions">
-        <button id="closeAuth" class="btn ghost">Cancelar</button>
-        <button id="doLogin" class="btn primary">Entrar</button>
-      </div>
-    </div>
-
-    <!-- REGISTER -->
-    <div id="paneRegister" class="hidden">
-      <div class="auth-row two">
-        <div>
-          <label>Nombre completo</label>
-          <input id="r-fullname" placeholder="Tu nombre"/>
-        </div>
-        <div>
-          <label>Teléfono</label>
-          <input id="r-phone" placeholder="3001234567"/>
-        </div>
-      </div>
-      <div class="auth-row two">
-        <div>
-          <label>Correo electrónico</label>
-          <input id="r-email" type="email" placeholder="correo@dominio.com"/>
-        </div>
-        <div>
-          <label>Contraseña</label>
-          <input id="r-pass" type="password" placeholder="Mínimo 6 caracteres"/>
-        </div>
-      </div>
-      <div class="auth-row two">
-        <div>
-          <label>Nombre del establecimiento</label>
-          <input id="r-barname" placeholder="Mi Negocio"/>
-        </div>
-        <div>
-          <label>Rol</label>
-          <select id="r-role">
-            <option value="admin">Propietario</option>
-            <option value="worker">Trabajador</option>
-          </select>
-        </div>
-      </div>
-      <div class="auth-row">
-        <label>Logo (opcional)</label>
-        <input id="r-logo" type="file" accept="image/*"/>
-      </div>
-      <div id="register-error2" class="err-text"></div>
-      <div class="auth-actions">
-        <button id="closeAuth2" class="btn ghost">Cancelar</button>
-        <button id="doRegister" class="btn primary">Crear cuenta</button>
-      </div>
-    </div>
-  </div>
-</div>
-<script>
-(function(){
-  // Tabs
-  const o = document.getElementById('authOverlay');
-  const tabLogin = document.getElementById('tabLogin');
-  const tabRegister = document.getElementById('tabRegister');
-  const paneLogin = document.getElementById('paneLogin');
-  const paneRegister = document.getElementById('paneRegister');
-  const closeAuth = document.getElementById('closeAuth');
-  const closeAuth2 = document.getElementById('closeAuth2');
-  function openOverlay(which='login'){
-    o.style.display='grid';
-    if(which==='login'){ tabLogin.classList.add('active'); tabRegister.classList.remove('active'); paneLogin.classList.remove('hidden'); paneRegister.classList.add('hidden'); }
-    else { tabRegister.classList.add('active'); tabLogin.classList.remove('active'); paneRegister.classList.remove('hidden'); paneLogin.classList.add('hidden'); }
-  }
-  function closeOverlay(){ o.style.display='none'; }
-
-  tabLogin?.addEventListener('click',()=>openOverlay('login'));
-  tabRegister?.addEventListener('click',()=>openOverlay('register'));
-  closeAuth?.addEventListener('click', closeOverlay);
-  closeAuth2?.addEventListener('click', closeOverlay);
-
-  // Exponer atajos a tu app/landing
-  window.app = window.app || {};
-  app.openLogin = ()=>openOverlay('login');
-  app.openRegister = ()=>openOverlay('register');
-  // Si hay botones de tu portada, los engancho por texto si existen
-  const btns = Array.from(document.querySelectorAll('button, a')).filter(b=>/crear una cuenta|crear cuenta/i.test(b.textContent||''));
-  btns.forEach(b=>b.addEventListener('click', ()=>openOverlay('register')));
-  const adminBtns = Array.from(document.querySelectorAll('button, a')).filter(b=>/soy administrador|iniciar sesión|entrar/i.test(b.textContent||''));
-  adminBtns.forEach(b=>b.addEventListener('click', ()=>openOverlay('login')));
-})();
-</script>
-
-
-<script>
-(function(){
-  if (!window.firebase) return;
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage && firebase.storage();
-
-  async function doLogin(){
-    const email = document.getElementById('login-email').value.trim();
-    const pass  = document.getElementById('login-pass').value;
-    const remember = document.getElementById('rememberMe').checked;
-    const err = document.getElementById('login-error2'); err.textContent='';
-
-    try{
-      const persistence = remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
-      await auth.setPersistence(persistence);
-      await auth.signInWithEmailAndPassword(email, pass);
-      document.getElementById('authOverlay').style.display='none';
-    }catch(e){
-      err.textContent = 'Correo o contraseña incorrectos.';
-      console.error('login:', e);
-    }
-  }
-
-  async function doRegister(){
-    const fn = document.getElementById('r-fullname').value.trim();
-    const ph = document.getElementById('r-phone').value.trim();
-    const em = document.getElementById('r-email').value.trim();
-    const pw = document.getElementById('r-pass').value;
-    const bn = document.getElementById('r-barname').value.trim();
-    const rl = document.getElementById('r-role').value;
-    const logo = document.getElementById('r-logo').files[0];
-    const err = document.getElementById('register-error2'); err.textContent='';
-
-    if(!fn||!em||!pw||!bn){ err.textContent='Completa los campos obligatorios.'; return; }
-
-    try{
-      const cred = await auth.createUserWithEmailAndPassword(em, pw);
-      const uid = cred.user.uid;
-      const bizRef = db.collection('businesses').doc();
-      const bizId = bizRef.id;
-      await bizRef.set({ name: bn, ownerUid: uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-
-      if (logo && storage){
-        const ref = storage.ref().child(`businesses/${bizId}/logo/${logo.name}`);
-        await ref.put(logo);
-        const url = await ref.getDownloadURL();
-        await bizRef.update({ logoUrl: url });
-      }
-
-      await db.collection('users').doc(uid).set({
-        fullname: fn, phone: ph, role: rl, businessId: bizId, email: em,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      document.getElementById('authOverlay').style.display='none';
-    }catch(e){
-      if(e.code==='auth/email-already-in-use'){
-        try{
-          await auth.signInWithEmailAndPassword(em, pw);
-          document.getElementById('authOverlay').style.display='none';
-        }catch(e2){
-          err.textContent='Este correo ya existe. Inicia sesión con tu contraseña o usa "Olvidé mi contraseña".';
-        }
-      }else{
-        err.textContent = e.message || 'No se pudo crear la cuenta.';
-        console.error('register:', e);
-      }
-    }
-  }
-
-  async function forgot(){
-    const email = document.getElementById('login-email').value.trim();
-    const err = document.getElementById('login-error2');
-    if(!email){ err.textContent='Escribe tu correo para enviarte un enlace.'; return; }
-    try{
-      await auth.sendPasswordResetEmail(email);
-      err.textContent='Te enviamos un enlace para restablecer la contraseña.';
-    }catch(e){
-      err.textContent='No pudimos enviar el correo. Verifica el email.';
-      console.error('reset:', e);
-    }
-  }
-
-  document.getElementById('doLogin').addEventListener('click', doLogin);
-  document.getElementById('doRegister').addEventListener('click', doRegister);
-  document.getElementById('forgotLink').addEventListener('click', forgot);
-
-  // Abre overlay si NO hay sesión al cargar
-  firebase.auth().onAuthStateChanged(u=>{
-    if(!u){ const o=document.getElementById('authOverlay'); if(o) o.style.display='grid'; }
-  });
-})();
 </script>
 </body>
 </html>
