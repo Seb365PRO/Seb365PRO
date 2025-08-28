@@ -2869,6 +2869,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // Aliases (Compat)
   const auth = firebase.auth();
   const db   = firebase.firestore();
+  /* 2-bis) Bootstrap para sesión de vendedor (sin Auth) tras recarga */
+  function bootstrapWorkerIfNeeded() {
+    try {
+      const asWorker = localStorage.getItem("inv_user_type") === "worker";
+      const bizId = localStorage.getItem("inv_current_business_id");
+      const hideCat = localStorage.getItem("inv_hide_category") === "1";
+      if (asWorker && bizId) {
+        // Recuperar el negocio y lanzar la app
+        db.collection("businesses").doc(bizId).get().then((doc) => {
+          if (doc.exists) {
+            document.body.classList.add("user-type-worker");
+      try { localStorage.setItem("inv_user_type", "worker"); } catch(_) {}
+            document.body.classList.remove("auth-visible");
+            hide(mdCategory);
+            showApp();
+            fillBusinessHeader(doc.data());
+            // Seguridad extra: no volver a mostrar categoría
+            try { localStorage.setItem("inv_hide_category", "1"); } catch(_) {}
+          } else if (!hideCat) {
+            show(mdCategory);
+          }
+        }).catch(console.error);
+      }
+    } catch (e) { console.error(e); }
+  }
+
 
   /* 2) Utilidades DOM */
   const $ = (sel) => document.querySelector(sel);
@@ -2986,10 +3012,11 @@ document.addEventListener('DOMContentLoaded', () => {
     $$(".tab-content").forEach(el => el.classList.remove("active"));
     const pane = document.getElementById(tabId);
     if (pane) pane.classList.add("active");
-
     navTabs.forEach(b => {
       b.classList.toggle("active", b.dataset.tab === tabId);
     });
+    try { localStorage.setItem("inv_last_tab", tabId); } catch (_) {}
+  });
   }
 
   // Navegación lateral
@@ -3011,10 +3038,16 @@ document.addEventListener('DOMContentLoaded', () => {
     show(elAppShell);
     document.body.classList.remove("auth-visible");
     setAppLoaded(true);
-    // Selecciona una pestaña por defecto si ninguna está activa
+    // Selecciona pestaña restaurando del cache si existe
+    let defaultTab = "turnos";
+    try {
+      const saved = localStorage.getItem("inv_last_tab");
+      if (saved && document.getElementById(saved)) defaultTab = saved;
+    } catch (_) {}
     if (!document.querySelector(".tab-content.active")) {
-      selectTab("turnos");
+      selectTab(defaultTab);
     }
+  }
   }
 
   // Exponer logout sin pisar tu objeto app existente
@@ -3167,12 +3200,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Modo vendedor: no requiere sesión de Auth; se usa vista restringida
       document.body.classList.add("user-type-worker");
+      try { localStorage.setItem("inv_user_type", "worker"); } catch(_) {}
       document.body.classList.remove("auth-visible");
       showApp();
       hide(mdWorkerLogin);
       // Rellenar encabezados con datos del negocio
       const bizDoc = await db.collection("businesses").doc(bizId).get();
       await fillBusinessHeader(bizDoc.data());
+      try { localStorage.setItem("inv_hide_category", "1"); localStorage.setItem("inv_current_business_id", bizId); } catch(_) {}
+      hide(mdCategory);
     } catch (err) {
       console.error(err);
       if (errWorker) errWorker.textContent = "No se pudo validar el código. Intenta de nuevo.";
@@ -3212,10 +3248,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userMenuEmail) userMenuEmail.textContent = user.email || "";
       } else {
         // No logueado
-        showAuth();
+        // Si hay sesión de vendedor persistida, arrancar como vendedor sin mostrar auth
+        const asWorker = (localStorage.getItem("inv_user_type") === "worker");
+        const bizId = localStorage.getItem("inv_current_business_id");
+        if (asWorker && bizId) {
+          document.body.classList.add("user-type-worker");
+          document.body.classList.remove("auth-visible");
+          hide(mdWorkerLogin); hide(mdLogin); hide(mdRegister);
+          db.collection("businesses").doc(bizId).get().then((doc)=>{
+            if (doc.exists) {
+              fillBusinessHeader(doc.data());
+              try { localStorage.setItem("inv_hide_category", "1"); } catch(_) {}
+              hide(mdCategory);
+              showApp();
+            } else {
+              showAuth();
+            }
+          }).catch((e)=>{ console.error(e); showAuth(); });
+        } else {
+          showAuth();
+        }
         setAppLoaded(true);
-        // Resetea vista trabajador
-        document.body.classList.remove("user-type-worker");
+        // Resetea vista trabajador si no aplica
+        if (!asWorker) document.body.classList.remove("user-type-worker");
       }
     } catch (e) {
       console.error(e);
@@ -3224,7 +3279,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  
   async function hydrateBusinessUI(uid) {
+    // Flag local para decidir si mostramos el modal de categoría.
+    let hideCategoryFlag = false;
+    try { hideCategoryFlag = (localStorage.getItem("inv_hide_category") === "1"); } catch(_) {}
+
     // Buscar negocio por ownerUid o por perfil
     let businessDoc = null;
 
@@ -3238,19 +3298,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Opción B: por ownerUid
     if (!businessDoc || !businessDoc.exists) {
-      const q = await db.collection("businesses").where("ownerUid", "==", uid).limit(1).get();
-      businessDoc = (!q.empty) ? q.docs[0] : null;
+      const q = await db.collection("businesses").where("ownerUid", "==", uid).limit(1).get().catch(() => null);
+      businessDoc = (q && !q.empty) ? q.docs[0] : null;
     }
 
     if (businessDoc && businessDoc.exists) {
       await fillBusinessHeader(businessDoc.data());
+      try { localStorage.setItem("inv_current_business_id", businessDoc.id || businessDoc.data().id || ""); localStorage.setItem("inv_user_type", "admin"); } catch(_) {}
+      // Marcar que ya hay negocio; no volver a mostrar el modal de categoría
+      try { localStorage.setItem("inv_hide_category", "1"); } catch(_) {}
+      hide(mdCategory);
     } else {
-      // Si no hay negocio asociado aún, mostrar selección de categoría
-      show(mdCategory);
+      // Solo mostrar el modal de categoría si NO está marcado para ocultarse
+      if (!hideCategoryFlag) {
+        show(mdCategory);
+      } else {
+        hide(mdCategory);
+        // Si está oculto por bandera pero no hay negocio, mantenemos la app visible sin bloquear
+        showApp();
+      }
     }
   }
-
-  async function fillBusinessHeader(biz) {
+async function fillBusinessHeader(biz) {
     if (!biz) return;
     if (headerBar)   headerBar.textContent = biz.name || "InventaPro";
     if (sideBarName) sideBarName.textContent = biz.name || "InventaPro";
@@ -3273,7 +3342,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* 10) Precarga visual */
   window.addEventListener("load", () => {
     // Mueve el preloader al modo compacto cuando la app está lista
-    setTimeout(() => setAppLoaded(true), 400);
+    setTimeout(() => { setAppLoaded(true); bootstrapWorkerIfNeeded(); }, 400);
   });
 
 })();
