@@ -18,7 +18,6 @@
 
     <div id="toast-container"></div>
 
-    <!-- Contenedor de Autenticación -->
     <div id="auth-container" class="view">
         <div class="auth-box">
             <h1>StockFlow</h1>
@@ -49,7 +48,6 @@
         </div>
     </div>
 
-    <!-- Contenedor Principal de la App -->
     <div id="app-container" class="view" style="display: none;">
         <header>
             <button id="menu-toggle">
@@ -95,12 +93,12 @@
                 </a>
             </nav>
             <div id="content">
-                <!-- El contenido de las vistas se inyectará aquí dinámicamente -->
-            </div>
+                </div>
         </main>
     </div>
 
     <script>
+        // Esta configuración se mantiene igual
         window.__FIREBASE_CONFIG__ = {
             apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
             authDomain: "seb360-pro.firebaseapp.com",
@@ -110,10 +108,6 @@
             appId: "1:750401346580:web:a682fd6ae09292ff589b01"
         };
     </script>
-    
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
     
     <script type="module" src="app.js"></script>
 
