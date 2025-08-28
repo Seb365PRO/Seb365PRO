@@ -54,6 +54,14 @@ const firebaseConfig = {
     if (typeof firebase !== 'undefined') { if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); }
     const auth = firebase.auth();
     const db   = firebase.firestore();
+    try {
+  firebase.firestore().settings({
+    experimentalAutoDetectLongPolling: true,  // si está disponible
+    experimentalForceLongPolling: true,       // fallback fuerte
+    useFetchStreams: false
+  });
+} catch (_) {}
+
 
     // Allowlist: allowed_users/{uid}.active == true
     async function isAllowed(uid) { 
