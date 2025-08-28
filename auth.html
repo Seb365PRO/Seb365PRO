@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acceso | SEB 360 PRO</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#0b0f1a;color:#eef;}
+    .card{width:100%;max-width:380px;background:#121828;border:1px solid #1d2540;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.35);padding:28px}
+    h1{font-size:1.25rem;margin:0 0 12px}
+    .muted{opacity:.8;margin-top:4px;font-size:.9rem}
+    label{display:block;font-size:.85rem;margin:.5rem 0 .25rem}
+    input{width:100%;padding:.7rem .8rem;border-radius:10px;border:1px solid #2b3558;background:#0e1324;color:#eef;outline:none}
+    button{width:100%;margin-top:14px;padding:.8rem;border-radius:12px;border:0;cursor:pointer;font-weight:600}
+    .primary{background:#4f7cff;color:#fff}
+    .error{color:#ff6b6b;margin-top:10px;min-height:20px}
+    .ok{color:#2ad3a7;margin-top:10px;min-height:20px}
+    .foot{margin-top:12px;font-size:.8rem;opacity:.8;text-align:center}
+    .brand{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .dot{width:10px;height:10px;background:#2ad3a7;border-radius:50%}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand"><div class="dot"></div><strong>SEB 360 PRO</strong></div>
+    <h1>Acceder</h1>
+    <div class="muted">Solo usuarios autorizados.</div>
+    <form id="auth-form">
+      <label for="email">Correo electrónico</label>
+      <input id="email" type="email" autocomplete="username" required />
+      <label for="password">Contraseña</label>
+      <input id="password" type="password" autocomplete="current-password" required />
+      <button class="primary" id="btn-login" type="submit">Ingresar</button>
+      <div id="msg" class="error"></div>
+      <div id="ok" class="ok"></div>
+      <div class="foot">¿Problemas? Contacta al administrador.</div>
+    </form>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
+    authDomain: "seb360-pro.firebaseapp.com",
+    projectId: "seb360-pro",
+    storageBucket: "seb360-pro.firebasestorage.app",
+    messagingSenderId: "750401346580",
+    appId: "1:750401346580:web:a682fd6ae09292ff589b01"
+  };
+
+    if (typeof firebase !== 'undefined') { if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    // Allowlist: allowed_users/{uid}.active == true
+    async function isAllowed(uid) { 
+      try { 
+        const doc = await db.doc(`allowed_users/${uid}`).get();
+        return !!(doc.exists && doc.get('active') === true);
+      } catch (e) { return false; }
+    }
+
+    auth.onAuthStateChanged(async (user) => { 
+      const msg = document.getElementById('msg');
+      const ok = document.getElementById('ok');
+      if (user) { 
+        const allowed = await isAllowed(user.uid);
+        if (!allowed) { 
+          msg.textContent = 'Tu usuario no está autorizado.'; 
+          try { await auth.signOut(); } catch(_ ) {}
+          return;
+        }
+        try { localStorage.setItem('inv_user_type','admin'); } catch(_ ) {}
+        ok.textContent = 'Acceso concedido. Redirigiendo…';
+        window.location.href = 'app.html'; 
+      }
+    });
+
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      const ok = document.getElementById('ok');
+      msg.textContent = ''; ok.textContent = '';
+      const email = document.getElementById('email').value.trim();
+      const pass  = document.getElementById('password').value;
+      try { 
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const cred = await auth.signInWithEmailAndPassword(email, pass);
+        const allowed = await isAllowed(cred.user.uid);
+        if (!allowed) { 
+          msg.textContent = 'No autorizado. Consulta con el administrador.';
+          await auth.signOut(); 
+          return; 
+        }
+        ok.textContent = 'Acceso concedido. Redirigiendo…';
+        window.location.href = 'app.html';
+      } catch (err) {
+        msg.textContent = toUserError(err);
+      }
+    });
+
+    function toUserError(err) { 
+      const code = (err && err.code) || '';
+      if (code.includes('user-not-found')) return 'Usuario no encontrado.';
+      if (code.includes('wrong-password')) return 'Contraseña incorrecta.';
+      if (code.includes('invalid-email')) return 'Correo inválido.';
+      if (code.includes('too-many-requests')) return 'Demasiados intentos, intenta más tarde.';
+      return err && err.message ? err.message : 'Error de acceso.';
+    }
+  </script>
+</body>
+</html>
