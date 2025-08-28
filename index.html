@@ -65,31 +65,27 @@
   const PROJECT_ID = firebase.app().options.projectId;
 
   async function isAllowed(user) {
-    try {
-      if (!user || !user.uid) return false;
-      // 1) Intento con SDK (rápido). Si la red bloquea, hacemos fallback REST.
-      try {
-        const snap = await db.doc(`allowed_users/${user.uid}`).get();
-        return !!(snap.exists && snap.get('active') === true);
-      } catch (e) {
-        // 2) Fallback REST con idToken (robusto en redes estrictas)
-        const token = await user.getIdToken(/* forceRefresh */ true);
-        const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/allowed_users/${user.uid}`;
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.status === 404) return false;
-        if (!res.ok) return false;
-        const data = await res.json();
-        const active =
-          data && data.fields && data.fields.active && data.fields.active.booleanValue === true;
-        return !!active;
-      }
-    } catch (e) {
-      console.warn('Allowlist check failed:', e);
-      return false;
+  try {
+    const uid   = user && user.uid;
+    const email = (user && user.email ? user.email : '').toLowerCase();
+
+    // 1) Por UID (tu flujo actual)
+    if (uid) {
+      const byUid = await db.doc(`allowed_users/${uid}`).get();
+      if (byUid.exists && byUid.get('active') === true) return true;
     }
+    // 2) Por email (nuevo)
+    if (email) {
+      const byEmail = await db.doc(`allowed_emails/${email}`).get();
+      if (byEmail.exists && byEmail.get('active') === true) return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn('Allowlist check warn:', e);
+    return false;
   }
+}
+
   // =========================================================================
 
   auth.onAuthStateChanged(async (user) => {
