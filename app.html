@@ -2854,12 +2854,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const auth = firebase.auth();
   const db   = firebase.firestore();
     try {
-  firebase.firestore().settings({
-    experimentalAutoDetectLongPolling: true,  // si está disponible
-    experimentalForceLongPolling: true,       // fallback fuerte
-    useFetchStreams: false
-  });
+  db.settings({ experimentalAutoDetectLongPolling: true });
 } catch (_) {}
+
 
 
   // Persistencia + offline (multi-dispositivo / multi-pestaña)
