@@ -37,12 +37,13 @@
     </form>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs (compat 9.6.1 como ya usas) -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
   <script>
-const firebaseConfig = {
+  const firebaseConfig = {
     apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
     authDomain: "seb360-pro.firebaseapp.com",
     projectId: "seb360-pro",
@@ -51,76 +52,88 @@ const firebaseConfig = {
     appId: "1:750401346580:web:a682fd6ae09292ff589b01"
   };
 
-    if (typeof firebase !== 'undefined') { if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); }
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-    try {
-  db.settings({ experimentalAutoDetectLongPolling: true });
-} catch (_) {}
-
-
-   // Allowlist: allowed_users/{uid}.active == true
-async function isAllowed(user) {
-  try {
-    const uid = user && user.uid;
-    if (!uid) return false;
-    const doc = await db.doc(`allowed_users/${uid}`).get();
-    return !!(doc.exists && doc.get('active') === true);
-  } catch (e) {
-    console.warn('Allowlist check warn:', e);
-    return false;
+  if (typeof firebase !== 'undefined') {
+    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
   }
-}
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
 
+  /* ===== FIX de transporte Firestore (redes estrictas) =====
+     Deja SOLO esta llamada a settings en el archivo.
+     Fuerza long-polling y desactiva fetch streams para evitar 400/unavailable.
+  */
+  try {
+    db.settings({ experimentalForceLongPolling: true, useFetchStreams: false, merge: true });
+  } catch (_) {
+    try {
+      // Fallback (por si "merge" no existe en 9.6.1)
+      db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
+    } catch (__) {}
+  }
+  /* ======================================================== */
 
-    auth.onAuthStateChanged(async (user) => { 
-      const msg = document.getElementById('msg');
-      const ok = document.getElementById('ok');
-      if (user) { 
-        const allowed = await isAllowed(user);
-        if (!allowed) { 
-          msg.textContent = 'Tu usuario no está autorizado.'; 
-          try { await auth.signOut(); } catch(_ ) {}
-          return;
-        }
-        try { localStorage.setItem('inv_user_type','admin'); } catch(_ ) {}
-        ok.textContent = 'Acceso concedido. Redirigiendo…';
-        window.location.href = 'app.html'; 
-      }
-    });
-
-    document.getElementById('auth-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('msg');
-      const ok = document.getElementById('ok');
-      msg.textContent = ''; ok.textContent = '';
-      const email = document.getElementById('email').value.trim();
-      const pass  = document.getElementById('password').value;
-      try { 
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        const cred = await auth.signInWithEmailAndPassword(email, pass);
-        const allowed = await isAllowed(cred.user);
-        if (!allowed) { 
-          msg.textContent = 'No autorizado. Consulta con el administrador.';
-          await auth.signOut(); 
-          return; 
-        }
-        ok.textContent = 'Acceso concedido. Redirigiendo…';
-        window.location.href = 'app.html';
-        
-      } catch (err) {
-        msg.textContent = toUserError(err);
-      }
-    });
-
-    function toUserError(err) { 
-      const code = (err && err.code) || '';
-      if (code.includes('user-not-found')) return 'Usuario no encontrado.';
-      if (code.includes('wrong-password')) return 'Contraseña incorrecta.';
-      if (code.includes('invalid-email')) return 'Correo inválido.';
-      if (code.includes('too-many-requests')) return 'Demasiados intentos, intenta más tarde.';
-      return err && err.message ? err.message : 'Error de acceso.';
+  // Allowlist por UID: allowed_users/{uid}.active == true
+  async function isAllowed(user) {
+    try {
+      const uid = user && user.uid;
+      if (!uid) return false;
+      const doc = await db.doc(`allowed_users/${uid}`).get();
+      return !!(doc.exists && doc.get('active') === true);
+    } catch (e) {
+      console.warn('Allowlist check warn:', e);
+      return false;
     }
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    const msg = document.getElementById('msg');
+    const ok  = document.getElementById('ok');
+    if (user) {
+      const allowed = await isAllowed(user);
+      if (!allowed) {
+        msg.textContent = 'Tu usuario no está autorizado.';
+        try { await auth.signOut(); } catch(_) {}
+        return;
+      }
+      try { localStorage.setItem('inv_user_type','admin'); } catch(_) {}
+      ok.textContent = 'Acceso concedido. Redirigiendo…';
+      window.location.href = 'app.html';  // asegúrate que exista exactamente este archivo
+    }
+  });
+
+  document.getElementById('auth-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    const ok  = document.getElementById('ok');
+    msg.textContent = ''; ok.textContent = '';
+
+    const email = document.getElementById('email').value.trim();
+    const pass  = document.getElementById('password').value;
+
+    try {
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      const cred = await auth.signInWithEmailAndPassword(email, pass);
+      const allowed = await isAllowed(cred.user);
+      if (!allowed) {
+        msg.textContent = 'No autorizado. Consulta con el administrador.';
+        await auth.signOut();
+        return;
+      }
+      ok.textContent = 'Acceso concedido. Redirigiendo…';
+      window.location.href = 'app.html';
+    } catch (err) {
+      msg.textContent = toUserError(err);
+    }
+  });
+
+  function toUserError(err) {
+    const code = (err && err.code) || '';
+    if (code.includes('user-not-found')) return 'Usuario no encontrado.';
+    if (code.includes('wrong-password')) return 'Contraseña incorrecta.';
+    if (code.includes('invalid-email')) return 'Correo inválido.';
+    if (code.includes('too-many-requests')) return 'Demasiados intentos, intenta más tarde.';
+    return err && err.message ? err.message : 'Error de acceso.';
+  }
   </script>
 </body>
 </html>
