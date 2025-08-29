@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.autotable.min.js"></script>
 
   <style>
     :root {
@@ -70,6 +73,7 @@
     header {
       display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
       height: 60px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-secondary);
+      position: sticky; top: 0; z-index: 100;
     }
     .header-logo {
       margin: 0; font-size: 22px; font-weight: 700;
@@ -92,6 +96,7 @@
     #main-nav {
       width: 250px; padding: 16px 8px; border-right: 1px solid var(--border-color);
       background: var(--bg-secondary); transition: left 0.3s ease-in-out;
+      height: 100vh; position: sticky; top: 0;
     }
     #main-nav .nav-link {
       display: flex; gap: 16px; align-items: center; color: var(--text-secondary); padding: 10px 16px;
@@ -209,14 +214,65 @@
     .mobile-nav-link span { font-size: 10px; font-weight: 500; }
     .mobile-nav-link.active { color: var(--brand-primary); }
 
+    .report-card h3 {
+        font-size: 16px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin: 0 0 8px 0;
+    }
+    .report-card p {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* Notificaciones */
+    .notification-container { position: relative; }
+    #notification-counter {
+        position: absolute; top: 0px; right: 0px;
+        background-color: var(--accent-red); color: white;
+        border-radius: 50%; width: 18px; height: 18px;
+        font-size: 11px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid var(--bg-secondary);
+    }
+    #notification-dropdown {
+        position: absolute; top: calc(100% + 10px); right: 0;
+        width: 380px; max-height: 450px;
+        display: flex; flex-direction: column;
+        z-index: 110;
+        overflow: hidden;
+    }
+    .notification-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0 20px 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .notification-header h3 { margin: 0; font-size: 18px;}
+    #notification-list { flex-grow: 1; overflow-y: auto; }
+    .notification-item {
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex; gap: 12px;
+        cursor: pointer; transition: background-color 0.2s;
+    }
+    .notification-item:last-child { border-bottom: none; }
+    .notification-item:hover { background-color: var(--bg-tertiary); }
+    .notification-item.unread { background-color: rgba(255, 111, 0, 0.05); }
+    .notification-icon { flex-shrink: 0; margin-top: 4px; }
+    .notification-icon svg { width: 18px; height: 18px; color: var(--text-secondary); }
+    .notification-content p { margin: 0 0 4px 0; font-size: 14px; line-height: 1.4; }
+    .notification-content span { font-size: 12px; color: var(--text-secondary); }
+
     @media (max-width: 768px) {
-      #main-nav { position: fixed; left: -270px; top: 60px; height: calc(100vh - 60px); z-index: 80; box-shadow: 4px 0 15px rgba(0,0,0,.1); }
+      #main-nav { position: fixed; left: -270px; top: 60px; z-index: 80; box-shadow: 4px 0 15px rgba(0,0,0,.1); }
       #main-nav.open { left: 0; }
       #content { padding: 16px; padding-bottom: 80px; }
       #menu-toggle { display: block !important; }
       #mobile-footer { display: block; }
       #logout-btn span { display: none; }
       #logout-btn { padding: 8px; }
+      #notification-dropdown { width: 90vw; max-width: 380px; }
     }
     @media (max-width: 640px) {
       header { padding: 0 16px; }
@@ -281,6 +337,19 @@
         <button id="theme-toggle" title="Alternar tema" class="button-secondary" style="padding: 8px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
         </button>
+        <div id="notification-bell" class="notification-container">
+            <button title="Notificaciones" class="button-secondary" style="padding: 8px; position: relative;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span id="notification-counter" class="hidden"></span>
+            </button>
+            <div id="notification-dropdown" class="card hidden">
+                <div class="notification-header">
+                    <h3>Notificaciones</h3>
+                </div>
+                <div id="notification-list">
+                </div>
+            </div>
+        </div>
         <button id="profile-btn" title="Mi Perfil" class="button-secondary" style="padding: 8px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         </button>
@@ -292,7 +361,7 @@
     </header>
     <main>
       <nav id="main-nav">
-        <a href="#" class="nav-link" data-view="dashboard-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span>Reportes</span></a>
+        <a href="#" class="nav-link" data-view="reports-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span>Reportes</span></a>
         <a href="#" class="nav-link" data-view="shifts-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Turnos y Ventas</span></a>
         <a href="#" class="nav-link" data-view="inventory-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="m12 22.08V12"/></svg><span>Inventario</span></a>
         <a href="#" class="nav-link" data-view="cashflow-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Flujo de Caja</span></a>
@@ -404,13 +473,14 @@
         workers: TCOL("workers"),
         cashflow: TCOL("cashflow_entries"),
         shifts: TCOL("shifts"),
-        purchases: TCOL("purchases")
+        purchases: TCOL("purchases"),
+        notifications: TCOL("notifications")
       };
     }
 
     let appState = {
       user: null, userData: null, role: null, unsub: [],
-      products: [], providers: [], workers: [],
+      products: [], providers: [], workers: [], notifications: [],
       inventory: {}, cashflow: [],
       activeShifts: [], selectedShiftId: null
     };
@@ -428,6 +498,7 @@
 
     const COP = (v) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
     const fmtDate = (ts) => ts?.toDate().toLocaleString("es-CO", { hour12: true, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) ?? "—";
+    const fmtDateShort = (d) => d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
 
     const toUnidades = (qty, unit, prod) => {
         if (!prod) return qty;
@@ -440,7 +511,7 @@
     const scheduleRender = (forceId = null) => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
-        const activeId = forceId || (document.querySelector(".nav-link.active")?.dataset.view) || "dashboard-view";
+        const activeId = forceId || (document.querySelector(".nav-link.active")?.dataset.view) || "reports-view";
         renderView(activeId);
         document.querySelectorAll('.mobile-nav-link').forEach(link => {
             link.classList.toggle('active', link.dataset.view === activeId);
@@ -471,8 +542,8 @@
     document.getElementById("menu-toggle").addEventListener("click", () => mainNav.classList.toggle("open"));
     document.getElementById("profile-btn").addEventListener("click", () => document.querySelector('.nav-link[data-view="profile-view"]').click());
     document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
-
-    // --- Lógica del Tema (Claro/Oscuro) ---
+    
+    // --- Lógica de Tema (Claro/Oscuro) ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const updateThemeToggleIcon = (theme) => {
       const icon = themeToggleBtn.querySelector('svg');
@@ -639,18 +710,20 @@
         document.body.dataset.role = appState.role;
         document.getElementById("auth-container").classList.add("hidden");
         document.getElementById("app-container").classList.remove("hidden");
-        document.querySelector('.nav-link[data-view="dashboard-view"]').classList.add("active");
+        document.querySelector('.nav-link[data-view="reports-view"]').classList.add("active");
         if (!persistentHandlersAttached) {
             attachPersistentHandlers();
             persistentHandlersAttached = true;
         }
         initRealtime();
-        scheduleRender("dashboard-view");
+        scheduleRender("reports-view");
       } else {
-        appState.unsub.forEach(u => u());
-        Object.values(stockUnsubscribers).forEach(unsubArray => unsubArray.forEach(unsub => unsub()));
+        appState.unsub.forEach(u => { if(typeof u === 'function') u() });
+        Object.values(stockUnsubscribers).forEach(unsubArray => unsubArray.forEach(unsub => { if(typeof unsub === 'function') unsub() }));
+        Object.values(shiftSubListeners).forEach(unsubArray => unsubArray.forEach(unsub => { if(typeof unsub === 'function') unsub() }));
         stockUnsubscribers = {};
-        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
+        shiftSubListeners = {};
+        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], notifications: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
         document.getElementById("app-container").classList.add("hidden");
         document.getElementById("auth-container").classList.remove("hidden");
         renderAuthUI();
@@ -664,10 +737,10 @@
 
     function initRealtime(){
       if(!tenantId()) return;
-      appState.unsub.forEach(u=>u()); 
+      appState.unsub.forEach(u=> { if(typeof u === 'function') u() }); 
       appState.unsub=[];
       
-      Object.values(stockUnsubscribers).forEach(unsubArray => unsubArray.forEach(unsub => unsub()));
+      Object.values(stockUnsubscribers).forEach(unsubArray => unsubArray.forEach(unsub => { if(typeof unsub === 'function') unsub() }));
       stockUnsubscribers = {};
 
       const add = (un)=> appState.unsub.push(un);
@@ -707,7 +780,10 @@
       add(onSnapshot(query(colref.providers, orderBy("nombre")), s=>{ appState.providers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.workers, orderBy("nombre")), s=>{ appState.workers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.cashflow, orderBy("date","desc")), s=>{ appState.cashflow = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
-      
+      add(onSnapshot(query(colref.notifications, orderBy("timestamp", "desc")), s => {
+            appState.notifications = s.docs.map(d => ({id: d.id, ...d.data()}));
+            renderNotifications();
+      }));
       add(onSnapshot(query(colref.shifts, where("estado", "==", "abierto")), (snapshot) => {
         const currentShiftIds = snapshot.docs.map(doc => doc.id);
         const previousShiftIds = appState.activeShifts.map(shift => shift.id);
@@ -752,12 +828,44 @@
    
     function renderView(id) {
         let html = "";
-        if (id === 'dashboard-view') {
-            const balance = appState.cashflow.reduce((b, e) => b + (e.type === "ingreso" ? e.amount : -e.amount), 0);
-            const totalSalesAllShifts = appState.activeShifts.reduce((total, shift) => total + shift.sales.reduce((subtotal, sale) => subtotal + sale.totalVenta, 0), 0);
-            const debt = appState.providers.reduce((s, p) => s + (p.saldoPendiente || 0), 0);
-            const low = appState.products.filter(p => (appState.inventory[p.id]?.barra?.unidades || 0) < 10).map(p => `<li>${p.nombre}: <strong>${appState.inventory[p.id]?.barra?.unidades || 0} uds</strong></li>`).join("");
-            html = `<div class="content-view"><h2>Panel de Control</h2><div class="form-grid"><div class="card"><h3>Saldo en Caja</h3><p>${COP(balance)}</p></div><div class="card"><h3>Ventas (Turnos Activos)</h3><p>${COP(totalSalesAllShifts)}</p></div><div class="card"><h3>Deuda Proveedores</h3><p>${COP(debt)}</p></div><div class="card"><h3>Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div></div></div>`;
+        if (id === 'reports-view') {
+            html = `<div class="content-view">
+                <h2>Reportes y Estadísticas</h2>
+                <div class="card" style="margin-bottom: 24px;">
+                    <h3>Seleccionar Periodo</h3>
+                    <form id="reports-form" class="form-grid" style="align-items: flex-end; gap: 16px 24px;">
+                        <div>
+                            <label for="report-start-date">Fecha de Inicio</label>
+                            <input type="datetime-local" id="report-start-date" required>
+                        </div>
+                        <div>
+                            <label for="report-end-date">Fecha de Fin</label>
+                            <input type="datetime-local" id="report-end-date" required>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                           <button type="button" id="set-today-btn" class="button-secondary" style="flex-grow: 1;">Hoy</button>
+                           <button type="submit" style="flex-grow: 2;">Calcular</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="form-grid">
+                    <div class="card report-card">
+                        <h3>Ganancia Bruta (Ventas)</h3>
+                        <p id="report-ganancia-bruta" class="amount-positive">${COP(0)}</p>
+                    </div>
+                     <div class="card report-card">
+                        <h3>Costos Totales</h3>
+                        <p id="report-costos-totales" class="amount-negative">${COP(0)}</p>
+                    </div>
+                    <div class="card report-card">
+                        <h3>Ganancia Neta</h3>
+                        <p id="report-ganancia-neta">${COP(0)}</p>
+                    </div>
+                </div>
+                <div style="margin-top: 24px;">
+                    <button id="generate-pdf-btn" disabled>Generar Reporte PDF</button>
+                </div>
+            </div>`;
         }
         if (id === 'products-view') {
             const providersPorVentas = appState.providers.filter(p => p.tipoPago === 'porVentas');
@@ -849,7 +957,11 @@
                 </div>`;
             }
         }
-        if (html) { content.innerHTML = html; attachHandlers(id); }
+        if (html) { 
+            content.innerHTML = html; 
+            attachHandlers(id); 
+            renderNotifications();
+        }
     }
    
     function attachPersistentHandlers() {
@@ -906,6 +1018,11 @@
                     }
                 });
                 
+                const currentShift = appState.activeShifts.find(s => s.id === appState.selectedShiftId);
+                const worker = appState.workers.find(w => w.id === currentShift?.workerId);
+                const prod = appState.products.find(p => p.id === productId);
+                await createNotification(`Venta de ${unidades} x ${prod.nombre} por ${worker?.nombre || 'Desconocido'}.`, 'sale');
+                await checkAndNotifyLowStock(productId);
                 showToast("Venta registrada");
                 modal.classList.remove("visible");
 
@@ -920,16 +1037,305 @@
         if (loanForm) loanForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             if (!appState.selectedShiftId) return;
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            
             const valor = parseFloat(document.getElementById("loan-value").value);
             const desc = document.getElementById("loan-description").value;
-            if (isNaN(valor) || !desc) return;
-            await addDoc(TCOL("shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
-            loanForm.reset();
-            document.getElementById("loan-modal").classList.remove("visible");
+            if (isNaN(valor) || !desc) {
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                await addDoc(TCOL("shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
+                
+                const currentShift = appState.activeShifts.find(s => s.id === appState.selectedShiftId);
+                const worker = appState.workers.find(w => w.id === currentShift?.workerId);
+                await createNotification(`${worker?.nombre || 'Alguien'} ha registrado un préstamo.`, 'loan');
+                
+                loanForm.reset();
+                document.getElementById("loan-modal").classList.remove("visible");
+            } catch(err) {
+                 showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        const notificationBell = document.getElementById('notification-bell');
+        if (notificationBell) {
+            notificationBell.addEventListener('click', async () => {
+                const dropdown = document.getElementById('notification-dropdown');
+                const isVisible = !dropdown.classList.contains('hidden');
+                
+                if (isVisible) {
+                    dropdown.classList.add('hidden');
+                } else {
+                    dropdown.classList.remove('hidden');
+                    const unreadNotifs = appState.notifications.filter(n => !n.read);
+                    if (unreadNotifs.length > 0) {
+                        const batch = writeBatch(db);
+                        unreadNotifs.forEach(notif => {
+                            const notifRef = doc(colref.notifications, notif.id);
+                            batch.update(notifRef, { read: true });
+                        });
+                        await batch.commit();
+                    }
+                }
+            });
+        }
+        document.addEventListener('click', (e) => {
+            const bell = document.getElementById('notification-bell');
+            const dropdown = document.getElementById('notification-dropdown');
+            if (bell && dropdown && !bell.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
         });
     }
 
+    async function createNotification(message, type = 'info') {
+        try {
+            await addDoc(colref.notifications, {
+                message: message,
+                timestamp: serverTimestamp(),
+                read: false,
+                type: type
+            });
+        } catch (error) {
+            console.error("Error creating notification:", error);
+        }
+    }
+
+    async function checkAndNotifyLowStock(productId) {
+        const LOW_STOCK_THRESHOLD = 10;
+        const stockData = appState.inventory[productId];
+        const product = appState.products.find(p => p.id === productId);
+        if (!stockData || !product) return;
+
+        const totalStock = (stockData.barra?.unidades || 0);
+        
+        const existingNotif = appState.notifications.find(n => 
+            !n.read && n.message.includes(product.nombre) && n.message.includes("Stock bajo")
+        );
+
+        if (totalStock <= LOW_STOCK_THRESHOLD && !existingNotif) {
+            await createNotification(`Stock bajo: ${product.nombre} solo tiene ${totalStock} unidades en barra.`, 'stock');
+        }
+    }
+
+    function renderNotifications() {
+        const counter = document.getElementById('notification-counter');
+        const list = document.getElementById('notification-list');
+        if (!counter || !list) return;
+
+        const unreadCount = appState.notifications.filter(n => !n.read).length;
+        if (unreadCount > 0) {
+            counter.textContent = unreadCount;
+            counter.classList.remove('hidden');
+        } else {
+            counter.classList.add('hidden');
+        }
+
+        if (appState.notifications.length === 0) {
+            list.innerHTML = `<div class="notification-item"><p>No hay notificaciones.</p></div>`;
+            return;
+        }
+
+        const ICONS_NOTIF = {
+            sale: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
+            purchase: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`,
+            stock: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+            shift: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+            loan: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`
+        };
+
+        list.innerHTML = appState.notifications.map(n => {
+            const icon = ICONS_NOTIF[n.type] || ICONS_NOTIF['sale'];
+            return `
+                <div class="notification-item ${n.read ? '' : 'unread'}">
+                    <div class="notification-icon">${icon}</div>
+                    <div class="notification-content">
+                        <p>${n.message}</p>
+                        <span>${fmtDate(n.timestamp)}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     function attachHandlers(id){
+        if (id === 'reports-view') {
+            const startDateInput = document.getElementById('report-start-date');
+            const endDateInput = document.getElementById('report-end-date');
+            const pdfBtn = document.getElementById('generate-pdf-btn');
+
+            const setToday = () => {
+                const now = new Date();
+                const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+                startDateInput.value = todayStart.toISOString().slice(0, 16);
+                endDateInput.value = todayEnd.toISOString().slice(0, 16);
+            };
+            setToday();
+
+            document.getElementById('set-today-btn').addEventListener('click', setToday);
+
+            document.getElementById('reports-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                
+                if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+                    showToast("Por favor, selecciona un rango de fechas válido.", "error");
+                    btn.disabled = false;
+                    return;
+                }
+
+                try {
+                    const allShiftsSnapshot = await getDocs(colref.shifts);
+                    let allSales = [];
+                    for (const shiftDoc of allShiftsSnapshot.docs) {
+                        const salesSnapshot = await getDocs(TCOL('shifts', shiftDoc.id, 'sales'));
+                        salesSnapshot.forEach(saleDoc => {
+                            allSales.push({ id: saleDoc.id, ...saleDoc.data() });
+                        });
+                    }
+
+                    const filteredSales = allSales.filter(s => s.fecha && s.fecha.toDate() >= startDate && s.fecha.toDate() <= endDate);
+                    const filteredCashflow = appState.cashflow.filter(cf => cf.date && cf.date.toDate() >= startDate && cf.date.toDate() <= endDate);
+                    
+                    const gananciaBruta = filteredSales.reduce((sum, sale) => sum + sale.totalVenta, 0);
+                    
+                    const costoMercanciaVendida = filteredSales.reduce((sum, sale) => {
+                        const product = appState.products.find(p => p.id === sale.productId);
+                        return sum + (sale.unidades * (product?.precioCompra || 0));
+                    }, 0);
+
+                    const otrosEgresos = filteredCashflow
+                        .filter(cf => cf.type === 'egreso')
+                        .reduce((sum, entry) => sum + entry.amount, 0);
+
+                    const costosTotales = costoMercanciaVendida + otrosEgresos;
+                    const gananciaNeta = gananciaBruta - costosTotales;
+                    
+                    document.getElementById('report-ganancia-bruta').textContent = COP(gananciaBruta);
+                    document.getElementById('report-costos-totales').textContent = COP(-costosTotales);
+                    const gananciaNetaEl = document.getElementById('report-ganancia-neta');
+                    gananciaNetaEl.textContent = COP(gananciaNeta);
+                    gananciaNetaEl.className = gananciaNeta >= 0 ? 'amount-positive' : 'amount-negative';
+
+                    pdfBtn.disabled = false;
+
+                } catch (error) {
+                    showToast(`Error al calcular: ${error.message}`, "error");
+                    console.error("Error calculating report:", error);
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+
+            pdfBtn.addEventListener('click', async () => {
+                 const startDate = new Date(startDateInput.value);
+                 const endDate = new Date(endDateInput.value);
+
+                 if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+                    showToast("Rango de fechas inválido para generar PDF.", "error");
+                    return;
+                }
+                
+                showToast("Generando reporte PDF...", "success");
+                pdfBtn.disabled = true;
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    const allShiftsSnapshot = await getDocs(colref.shifts);
+                    let allSales = [];
+                    for (const shiftDoc of allShiftsSnapshot.docs) {
+                        const salesSnapshot = await getDocs(TCOL('shifts', shiftDoc.id, 'sales'));
+                        salesSnapshot.forEach(saleDoc => {
+                            allSales.push({ id: saleDoc.id, ...saleDoc.data() });
+                        });
+                    }
+                    
+                    const filteredSales = allSales.filter(s => s.fecha && s.fecha.toDate() >= startDate && s.fecha.toDate() <= endDate);
+                    const filteredCashflow = appState.cashflow.filter(cf => cf.date && cf.date.toDate() >= startDate && cf.date.toDate() <= endDate);
+
+                    const gananciaBruta = filteredSales.reduce((sum, sale) => sum + sale.totalVenta, 0);
+                    const costoMercanciaVendida = filteredSales.reduce((sum, sale) => {
+                        const product = appState.products.find(p => p.id === sale.productId);
+                        return sum + (sale.unidades * (product?.precioCompra || 0));
+                    }, 0);
+                    const otrosEgresos = filteredCashflow.filter(cf => cf.type === 'egreso').reduce((sum, entry) => sum + entry.amount, 0);
+                    const costosTotales = costoMercanciaVendida + otrosEgresos;
+                    const gananciaNeta = gananciaBruta - costosTotales;
+                    
+                    doc.setFontSize(20);
+                    doc.text(`Reporte Financiero - ${appState.userData.businessName || 'seb365 pro'}`, 14, 22);
+                    doc.setFontSize(11);
+                    doc.setTextColor(100);
+                    doc.text(`Periodo: ${startDate.toLocaleString('es-CO')} - ${endDate.toLocaleString('es-CO')}`, 14, 30);
+
+                    doc.autoTable({
+                        startY: 40,
+                        head: [['Métrica', 'Valor']],
+                        body: [
+                            ['Ganancia Bruta (Ingresos por Ventas)', COP(gananciaBruta)],
+                            ['Costo de Mercancía Vendida (CMV)', COP(-costoMercanciaVendida)],
+                            ['Otros Egresos (Flujo de Caja)', COP(-otrosEgresos)],
+                            [{ content: 'GANANCIA NETA', styles: { fontStyle: 'bold' } }, { content: COP(gananciaNeta), styles: { fontStyle: 'bold' } }]
+                        ],
+                        theme: 'grid',
+                        headStyles: { fillColor: [255, 111, 0] },
+                        didParseCell: function(data) {
+                            if (data.row.index > 0 && data.row.index < 3) {
+                                data.cell.styles.textColor = [217, 48, 37]; // Red for costs
+                            }
+                            if (data.row.index === 3) {
+                                data.cell.styles.textColor = gananciaNeta >= 0 ? [30, 142, 62] : [217, 48, 37];
+                            }
+                        }
+                    });
+
+                    if (filteredSales.length > 0) {
+                        doc.autoTable({
+                            startY: doc.autoTable.previous.finalY + 10,
+                            head: [['Fecha', 'Producto', 'Cant.', 'Total Venta', 'Comisión']],
+                            body: filteredSales.map(sale => {
+                                const product = appState.products.find(p => p.id === sale.productId);
+                                return [ fmtDate(sale.fecha), product?.nombre || 'N/A', sale.unidades, COP(sale.totalVenta), COP(sale.totalComision || 0)];
+                            }),
+                            theme: 'striped',
+                            headStyles: { fillColor: [48, 49, 52] },
+                        });
+                    }
+
+                    const egresosFiltrados = filteredCashflow.filter(cf => cf.type === 'egreso');
+                    if (egresosFiltrados.length > 0) {
+                        doc.autoTable({
+                            startY: doc.autoTable.previous.finalY + 10,
+                            head: [['Fecha', 'Descripción Egreso', 'Monto']],
+                            body: egresosFiltrados.map(entry => [fmtDate(entry.date), entry.description, COP(entry.amount)]),
+                            theme: 'striped',
+                            headStyles: { fillColor: [48, 49, 52] },
+                        });
+                    }
+                    
+                    doc.save(`Reporte_${fmtDateShort(new Date())}.pdf`);
+
+                } catch (error) {
+                    showToast(`Error al generar PDF: ${error.message}`, 'error');
+                    console.error("PDF generation error:", error);
+                } finally {
+                    pdfBtn.disabled = false;
+                }
+            });
+        }
         if (id === 'products-view') {
             content.querySelectorAll(".btn-edit").forEach(b => b.addEventListener("click", () => {
                 const p = appState.products.find(x => x.id === b.dataset.id); if (!p) return;
@@ -1048,6 +1454,7 @@
                         }
                     });
 
+                    await createNotification(`Compra de ${unidades} x ${prod.nombre} a ${provider.nombre}.`, 'purchase');
                     showToast("Compra registrada exitosamente");
                     purchaseForm.reset();
                 } catch (err) {
@@ -1081,6 +1488,8 @@
                         t.update(bodegaRef, { unidades: increment(-unidades) });
                         t.update(barraRef, { unidades: increment(unidades) });
                     });
+                    
+                    await checkAndNotifyLowStock(productId);
                     showToast("Traslado exitoso");
                     transferForm.reset();
                 } catch (err) {
@@ -1378,13 +1787,24 @@
                     e.preventDefault();
                     const workerId = document.getElementById("shift-worker").value;
                     if (!workerId) return;
-                    const worker = appState.workers.find(w => w.id === workerId);
-                    await addDoc(colref.shifts, {
-                        workerId,
-                        pagoBase: worker?.pagoBase || 0,
-                        inicio: serverTimestamp(),
-                        estado: "abierto"
-                    });
+                    
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+
+                    try {
+                        const worker = appState.workers.find(w => w.id === workerId);
+                        await addDoc(colref.shifts, {
+                            workerId,
+                            pagoBase: worker?.pagoBase || 0,
+                            inicio: serverTimestamp(),
+                            estado: "abierto"
+                        });
+                        await createNotification(`${worker.nombre} ha iniciado turno.`, 'shift');
+                    } catch(err) {
+                        showToast(err.message, 'error');
+                    } finally {
+                        btn.disabled = false;
+                    }
                 });
                 content.querySelectorAll('.btn-manage-shift').forEach(btn => btn.addEventListener('click', (e) => {
                     appState.selectedShiftId = e.target.dataset.shiftId;
@@ -1434,4 +1854,3 @@
   </script>
 </body>
 </html>
-
