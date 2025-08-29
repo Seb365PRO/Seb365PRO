@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>seb365 pro</title>
+  <title>SEB365 PRO</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,14 +29,98 @@
       --shadow-color: var(--dark-shadow-color); --logo-color: var(--dark-logo-color);
     }
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
+    html, body {
+      height: 100%;
+      overflow-x: hidden; /* Evita el scroll horizontal */
+    }
     body {
       margin: 0; font-family: 'Roboto', sans-serif; background-color: var(--bg-primary);
       color: var(--text-primary); transition: background-color 0.2s, color 0.2s;
     }
     main { display: flex; min-height: calc(100vh - 60px); }
-    #content { flex: 1; padding: 24px; }
+    #content { flex: 1; padding: 24px; padding-bottom: 80px; } /* Add padding for mobile footer */
     .hidden { display: none !important; }
+
+    /* --- Animación de Inicio Profesional --- */
+    #splash-screen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: #1a1a1a;
+      z-index: 10000;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.5s ease-out;
+    }
+    #splash-screen.hidden { opacity: 0; pointer-events: none; }
+
+    /* Animación de logo SVG */
+    #logo-svg {
+        width: 80%;
+        max-width: 450px; /* Aumentado para mejor visualización del nuevo texto */
+        margin-top: 24px;
+    }
+    #logo-svg path {
+        stroke: url(#logo-gradient);
+        stroke-width: 1.5; /* Ajustado para el nuevo grosor */
+        fill-opacity: 0;
+        /* Aumentado para cubrir la nueva longitud del path */
+        stroke-dasharray: 3000; 
+        stroke-dashoffset: 3000;
+        animation: draw-logo 2.5s ease-out forwards, fill-logo 1s ease-out forwards 2s;
+    }
+    @keyframes draw-logo {
+        to { stroke-dashoffset: 0; }
+    }
+    @keyframes fill-logo {
+        to { fill-opacity: 1; fill: url(#logo-gradient); }
+    }
+
+    /* Animación de Cubo de Partículas */
+    .particle-cube-container {
+        perspective: 1000px;
+        width: 90px;
+        height: 90px;
+    }
+    .particle-cube {
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transform: rotateX(-20deg) rotateY(-30deg);
+        animation: spin-cube 12s infinite linear 2.5s;
+    }
+    @keyframes spin-cube {
+        from { transform: rotateX(-20deg) rotateY(-30deg); }
+        to { transform: rotateX(-20deg) rotateY(330deg); }
+    }
+    .particle {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(45deg, #ff4800, #ffc107, #ff6f00);
+        opacity: 0;
+        transform-style: preserve-3d;
+        animation: form-particles 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    }
+    .particle::before, .particle::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: inherit;
+    }
+    .particle::before { transform: rotateY(90deg) translateZ(15px) translateX(15px); }
+    .particle::after { transform: rotateX(90deg) translateZ(15px) translateY(-15px); }
+    @keyframes form-particles {
+        0% {
+            opacity: 0;
+            transform: translate3d(var(--tx-start), var(--ty-start), var(--tz-start)) rotateX(var(--rx-start)) rotateY(var(--ry-start)) scale(0.1);
+        }
+        100% {
+            opacity: 1;
+            transform: translate3d(var(--tx-end), var(--ty-end), var(--tz-end));
+        }
+    }
+    /* --- Fin Animación de Inicio --- */
+    
     header {
       display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
       height: 60px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-secondary);
@@ -65,7 +149,7 @@
       padding: 20px; box-shadow: 0 2px 4px var(--shadow-color);
     }
     .content-view h2, .card h2, .auth-box h2 { margin: 0 0 24px 0; font-size: 24px; font-weight: 500; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
     input, select, button { font: inherit; outline-color: var(--brand-primary); }
     input, select {
       width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border-color);
@@ -75,7 +159,7 @@
     button {
       background: linear-gradient(45deg, #ff4800, #ff6f00, #ffc107); background-size: 200% auto;
       border: none; color: #fff; padding: 12px 18px; border-radius: 8px; cursor: pointer;
-      font-weight: 500; transition: background-position 0.4s ease;
+      font-weight: 500; transition: background-position 0.4s ease, background-color 0.3s ease, background 0.3s ease;
     }
     button:hover { background-position: right center; }
     button[disabled] { opacity: .6; cursor: not-allowed; background-position: left center !important; }
@@ -84,7 +168,7 @@
     }
     .button-secondary:hover { background: var(--border-color); }
     label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 14px; text-align: left; }
-    .table-wrapper { overflow: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+    .table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
     table { width: 100%; border-collapse: collapse; border-spacing: 0; }
     thead th {
       font-weight: 500; color: var(--text-secondary); text-align: left; padding: 12px 16px;
@@ -104,7 +188,6 @@
     .amount-positive { color: var(--accent-green); } .amount-negative { color: var(--accent-red); }
     #auth-container { display: flex; align-items: center; justify-content: center; padding: 24px; min-height: 100vh; }
     .auth-box { max-width: 420px; width: 100%; text-align: center; }
-    #product-stock-display { color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block; height: 14px; }
     .modal {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center; z-index: 1000;
@@ -113,66 +196,90 @@
     .modal.visible { opacity: 1; pointer-events: all; }
     .modal-content {
         background: var(--bg-primary); padding: 24px; border-radius: 12px;
-        width: 90%; max-width: 450px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        width: 90%; max-width: 600px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         transform: scale(0.95); transition: transform 0.3s ease;
     }
     .modal.visible .modal-content { transform: scale(1); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .modal-header h3 { margin: 0; }
     .modal-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); }
-    
     #fichas-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 16px; margin-bottom: 24px;
     }
     .ficha-card {
-        background-color: var(--bg-tertiary);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 16px;
-        text-align: center;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
+        background-color: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 12px;
+        padding: 16px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
     }
-    .ficha-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 12px var(--shadow-color);
+    .ficha-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px var(--shadow-color); }
+    .ficha-card h4 { margin: 0 0 8px 0; font-size: 16px; color: var(--text-primary); text-transform: uppercase; }
+    .ficha-card-stock { font-size: 20px; font-weight: 700; color: var(--brand-primary); }
+    .ficha-card-stock span { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+    .active-shifts-list { display: flex; flex-direction: column; gap: 12px; }
+    .active-shift-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color);
     }
-    .ficha-card h4 {
-        margin: 0 0 8px 0;
-        font-size: 16px;
-        color: var(--text-primary);
-        text-transform: uppercase;
+    .active-shift-item-info { display: flex; flex-direction: column; }
+    .active-shift-item-info strong { font-size: 18px; color: var(--text-primary); }
+    .active-shift-item-info span { font-size: 14px; color: var(--text-secondary); }
+    .active-shift-item-actions { display: flex; gap: 10px; }
+    #mobile-footer {
+      display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
+      background-color: var(--bg-secondary); border-top: 1px solid var(--border-color);
+      box-shadow: 0 -2px 10px var(--shadow-color); z-index: 50;
     }
-    .ficha-card-stock {
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--brand-primary);
+    #mobile-footer-nav { display: flex; justify-content: space-around; align-items: center; height: 100%; }
+    .mobile-nav-link {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-decoration: none; color: var(--text-secondary); flex-grow: 1;
+      height: 100%; transition: color 0.2s;
     }
-    .ficha-card-stock span {
-        font-size: 12px;
-        font-weight: 400;
-        color: var(--text-secondary);
-    }
+    .mobile-nav-link svg { width: 24px; height: 24px; margin-bottom: 4px; }
+    .mobile-nav-link span { font-size: 10px; font-weight: 500; }
+    .mobile-nav-link.active { color: var(--brand-primary); }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 768px) {
       #main-nav { position: fixed; left: -270px; top: 60px; height: calc(100vh - 60px); z-index: 80; box-shadow: 4px 0 15px rgba(0,0,0,.1); }
       #main-nav.open { left: 0; }
-      #content { padding: 16px; }
+      #content { padding: 16px; padding-bottom: 80px; }
       #menu-toggle { display: block !important; }
+      #mobile-footer { display: block; }
+      #logout-btn span { display: none; }
+      #logout-btn { padding: 8px; }
     }
     @media (max-width: 640px) {
-      header { padding: 0 16px; }
+      header { padding: 0 16px; } 
       .form-grid { grid-template-columns: 1fr; }
+      .active-shift-item { flex-direction: column; align-items: flex-start; gap: 12px; }
+      table { font-size: 14px; }
+      thead th, tbody td { padding: 12px 8px; }
+      .actions { flex-wrap: wrap; gap: 6px; }
+      .actions button { padding: 5px 8px; font-size: 13px; }
     }
   </style>
 </head>
 <body>
 
+  <div id="splash-screen">
+    <div class="particle-cube-container">
+        <div class="particle-cube"></div>
+    </div>
+    <svg id="logo-svg" viewBox="0 0 600 100" preserveAspectRatio="xMidYMid meet">
+        <defs>
+            <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:var(--brand-primary);" />
+                <stop offset="50%" style="stop-color:#ffc107;" />
+                <stop offset="100%" style="stop-color:var(--brand-secondary);" />
+            </linearGradient>
+        </defs>
+        <path d="M22.9,67.8c-10.2,0-17.7-2.9-22.4-8.6c-4.7-5.7-7-13.6-7-23.7c0-10.1,2.4-18,7.1-23.7c4.7-5.7,12.2-8.6,22.4-8.6c11.1,0,19,3,23.6,9l-8.5,6c-3.1-3.9-7.9-5.9-14.3-5.9c-6.8,0-12,2.3-15.6,6.9c-3.6,4.6-5.4,10.6-5.4,18c0,11.2,2.8,18.4,8.5,21.6c5.7,3.2,13.2,2.1,22.6-3.4l6.1,8.1C44.7,65.2,34.9,67.8,22.9,67.8z M84.1,65.4V5.1h14.2v60.3H84.1z M125.4,67.8c-10.2,0-17.7-2.9-22.4-8.6c-4.7-5.7-7-13.6-7-23.7c0-10.1,2.4-18,7.1-23.7c4.7-5.7,12.2-8.6,22.4-8.6c11.1,0,19,3,23.6,9l-8.5,6c-3.1-3.9-7.9-5.9-14.3-5.9c-6.8,0-12,2.3-15.6,6.9c-3.6,4.6-5.4,10.6-5.4,18c0,11.2,2.8,18.4,8.5,21.6c5.7,3.2,13.2,2.1,22.6-3.4l6.1,8.1C147.1,65.2,137.3,67.8,125.4,67.8z M221.3,65.4h-14L195,36.1h-0.3l-12.2,29.3h-14L142.1,5.1h14.9l10.7,26.5h0.3l11-26.5h14.9L221.3,65.4z M251.3,65.4v-26c0-6.1,0.8-10.2,2.5-12.3c1.7-2.1,4.5-3.2,8.4-3.2c3.9,0,6.7,1.1,8.4,3.2c1.7,2.1,2.5,6.2,2.5,12.3v26h14.2V38.9c0-9.2-1.9-16.1-5.6-20.7c-3.7-4.6-9.3-6.9-16.7-6.9c-7.4,0-13,2.3-16.7,6.9c-3.7,4.6-5.6,11.5-5.6,20.7v26.5H251.3z M300,65.4l-11-20.3h-16.1v20.3h-14.2V5.1h26.4c7.6,0,13.4,1.8,17.4,5.3c4,3.5,6.1,8.6,6.1,15.2c0,5.4-1.6,9.8-4.7,13.2c-3.1,3.4-7.6,5.4-13.4,5.9l12.8,20.7H300z M287.1,34.9h-8.4V17.4h8.4c3.9,0,6.7,0.8,8.4,2.5c1.7,1.7,2.5,4.1,2.5,7.2c0,3.1-0.8,5.5-2.5,7.2C303.8,34.1,301,34.9,287.1,34.9z M375.3,67.8c-12.2,0-21.7-3.4-28.5-10.3c-6.8-6.9-10.2-16.1-10.2-27.7c0-11.6,3.4-20.8,10.2-27.7c6.8-6.9,16.3-10.3,28.5-10.3c12.2,0,21.7,3.4,28.5,10.3c6.8,6.9,10.2,16.1,10.2,27.7c0,11.6-3.4,20.8-10.2,27.7C397,64.4,387.5,67.8,375.3,67.8z M375.3,55.5c5.3,0,9.5-1.9,12.6-5.8c3.1-3.9,4.7-9.2,4.7-16.1c0-6.9-1.6-12.3-4.7-16.1c-3.1-3.9-7.3-5.8-12.6-5.8c-5.3,0-9.5,1.9-12.6,5.8c-3.1,3.9-4.7,9.2-4.7,16.1c0,6.9,1.6,12.3,4.7,16.1C365.8,53.6,370,55.5,375.3,55.5z M450.7,65.4l-11-20.3h-16.1v20.3h-14.2V5.1h29.2v12.3h-15v9.8h13.9l10.7-19.1h15.4l-12.1,21.2l13.6,26.1H450.7z M498.4,65.4l-11-20.3h-16.1v20.3h-14.2V5.1h26.4c7.6,0,13.4,1.8,17.4,5.3c4,3.5,6.1,8.6,6.1,15.2c0,7.9-3,13.7-8.9,17.4c-5.9,3.7-14.2,4.5-25,4.5h-2.1v0L498.4,65.4z M485.5,34.9h-8.4V17.4h8.4c3.9,0,6.7,0.8,8.4,2.5c1.7,1.7,2.5,4.1,2.5,7.2c0,3.1-0.8,5.5-2.5,7.2C502.2,34.1,499.4,34.9,485.5,34.9z M555,67.8c-12.2,0-21.7-3.4-28.5-10.3c-6.8-6.9-10.2-16.1-10.2-27.7c0-11.6,3.4-20.8,10.2-27.7s16.3-10.3,28.5-10.3c9.7,0,17.6,2.5,23.7,7.6l-7,8.2c-4.4-3.5-9.3-5.3-14.8-5.3c-5.3,0-9.5,1.9-12.6,5.8c-3.1,3.9-4.7,9.2-4.7,16.1c0,6.9,1.6,12.3,4.7,16.1c3.1,3.9,7.3,5.8,12.6,5.8c5.8,0,11.3-2,16.5-6.1l6.8,8.3C573.9,65,565.4,67.8,555,67.8z" />
+    </svg>
+  </div>
+
   <div id="toast-container"></div>
   <div id="auth-container"></div>
+
   <div id="app-container" class="hidden">
     <header>
       <button id="menu-toggle" title="Menú" class="button-secondary" style="padding: 8px 10px; display: none;">
@@ -191,7 +298,7 @@
         </button>
         <button id="logout-btn" class="button-secondary" style="display:flex; align-items:center; gap: 8px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            Salir
+            <span>Salir</span>
         </button>
       </div>
     </header>
@@ -202,12 +309,21 @@
         <a href="#" class="nav-link" data-view="inventory-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="m12 22.08V12"/></svg><span>Inventario</span></a>
         <a href="#" class="nav-link" data-view="cashflow-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Flujo de Caja</span></a>
         <a href="#" class="nav-link" data-view="products-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>Productos y Fichas</span></a>
-        <a href="#" class="nav-link" data-view="providers-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M15 18H9"/><path d="M19 18h2a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.52a2 2 0 0 1-1.78-.9L14 3H9.28a2 2 0 0 0-1.78.9L6 6H3"/><circle cx="17" cy="15" r="2"/></svg><span>Proveedores</span></a>
+        <a href="#" class="nav-link" data-view="providers-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg><span>Proveedores</span></a>
         <a href="#" class="nav-link admin-only" data-view="workers-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Trabajadores</span></a>
         <a href="#" class="nav-link hidden" data-view="profile-view"></a>
       </nav>
       <div id="content"></div>
     </main>
+    <footer id="mobile-footer">
+        <div id="mobile-footer-nav">
+            <a href="#" class="mobile-nav-link" data-view="shifts-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Turnos</span></a>
+            <a href="#" class="mobile-nav-link" data-view="inventory-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="m12 22.08V12"/></svg><span>Inventario</span></a>
+            <a href="#" class="mobile-nav-link" data-view="cashflow-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Caja</span></a>
+            <a href="#" class="mobile-nav-link" data-view="products-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>Productos</span></a>
+            <a href="#" class="mobile-nav-link" data-view="providers-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg><span>Proveedores</span></a>
+        </div>
+    </footer>
   </div>
 
   <div id="loan-modal" class="modal">
@@ -239,6 +355,17 @@
     </div>
   </div>
 
+  <div id="desglose-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="desglose-modal-title">Desglose del Turno</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div id="desglose-modal-body" class="table-wrapper" style="max-height: 60vh; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+
   <script>
     window.__FIREBASE_CONFIG__ = {
       apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
@@ -255,6 +382,39 @@
     import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, collectionGroup, doc, setDoc, addDoc, getDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    document.addEventListener('DOMContentLoaded', () => {
+        const cubeContainer = document.querySelector('.particle-cube');
+        if(cubeContainer) {
+            for (let i = 0; i < 27; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const x = (i % 3) * 30;
+                const y = Math.floor(i / 9) * 30;
+                const z = Math.floor((i % 9) / 3) * 30;
+                particle.style.setProperty('--tx-end', `${x}px`);
+                particle.style.setProperty('--ty-end', `${y}px`);
+                particle.style.setProperty('--tz-end', `${z}px`);
+
+                particle.style.setProperty('--tx-start', `${(Math.random() - 0.5) * 400}px`);
+                particle.style.setProperty('--ty-start', `${(Math.random() - 0.5) * 400}px`);
+                particle.style.setProperty('--tz-start', `${(Math.random() - 0.5) * 400}px`);
+                particle.style.setProperty('--rx-start', `${Math.random() * 360}deg`);
+                particle.style.setProperty('--ry-start', `${Math.random() * 360}deg`);
+                particle.style.animationDelay = `${Math.random() * 1}s`;
+
+                cubeContainer.appendChild(particle);
+            }
+        }
+
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.classList.add('hidden');
+                setTimeout(() => splash.remove(), 600);
+            }
+        }, 3800);
+    });
+
     const appFB = initializeApp(window.__FIREBASE_CONFIG__);
     const auth = getAuth(appFB);
     const db = getFirestore(appFB);
@@ -262,9 +422,10 @@
     let appState = {
       user: null, userData: null, role: null, unsub: [],
       products: [], providers: [], workers: [],
-      inventory: {}, cashflow: [], activeShift: null
+      inventory: {}, cashflow: [], 
+      activeShifts: [], selectedShiftId: null
     };
-    let registrationData = {};
+    let registrationData = {}, shiftSubListeners = {};
 
     const colref = {
       users: collection(db, "users"), products: collection(db, "products"), providers: collection(db, "providers"),
@@ -279,31 +440,47 @@
         c.appendChild(t); setTimeout(() => t.remove(), 3200);
     };
     const COP = (v) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
-    const fmtDate = (ts) => ts?.toDate().toLocaleString("es-CO") ?? "—";
+    const fmtDate = (ts) => ts?.toDate().toLocaleString("es-CO", { hour12: true, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) ?? "—";
 
     let raf = null;
     const scheduleRender = (forceId = null) => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
-        const active = forceId || (document.querySelector(".nav-link.active")?.dataset.view) || "dashboard-view";
-        renderView(active);
+        const activeId = forceId || (document.querySelector(".nav-link.active")?.dataset.view) || "dashboard-view";
+        renderView(activeId);
+        
+        const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+        mobileLinks.forEach(link => {
+            link.classList.toggle('active', link.dataset.view === activeId);
+        });
         raf = null;
       });
     };
 
     const mainNav = document.getElementById("main-nav");
-    document.getElementById("menu-toggle").addEventListener("click", () => mainNav.classList.toggle("open"));
-    document.getElementById("profile-btn").addEventListener("click", () => document.querySelector('.nav-link[data-view="profile-view"]').click());
-    mainNav.addEventListener("click", (e) => {
-      const link = e.target.closest(".nav-link");
+    const mobileFooterNav = document.getElementById("mobile-footer-nav");
+    
+    function handleNavClick(e) {
+      const link = e.target.closest(".nav-link, .mobile-nav-link");
       if (!link) return;
       e.preventDefault();
       mainNav.classList.remove("open");
-      document.querySelectorAll(".nav-link").forEach(n => n.classList.remove("active"));
-      link.classList.add("active");
-      scheduleRender(link.dataset.view);
-    });
+      const viewId = link.dataset.view;
+      
+      document.querySelectorAll(".nav-link, .mobile-nav-link").forEach(n => {
+        n.classList.toggle('active', n.dataset.view === viewId);
+      });
+      
+      appState.selectedShiftId = null; 
+      scheduleRender(viewId);
+    }
 
+    mainNav.addEventListener("click", handleNavClick);
+    mobileFooterNav.addEventListener("click", handleNavClick);
+
+    document.getElementById("menu-toggle").addEventListener("click", () => mainNav.classList.toggle("open"));
+    document.getElementById("profile-btn").addEventListener("click", () => document.querySelector('.nav-link[data-view="profile-view"]').click());
+    
     const themeToggleBtn = document.getElementById('theme-toggle');
     const updateThemeToggleIcon = (theme) => {
         const icon = themeToggleBtn.querySelector('svg');
@@ -327,7 +504,7 @@
       <div class="auth-box card">
         <h1>seb365 pro</h1><p>Gestión de inventario simplificada</p>
         <div id="login-view">
-          <form id="login-form" autocomplete="on"><input type="email" id="login-email" placeholder="Correo electrónico" required><input type="password" id="login-password" placeholder="Contraseña" required><button type="submit">Ingresar</button><button id="google-login-btn" type="button" class="button-secondary"><svg viewBox="0 0 48 48" style="width:18px;height:18px;margin-right:8px;"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button></form>
+          <form id="login-form" autocomplete="on"><input type="email" id="login-email" placeholder="Correo electrónico" required><input type="password" id="login-password" placeholder="Contraseña" required><button type="submit">Ingresar</button><button id="google-login-btn" type="button" class="button-secondary" style="display:flex;justify-content:center;align-items:center;"><svg viewBox="0 0 48 48" style="width:18px;height:18px;margin-right:8px;"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button></form>
           <p style="margin-top:20px; font-size: 14px;">¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
         </div>
         <div id="register-view" class="hidden">
@@ -349,6 +526,7 @@
     document.getElementById("show-login-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("register-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("login-view").classList.remove("hidden"); });
     document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
     
+    let persistentHandlersAttached = false;
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDocRef = doc(db, "users", user.uid);
@@ -360,13 +538,20 @@
         document.getElementById("auth-container").classList.add("hidden");
         document.getElementById("app-container").classList.remove("hidden");
         document.querySelector('.nav-link[data-view="dashboard-view"]').classList.add("active");
+        
+        if (!persistentHandlersAttached) {
+            attachPersistentHandlers();
+            persistentHandlersAttached = true;
+        }
+
         initRealtime();
         scheduleRender("dashboard-view");
       } else {
         appState.unsub.forEach(u => u()); appState.unsub = [];
-        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShift: null };
+        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
         document.getElementById("app-container").classList.add("hidden");
         document.getElementById("auth-container").classList.remove("hidden");
+        persistentHandlersAttached = false;
       }
     });
 
@@ -377,15 +562,43 @@
       add(onSnapshot(query(colref.providers, orderBy("nombre")), s=>{ appState.providers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.workers, orderBy("nombre")), s=>{ appState.workers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.cashflow, orderBy("date","desc")), s=>{ appState.cashflow = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
-      add(onSnapshot(query(colref.shifts, where("estado","==","abierto")), s=>{
-        if(!s.empty){
-          const sh=s.docs[0];
-          appState.activeShift = { id: sh.id, ...sh.data(), sales:[], loans:[] };
-          appState.unsub.push(onSnapshot(collection(db,"shifts", sh.id, "sales"), ss=>{ if(appState.activeShift) appState.activeShift.sales = ss.docs.map(d=>d.data()); scheduleRender(); }));
-          appState.unsub.push(onSnapshot(collection(db,"shifts", sh.id, "loans"), ls=>{ if(appState.activeShift) appState.activeShift.loans = ls.docs.map(d=>d.data()); scheduleRender(); }));
-        }else{ appState.activeShift=null; }
+      
+      add(onSnapshot(query(colref.shifts, where("estado", "==", "abierto")), (snapshot) => {
+        const currentShiftIds = snapshot.docs.map(doc => doc.id);
+        const previousShiftIds = appState.activeShifts.map(shift => shift.id);
+
+        previousShiftIds.forEach(shiftId => {
+            if (!currentShiftIds.includes(shiftId) && shiftSubListeners[shiftId]) {
+                shiftSubListeners[shiftId].forEach(unsub => unsub());
+                delete shiftSubListeners[shiftId];
+            }
+        });
+        
+        const shiftsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        shiftsData.forEach((shiftData) => {
+            const existingShiftIndex = appState.activeShifts.findIndex(s => s.id === shiftData.id);
+            if (existingShiftIndex === -1) {
+                const newShift = { ...shiftData, sales: [], loans: [] };
+                appState.activeShifts.push(newShift);
+
+                const salesUnsub = onSnapshot(collection(db, "shifts", shiftData.id, "sales"), (salesSnapshot) => {
+                    const shiftToUpdate = appState.activeShifts.find(s => s.id === shiftData.id);
+                    if(shiftToUpdate) shiftToUpdate.sales = salesSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+                    scheduleRender();
+                });
+                const loansUnsub = onSnapshot(collection(db, "shifts", shiftData.id, "loans"), (loansSnapshot) => {
+                     const shiftToUpdate = appState.activeShifts.find(s => s.id === shiftData.id);
+                    if(shiftToUpdate) shiftToUpdate.loans = loansSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+                    scheduleRender();
+                });
+                shiftSubListeners[shiftData.id] = [salesUnsub, loansUnsub];
+            }
+        });
+        appState.activeShifts = appState.activeShifts.filter(s => currentShiftIds.includes(s.id));
         scheduleRender();
       }));
+
       add(onSnapshot(collectionGroup(db,"stock"), snap=>{ const inv={}; snap.docs.forEach(ds=>{ const parts=ds.ref.path.split("/"); const pid=parts[1], place=parts[3]; (inv[pid]??={})[place]=ds.data(); }); appState.inventory=inv; scheduleRender(); }));
     }
 
@@ -397,20 +610,20 @@
         
         if (id === 'dashboard-view') {
             const balance = appState.cashflow.reduce((b, e) => b + (e.type === "ingreso" ? e.amount : -e.amount), 0);
-            const salesTurn = appState.activeShift?.sales.reduce((s, x) => s + x.totalVenta, 0) || 0;
+            const totalSalesAllShifts = appState.activeShifts.reduce((total, shift) => total + shift.sales.reduce((subtotal, sale) => subtotal + sale.totalVenta, 0), 0);
             const debt = appState.providers.reduce((s, p) => s + (p.saldoPendiente || 0), 0);
             const low = appState.products.filter(p => (appState.inventory[p.id]?.barra?.unidades || 0) < 10).map(p => `<li>${p.nombre}: <strong>${appState.inventory[p.id]?.barra?.unidades || 0} uds</strong></li>`).join("");
-            html = `<div class="content-view"><h2>Panel de Control</h2><div class="dashboard-grid"><div class="card"><h3>Saldo en Caja</h3><p>${COP(balance)}</p></div><div class="card"><h3>Ventas Turno</h3><p>${COP(salesTurn)}</p></div><div class="card"><h3>Deuda Proveedores</h3><p>${COP(debt)}</p></div><div class="card"><h3>Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div></div></div>`;
+            html = `<div class="content-view"><h2>Panel de Control</h2><div class="form-grid"><div class="card"><h3>Saldo en Caja</h3><p>${COP(balance)}</p></div><div class="card"><h3>Ventas (Turnos Activos)</h3><p>${COP(totalSalesAllShifts)}</p></div><div class="card"><h3>Deuda Proveedores</h3><p>${COP(debt)}</p></div><div class="card"><h3>Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div></div></div>`;
         }
 
         if (id === 'products-view') {
             const rows = appState.products.map(p => row([ p.nombre, p.esFicha ? 'Sí' : 'No', COP(p.precioVenta || 0), COP(p.precioComision || 0), `<div class="actions"><button class="btn-edit" data-id="${p.id}">Editar</button></div>` ])).join("");
             html = `<div class="content-view"><h2>Productos y Fichas</h2><form id="product-form" class="card"><input type="hidden" id="product-id"><div class="form-grid"><input id="product-nombre" placeholder="Nombre" required><input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required><input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required><input id="product-precioComision" type="number" step="any" min="0" placeholder="Valor para Pago (Comisión)"><input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja"><input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta"></div><div style="margin-top: 16px;"><label style="display:inline-flex; align-items:center; gap: 8px; font-size: 16px;"><input id="product-esFicha" type="checkbox"> Es una Ficha</label></div><button type="submit" style="margin-top: 16px;">Guardar</button></form><div class="table-wrapper" style="margin-top:24px"><table><thead><tr><th>Nombre</th><th>Es Ficha</th><th>P. Venta</th><th>Valor Pago</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
         }
-      
+        
         if (id === 'inventory-view') {
             const rows = appState.products.map(p=> row([ p.nombre, appState.inventory[p.id]?.bodega?.unidades ?? 0, appState.inventory[p.id]?.barra?.unidades ?? 0 ])).join("");
-            const productOpts = appState.products.filter(p=>p.activo).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
+            const productOpts = appState.products.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
             const providerOpts = appState.providers.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
             html = `<div class="content-view"><h2>Inventario y Compras</h2><div class="form-grid"><form id="purchase-form" class="card"><h3>Registrar Compra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="purchase-provider" required><option value="">Proveedor…</option>${providerOpts}</select><select id="purchase-product" required><option value="">Producto…</option>${productOpts}</select><input id="purchase-quantity" type="number" min="1" placeholder="Cantidad" required><select id="purchase-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><select id="purchase-type" required><option value="contado">Contado (Afecta caja)</option><option value="consignacion">Consignación</option></select><button type="submit">Registrar Compra</button></div></form><form id="transfer-form" class="card"><h3>Trasladar Bodega → Barra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="transfer-product" required><option value="">Producto…</option>${productOpts}</select><input id="transfer-quantity" type="number" min="1" placeholder="Cantidad" required><select id="transfer-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><button type="submit">Trasladar</button></div></form></div><h3 style="margin:24px 0 12px 0;">Stock Actual</h3><div class="table-wrapper"><table><thead><tr><th>Producto</th><th>Stock Bodega</th><th>Stock Barra</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin stock.</td></tr>`}</tbody></table></div></div>`;
         }
@@ -434,34 +647,110 @@
             const u = appState.userData || {};
             html = `<div class="content-view"><h2>Mi Perfil</h2><div class="form-grid"><div class="card"><h2>Datos Personales</h2><form id="profile-personal-form"><div class="form-grid" style="gap: 12px; margin-bottom: 12px;"><div><label for="profile-name">Nombre</label><input id="profile-name" value="${u.displayName || ''}"></div><div><label for="profile-phone">Teléfono</label><input id="profile-phone" type="tel" value="${u.phone || ''}"></div></div><label for="profile-email">Correo (no se puede cambiar)</label><input id="profile-email" type="email" value="${u.email || ''}" disabled><button type="submit" style="margin-top: 16px;">Guardar Datos Personales</button></form></div><div class="card"><h2>Datos del Negocio</h2><form id="profile-business-form"><div style="margin-bottom: 12px;"><label for="profile-business-name">Nombre del Negocio</label><input id="profile-business-name" value="${u.businessName || ''}"></div><div style="margin-bottom: 12px;"><label for="profile-business-type">Tipo de Negocio</label><select id="profile-business-type"><option value="bar" ${u.businessType === 'bar' ? 'selected' : ''}>Bar</option><option value="discoteca" ${u.businessType === 'discoteca' ? 'selected' : ''}>Discoteca</option><option value="cafeteria" ${u.businessType === 'cafeteria' ? 'selected' : ''}>Cafetería</option><option value="restaurante" ${u.businessType === 'restaurante' ? 'selected' : ''}>Restaurante</option></select></div><button type="submit" style="margin-top: 16px;">Guardar Datos del Negocio</button></form></div></div><div class="card" style="margin-top: 24px;"><h2>Licencia</h2><p><strong>Tipo de plan:</strong> PRO</p><p><strong>Estado:</strong> Activa</p><p style="color: var(--text-secondary);">Esta sección se habilitará en futuras actualizaciones.</p></div></div>`;
         }
-      
+        
         if (id === 'shifts-view') {
-            if (appState.activeShift) {
-                const worker = appState.workers.find(w => w.id === appState.activeShift.workerId);
-                const ingresos = appState.activeShift.sales.reduce((s, x) => s + x.totalVenta, 0);
-                const comisiones = appState.activeShift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
-                const prestamos = appState.activeShift.loans.reduce((s, l) => s + l.valor, 0);
+            if (appState.selectedShiftId) {
+                const shift = appState.activeShifts.find(s => s.id === appState.selectedShiftId);
+                if (!shift) { appState.selectedShiftId = null; return renderView('shifts-view'); }
+                
+                const worker = appState.workers.find(w => w.id === shift.workerId);
+                const ingresos = shift.sales.reduce((s, x) => s + x.totalVenta, 0);
+                const comisiones = shift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
+                const prestamos = shift.loans.reduce((s, l) => s + l.valor, 0);
                 
                 const fichaProducts = appState.products.filter(p => p.esFicha && p.activo);
-                const regularProducts = appState.products.filter(p => !p.esFicha && p.activo);
-                
                 const fichaCardsHTML = fichaProducts.map(ficha => {
                     const stock = appState.inventory[ficha.id]?.barra?.unidades ?? 0;
                     return `<div class="ficha-card" data-product-id="${ficha.id}"><h4>${ficha.nombre}</h4><div class="ficha-card-stock">${stock} <span>uds.</span></div></div>`;
                 }).join("");
 
-                const productOpts = regularProducts.map(p => `<option value="${p.id}">${p.nombre}</option>`).join("");
-
-                html = `<div class="content-view"><h2>Turno Activo: <span style="color: var(--brand-primary);">${worker?.nombre || "…"}</span></h2><h3 style="margin-top: 24px;">Fichas</h3><div id="fichas-grid">${fichaCardsHTML || "<p>No hay fichas activas configuradas.</p>"}</div><h3 style="margin-top: 24px;">Productos</h3><div class="form-grid"><form id="sale-form" class="card"><div style="display: flex; flex-direction: column; gap: 12px;"><div><select id="sale-product" required><option value="">Seleccionar producto…</option>${productOpts}</select><span id="product-stock-display"></span></div><input id="sale-quantity" type="number" min="1" value="1" placeholder="Unidades" required><button type="submit">Vender Producto</button></div></form></div><div class="card" style="margin-top:24px"><h4>Resumen del Turno</h4><p><strong>Ingresos (Ventas):</strong> ${COP(ingresos)}</p><p><strong>Total para Pago (Comisiones):</strong> ${COP(comisiones)}</p><p><strong>Préstamos:</strong> ${COP(prestamos)}</p><hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;"><div style="display: flex; gap: 12px; flex-wrap: wrap;"><button id="open-loan-modal-btn" class="button-secondary">Registrar Préstamo</button><button id="close-shift-btn" style="background-color: var(--accent-red); flex-grow: 1;">Cerrar y Liquidar</button></div></div></div>`;
+                html = `<div class="content-view">
+                    <button id="back-to-shifts-list" class="button-secondary" style="margin-bottom: 24px;">&larr; Volver a la lista de turnos</button>
+                    <h2>Gestionando Turno: <span style="color: var(--brand-primary);">${worker?.nombre || "…"}</span></h2>
+                    <h3 style="margin-top: 24px;">Vender Fichas</h3>
+                    <div id="fichas-grid">${fichaCardsHTML || "<p>No hay fichas activas configuradas.</p>"}</div>
+                    <div class="card" style="margin-top:24px">
+                        <h4>Resumen del Turno</h4>
+                        <p><strong>Ingresos (Ventas):</strong> ${COP(ingresos)}</p>
+                        <p><strong>Total para Pago (Comisiones):</strong> ${COP(comisiones)}</p>
+                        <p><strong>Préstamos:</strong> ${COP(prestamos)}</p>
+                        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button id="open-loan-modal-btn" class="button-secondary">Registrar Préstamo</button>
+                            <button id="close-shift-btn" data-shift-id="${shift.id}" style="background: var(--accent-red); flex-grow: 1;">Cerrar y Liquidar Turno</button>
+                        </div>
+                    </div>
+                </div>`;
             } else {
-                const workerOpts = appState.workers.filter(w => w.activo).map(w => `<option value="${w.id}">${w.nombre}</option>`).join("");
-                html = `<div class="content-view"><h2>Iniciar Turno</h2><div style="max-width: 400px;"><form id="open-shift-form" class="card"><select id="shift-worker" required style="margin-bottom: 12px;"><option value="">Seleccionar trabajador…</option>${workerOpts}</select><button type="submit">Iniciar Turno</button></form></div></div>`;
+                const workerOpts = appState.workers.filter(w => w.activo && !appState.activeShifts.some(s => s.workerId === w.id)).map(w => `<option value="${w.id}">${w.nombre}</option>`).join("");
+                const activeShiftsHTML = appState.activeShifts.map(shift => {
+                    const worker = appState.workers.find(w => w.id === shift.workerId);
+                    return `<div class="active-shift-item">
+                        <div class="active-shift-item-info"><strong>${worker?.nombre || 'Desconocido'}</strong><span>Inició: ${fmtDate(shift.inicio)}</span></div>
+                        <div class="active-shift-item-actions">
+                            <button class="btn-view-desglose button-secondary" data-shift-id="${shift.id}">Ver Desglose</button>
+                            <button class="btn-manage-shift" data-shift-id="${shift.id}">Gestionar</button>
+                        </div>
+                    </div>`;
+                }).join("");
+
+                html = `<div class="content-view">
+                    <h2>Turnos y Ventas</h2>
+                    <div class="card"><h3>Iniciar Nuevo Turno</h3><form id="open-shift-form"><select id="shift-worker" required style="margin-bottom: 12px;"><option value="">Seleccionar trabajador…</option>${workerOpts}</select><button type="submit">Iniciar Turno</button></form></div>
+                    <h3 style="margin: 24px 0 12px 0;">Turnos Activos (${appState.activeShifts.length})</h3>
+                    <div class="active-shifts-list">${activeShiftsHTML || "<p>No hay turnos activos en este momento.</p>"}</div>
+                </div>`;
             }
         }
 
         if (html) { content.innerHTML = html; attachHandlers(id); }
     }
     
+    function attachPersistentHandlers() {
+        const fichaSaleForm = document.getElementById("ficha-sale-form");
+        if(fichaSaleForm) fichaSaleForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const modal = document.getElementById("ficha-sale-modal");
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+
+            const productId = document.getElementById("ficha-sale-product-id").value;
+            const unidades = parseInt(document.getElementById("ficha-sale-quantity").value);
+            const prod = appState.products.find(p => p.id === productId);
+            
+            if (!prod || isNaN(unidades) || unidades <= 0) { showToast("Cantidad inválida", "error"); btn.disabled = false; return; }
+
+            try {
+                await runTransaction(db, async (t) => {
+                    const barraRef = doc(db, "inventory", productId, "stock", "barra");
+                    const snap = await t.get(barraRef);
+                    if (!snap.exists() || (snap.data().unidades || 0) < unidades) { throw new Error(`Stock insuficiente para ${prod.nombre}`); }
+                    t.set(barraRef, { unidades: increment(-unidades) }, { merge: true });
+                });
+                await addDoc(collection(db, "shifts", appState.selectedShiftId, "sales"), {
+                    type: 'ficha', productId: productId, unidades: unidades,
+                    totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0),
+                    fecha: serverTimestamp()
+                });
+                showToast("Venta registrada");
+                modal.classList.remove("visible");
+            } catch(err) { showToast(err.message, "error"); }
+            finally { btn.disabled = false; }
+        });
+        
+        const loanForm = document.getElementById("loan-form");
+        if (loanForm) loanForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            if (!appState.selectedShiftId) return;
+            const valor = parseFloat(document.getElementById("loan-value").value);
+            const desc = document.getElementById("loan-description").value;
+            if (isNaN(valor) || !desc) return;
+            await addDoc(collection(db, "shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
+            loanForm.reset();
+            document.getElementById("loan-modal").classList.remove("visible");
+        });
+    }
+
     function attachHandlers(id){
         if (id === 'products-view') {
             content.querySelectorAll(".btn-edit").forEach(b => b.addEventListener("click", () => {
@@ -513,40 +802,85 @@
 
         if(id==="cashflow-view"){ const form=document.getElementById("cashflow-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const data={ type:document.getElementById("cashflow-type").value, amount:parseFloat(document.getElementById("cashflow-amount").value), description:document.getElementById("cashflow-description").value, date:serverTimestamp(), manual:true, userId:appState.user.uid }; try{ await addDoc(colref.cashflow,data); showToast("Movimiento registrado"); form.reset(); } catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
 
-        if(id==="providers-view"){ content.querySelectorAll(".btn-edit-provider").forEach(b=>b.addEventListener("click",()=>{ const p=appState.providers.find(x=>x.id===b.dataset.id); if(!p) return; document.getElementById("provider-id").value=p.id; document.getElementById("provider-nombre").value=p.nombre||""; document.getElementById("provider-contacto").value=p.contacto||""; document.getElementById("provider-consignacion").checked=!!p.consignacion; })); const form=document.getElementById("provider-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("provider-id").value; const data={ nombre:document.getElementById("provider-nombre").value, contacto:document.getElementById("provider-contacto").value, consignacion:document.getElementById("provider-consignacion").checked }; try{ if(id) await setDoc(doc(colref.providers,id), data, {merge:true}); else await addDoc(colref.providers, {...data, saldoPendiente:0}); showToast("Proveedor guardado"); form.reset(); document.getElementById("provider-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); content.querySelectorAll(".btn-settle").forEach(b=>b.addEventListener("click",()=>{ const prov=appState.providers.find(x=>x.id===b.dataset.id); if(!prov) return; if((prov.saldoPendiente||0)<=0){ showToast("Proveedor sin saldo pendiente","error"); return; } document.getElementById("settlement-provider-name").textContent=prov.nombre; document.getElementById("settlement-provider-balance").textContent=COP(prov.saldoPendiente||0); document.getElementById("settle-provider-btn").dataset.providerId=prov.id; document.getElementById("settlement-details").classList.remove("hidden"); })); const settle=document.getElementById("settle-provider-btn"); if(settle) settle.addEventListener("click", async (e)=>{ const providerId=e.target.dataset.providerId; const prov=appState.providers.find(p=>p.id===providerId); if(!prov) return; if(!confirm(`¿Pagar ${COP(prov.saldoPendiente)} a ${prov.nombre}?`)) return; try{ const b=writeBatch(db); b.set(doc(colref.cashflow), {type:"egreso",amount:prov.saldoPendiente,description:`Pago liquidación: ${prov.nombre}`,date:serverTimestamp()}); b.set(doc(colref.providers,providerId), {saldoPendiente:0}, {merge:true}); await b.commit(); showToast("Liquidación realizada"); document.getElementById("settlement-details").classList.add("hidden"); }catch(err){ showToast(err.message,"error"); } }); }
+        if(id==="providers-view"){ content.querySelectorAll(".btn-edit-provider").forEach(b=>b.addEventListener("click",()=>{ const p=appState.providers.find(x=>x.id===b.dataset.id); if(!p) return; document.getElementById("provider-id").value=p.id; document.getElementById("provider-nombre").value=p.nombre||""; document.getElementById("provider-contacto").value=p.contacto||""; document.getElementById("provider-consignacion").checked=!!p.consignacion; })); const form=document.getElementById("provider-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("provider-id").value; const data={ nombre:document.getElementById("provider-nombre").value, contacto:document.getElementById("provider-contacto").value, consignacion:document.getElementById("provider-consignacion").checked }; try{ if(id) await setDoc(doc(colref.providers,id), data, {merge:true}); else await addDoc(colref.providers, {...data, saldoPendiente:0}); showToast("Proveedor guardado"); form.reset(); document.getElementById("provider-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); content.querySelectorAll(".btn-settle").forEach(b=>b.addEventListener("click",()=>{ const prov=appState.providers.find(x=>x.id===b.dataset.id); if(!prov) return; if((prov.saldoPendiente||0)<=0){ showToast("Proveedor sin saldo pendiente","error"); return; } document.getElementById("settlement-provider-name").textContent=prov.nombre; document.getElementById("settlement-provider-balance").textContent=COP(prov.saldoPendiente||0); document.getElementById("settle-provider-btn").dataset.providerId=prov.id; document.getElementById("settlement-details").classList.remove("hidden"); })); const settle=document.getElementById("settle-provider-btn"); if(settle) settle.addEventListener("click", async (e)=>{ const providerId=e.target.dataset.providerId; const prov=appState.providers.find(p=>p.id===providerId); if(!prov) return; const b=writeBatch(db); b.set(doc(colref.cashflow), {type:"egreso",amount:prov.saldoPendiente,description:`Pago liquidación: ${prov.nombre}`,date:serverTimestamp()}); b.set(doc(colref.providers,providerId), {saldoPendiente:0}, {merge:true}); try { await b.commit(); showToast("Liquidación realizada"); document.getElementById("settlement-details").classList.add("hidden"); } catch(err) { showToast(err.message, "error"); } }); }
 
         if(id==="workers-view"){ content.querySelectorAll(".btn-edit-worker").forEach(b=>b.addEventListener("click",()=>{ const w=appState.workers.find(x=>x.id===b.dataset.id); if(!w) return; document.getElementById("worker-id").value=w.id; document.getElementById("worker-nombre").value=w.nombre||""; document.getElementById("worker-pagoBase").value=w.pagoBase||0; document.getElementById("worker-activo").checked=!!w.activo; })); const form=document.getElementById("worker-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("worker-id").value; const data={ nombre:document.getElementById("worker-nombre").value, pagoBase:parseFloat(document.getElementById("worker-pagoBase").value)||0, activo:document.getElementById("worker-activo").checked }; try{ if(id) await setDoc(doc(colref.workers,id), data, {merge:true}); else await addDoc(colref.workers, data); showToast("Trabajador guardado"); form.reset(); document.getElementById("worker-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
         
         if(id === "profile-view") { const personalForm = document.getElementById("profile-personal-form"); if(personalForm) personalForm.addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; try { const userRef = doc(db, "users", appState.user.uid); const newDisplayName = document.getElementById("profile-name").value; const newPhone = document.getElementById("profile-phone").value; await setDoc(userRef, { displayName: newDisplayName, phone: newPhone }, { merge: true }); appState.userData.displayName = newDisplayName; appState.userData.phone = newPhone; showToast("Datos personales actualizados"); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled=false; } }); const businessForm = document.getElementById("profile-business-form"); if(businessForm) businessForm.addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; try { const userRef = doc(db, "users", appState.user.uid); const newBusinessName = document.getElementById("profile-business-name").value; const newBusinessType = document.getElementById("profile-business-type").value; await setDoc(userRef, { businessName: newBusinessName, businessType: newBusinessType }, { merge: true }); appState.userData.businessName = newBusinessName; appState.userData.businessType = newBusinessType; showToast("Datos del negocio actualizados"); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled=false; } }); }
 
         if(id==="shifts-view"){
-            const openShiftForm=document.getElementById("open-shift-form");
-            if(openShiftForm) openShiftForm.addEventListener("submit", async (e)=>{ e.preventDefault(); const workerId=document.getElementById("shift-worker").value; if(!workerId) return; const worker=appState.workers.find(w=>w.id===workerId); await addDoc(colref.shifts,{workerId,pagoBase:worker?.pagoBase||0,inicio:serverTimestamp(),estado:"abierto"}); });
-            const productSelect = document.getElementById("sale-product");
-            if (productSelect) { productSelect.addEventListener("change", () => { const stockDisplay = document.getElementById("product-stock-display"); const selectedId = productSelect.value; if (!selectedId) { stockDisplay.textContent = ""; return; } const stock = appState.inventory[selectedId]?.barra?.unidades ?? 0; stockDisplay.textContent = `Stock en barra: ${stock} uds.`; }); }
-            const saleForm=document.getElementById("sale-form");
-            if(saleForm) saleForm.addEventListener("submit", async (e)=>{ e.preventDefault(); if(!appState.activeShift) return; const productId=document.getElementById("sale-product").value; const unidades=parseInt(document.getElementById("sale-quantity").value); const prod=appState.products.find(p=>p.id===productId); if(!prod || isNaN(unidades)||unidades<=0){ showToast("Venta inválida","error"); return; } const btn=saleForm.querySelector('button[type="submit"]'); btn.disabled=true; try{ await runTransaction(db, async (t)=>{ const barraRef=doc(db,"inventory",productId,"stock","barra"); const snap=await t.get(barraRef); if(!snap.exists() || (snap.data().unidades||0)<unidades) throw new Error(`Stock insuficiente para ${prod.nombre}`); t.set(barraRef,{unidades: increment(-unidades)},{merge:true}); }); await addDoc(collection(db,"shifts", appState.activeShift.id, "sales"),{ type: 'product', productId, unidades, totalVenta:unidades*(prod.precioVenta||0), totalComision:unidades*(prod.precioComision||0), fecha:serverTimestamp() }); showToast("Venta de producto registrada"); saleForm.reset(); document.getElementById("product-stock-display").textContent = ""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
-            
-            const fichasGrid = document.getElementById("fichas-grid");
-            if (fichasGrid) { fichasGrid.addEventListener("click", (e) => { const card = e.target.closest(".ficha-card"); if (!card) return; const productId = card.dataset.productId; const product = appState.products.find(p => p.id === productId); const stock = appState.inventory[productId]?.barra?.unidades ?? 0; const modal = document.getElementById("ficha-sale-modal"); modal.querySelector("#ficha-sale-modal-title").textContent = `Vender ${product.nombre}`; modal.querySelector("#ficha-sale-product-id").value = productId; modal.querySelector("#ficha-sale-stock").textContent = stock; modal.querySelector("#ficha-sale-quantity").value = 1; modal.classList.add("visible"); }); }
-            
-            const fichaSaleForm = document.getElementById("ficha-sale-form");
-            if(fichaSaleForm) fichaSaleForm.addEventListener("submit", async (e) => { e.preventDefault(); const modal = document.getElementById("ficha-sale-modal"); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; const productId = document.getElementById("ficha-sale-product-id").value; const unidades = parseInt(document.getElementById("ficha-sale-quantity").value); const prod = appState.products.find(p => p.id === productId); try { await runTransaction(db, async (t) => { const barraRef = doc(db, "inventory", productId, "stock", "barra"); const snap = await t.get(barraRef); if (!snap.exists() || (snap.data().unidades || 0) < unidades) throw new Error(`Stock insuficiente para ${prod.nombre}`); t.set(barraRef, { unidades: increment(-unidades) }, { merge: true }); }); await addDoc(collection(db, "shifts", appState.activeShift.id, "sales"), { type: 'ficha', productId: productId, unidades: unidades, totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0), fecha: serverTimestamp() }); showToast("Venta registrada"); modal.classList.remove("visible"); scheduleRender(); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled = false; } });
-            
-            const fichaModal = document.getElementById("ficha-sale-modal"); const closeFichaModalBtn = fichaModal.querySelector(".modal-close-btn"); if (closeFichaModalBtn) closeFichaModalBtn.addEventListener("click", () => fichaModal.classList.remove("visible")); fichaModal.addEventListener("click", (e) => { if(e.target === fichaModal) fichaModal.classList.remove("visible") });
-            
-            const loanModal = document.getElementById("loan-modal"), openLoanBtn = document.getElementById("open-loan-modal-btn"), closeLoanBtn = loanModal.querySelector(".modal-close-btn");
-            if(openLoanBtn) openLoanBtn.addEventListener("click", () => loanModal.classList.add("visible"));
-            if(closeLoanBtn) closeLoanBtn.addEventListener("click", () => loanModal.classList.remove("visible"));
-            loanModal.addEventListener("click", (e) => { if (e.target === loanModal) loanModal.classList.remove("visible"); });
+            if (appState.selectedShiftId) {
+                document.getElementById("back-to-shifts-list")?.addEventListener("click", () => { appState.selectedShiftId = null; scheduleRender(); });
+                document.getElementById("fichas-grid")?.addEventListener("click", (e) => { const card = e.target.closest(".ficha-card"); if (!card) return; const productId = card.dataset.productId; const product = appState.products.find(p => p.id === productId); const stock = appState.inventory[productId]?.barra?.unidades ?? 0; const modal = document.getElementById("ficha-sale-modal"); modal.querySelector("#ficha-sale-modal-title").textContent = `Vender ${product.nombre}`; modal.querySelector("#ficha-sale-product-id").value = productId; modal.querySelector("#ficha-sale-stock").textContent = stock; modal.querySelector("#ficha-sale-quantity").value = 1; modal.classList.add("visible"); });
+                document.getElementById("open-loan-modal-btn")?.addEventListener("click", () => { document.getElementById("loan-modal").classList.add("visible"); });
+                document.getElementById("close-shift-btn")?.addEventListener("click", async (e) => {
+                    const btn = e.target;
+                    const isConfirmed = btn.dataset.confirmed === 'true';
 
-            const loanForm=document.getElementById("loan-form");
-            if(loanForm) loanForm.addEventListener("submit", async (e)=>{ e.preventDefault(); if(!appState.activeShift) return; const valor=parseFloat(document.getElementById("loan-value").value); const desc=document.getElementById("loan-description").value; if(isNaN(valor)||!desc) return; await addDoc(collection(db,"shifts", appState.activeShift.id, "loans"), { descripcion:desc, valor, fecha:serverTimestamp() }); loanForm.reset(); loanModal.classList.remove("visible"); });
+                    if (!isConfirmed) {
+                        btn.dataset.originalText = btn.textContent;
+                        btn.textContent = '¿Confirmar Cierre?';
+                        btn.style.background = 'var(--brand-secondary)';
+                        btn.dataset.confirmed = 'true';
+                        
+                        const timeoutId = setTimeout(() => {
+                            btn.textContent = btn.dataset.originalText;
+                            btn.style.background = '';
+                            btn.dataset.confirmed = 'false';
+                        }, 4000);
+                        btn.dataset.timeoutId = timeoutId;
+                        return;
+                    }
 
-            const closeShiftBtn=document.getElementById("close-shift-btn");
-            if(closeShiftBtn) closeShiftBtn.addEventListener("click", async ()=>{ if(!appState.activeShift) return; if(!confirm("¿Cerrar y liquidar turno?")) return; const sh=appState.activeShift; const worker=appState.workers.find(w=>w.id===sh.workerId); const ingresos=sh.sales.reduce((s,x)=>s+x.totalVenta,0); const comisiones =sh.sales.reduce((s,x)=>s+(x.totalComision||0),0); const prestamos=sh.loans.reduce((s,l)=>s+l.valor,0); const totalAPagar=(sh.pagoBase||0)+comisiones-prestamos; try{ const b=writeBatch(db); b.set(doc(colref.cashflow), {type:"ingreso",amount:ingresos,description:`Cierre turno ${worker?.nombre||""}`,date:serverTimestamp()}); if(totalAPagar>0) b.set(doc(colref.cashflow), {type:"egreso",amount:totalAPagar,description:`Pago liquidación ${worker?.nombre||""}`,date:serverTimestamp()}); b.set(doc(colref.shifts, sh.id), {estado:"cerrado", fin:serverTimestamp()}, {merge:true}); await b.commit(); showToast("Turno cerrado"); }catch(err){ showToast(err.message,"error"); } });
+                    clearTimeout(btn.dataset.timeoutId);
+                    btn.disabled = true;
+                    const shiftId = btn.dataset.shiftId;
+                    const shift = appState.activeShifts.find(s => s.id === shiftId);
+                    if (!shift) { btn.disabled = false; return; }
+
+                    const worker = appState.workers.find(w => w.id === shift.workerId);
+                    const ingresos = shift.sales.reduce((s, x) => s + x.totalVenta, 0);
+                    const comisiones = shift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
+                    const prestamos = shift.loans.reduce((s, l) => s + l.valor, 0);
+                    const totalAPagar = (worker?.pagoBase || 0) + comisiones - prestamos;
+                    try {
+                        const b = writeBatch(db);
+                        b.set(doc(colref.cashflow), { type: "ingreso", amount: ingresos, description: `Cierre turno ${worker?.nombre || ""}`, date: serverTimestamp() });
+                        if (totalAPagar > 0) b.set(doc(colref.cashflow), { type: "egreso", amount: totalAPagar, description: `Pago liquidación ${worker?.nombre || ""}`, date: serverTimestamp() });
+                        b.set(doc(colref.shifts, shift.id), { estado: "cerrado", fin: serverTimestamp(), totalIngresos: ingresos, totalComisiones: comisiones, totalPrestamos: prestamos, totalPagado: totalAPagar }, { merge: true });
+                        await b.commit();
+                        appState.selectedShiftId = null;
+                        showToast("Turno cerrado y liquidado");
+                    } catch (err) {
+                        showToast(err.message, "error");
+                        btn.textContent = btn.dataset.originalText;
+                        btn.style.background = '';
+                        btn.dataset.confirmed = 'false';
+                        btn.disabled = false;
+                    }
+                });
+            } else {
+                document.getElementById("open-shift-form")?.addEventListener("submit", async (e) => { e.preventDefault(); const workerId = document.getElementById("shift-worker").value; if (!workerId) return; const worker = appState.workers.find(w => w.id === workerId); await addDoc(colref.shifts, { workerId, pagoBase: worker?.pagoBase || 0, inicio: serverTimestamp(), estado: "abierto" }); });
+                content.querySelectorAll('.btn-manage-shift').forEach(btn => btn.addEventListener('click', (e) => { appState.selectedShiftId = e.target.dataset.shiftId; scheduleRender(); }));
+                content.querySelectorAll('.btn-view-desglose').forEach(btn => btn.addEventListener('click', (e) => {
+                    const shiftId = e.target.dataset.shiftId; const shift = appState.activeShifts.find(s => s.id === shiftId); if (!shift) return;
+                    const worker = appState.workers.find(w => w.id === shift.workerId);
+                    document.getElementById('desglose-modal-title').textContent = `Desglose de ${worker?.nombre || '...'}`;
+                    const combinedEvents = [ ...shift.sales.map(s => ({ ...s, eventType: 'sale' })), ...shift.loans.map(l => ({ ...l, eventType: 'loan' })) ];
+                    combinedEvents.sort((a, b) => (a.fecha?.toMillis() || 0) - (b.fecha?.toMillis() || 0));
+                    const tableBody = combinedEvents.map(event => { const time = event.fecha?.toDate().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) || '...'; if (event.eventType === 'sale') { const product = appState.products.find(p => p.id === event.productId); const description = `${event.unidades} x ${product?.nombre || 'Ficha vendida'}`; return row([time, description, COP(event.totalVenta), COP(event.totalComision), '']); } else { return row([time, `Préstamo: ${event.descripcion}`, '', '', COP(event.valor)]); } }).join('');
+                    document.getElementById('desglose-modal-body').innerHTML = `<table><thead><tr><th>Hora</th><th>Descripción</th><th>Ingreso</th><th>Comisión</th><th>Préstamo</th></tr></thead><tbody>${tableBody || `<tr><td colspan="5">No hay eventos registrados.</td></tr>`}</tbody></table>`;
+                    document.getElementById('desglose-modal').classList.add('visible');
+                }));
+            }
         }
     }
+    const modals = document.querySelectorAll(".modal");
+    modals.forEach(modal => {
+        const closeBtn = modal.querySelector(".modal-close-btn");
+        if (closeBtn) closeBtn.addEventListener("click", () => modal.classList.remove("visible"));
+        modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("visible") });
+    });
   </script>
 </body>
 </html>
