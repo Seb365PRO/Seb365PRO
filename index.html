@@ -364,14 +364,13 @@
 
     // --- Inicialización de Firebase ---
     const firebaseConfig = {
-      apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
-    authDomain: "seb360-pro.firebaseapp.com",
-    projectId: "seb360-pro",
-    storageBucket: "seb360-pro.firebasestorage.app",
-    messagingSenderId: "750401346580",
-    appId: "1:750401346580:web:a682fd6ae09292ff589b01"
-  };
-
+        apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
+        authDomain: "seb360-pro.firebaseapp.com",
+        projectId: "seb360-pro",
+        storageBucket: "seb360-pro.appspot.com",
+        messagingSenderId: "750401346580",
+        appId: "1:750401346580:web:a682fd6ae09292ff589b01"
+    };
 
     const appFB = initializeApp(firebaseConfig);
     const auth = getAuth(appFB);
@@ -403,7 +402,7 @@
       inventory: {}, cashflow: [],
       activeShifts: [], selectedShiftId: null
     };
-    let registrationData = {}, shiftSubListeners = {};
+    let registrationData = {}, shiftSubListeners = {}, stockUnsubscribers = {};
 
     // --- Funciones de Utilidad ---
     const showToast = (msg, type = "success") => {
@@ -637,6 +636,8 @@
         scheduleRender("dashboard-view");
       } else {
         appState.unsub.forEach(u => u());
+        Object.values(stockUnsubscribers).forEach(unsub => unsub());
+        stockUnsubscribers = {};
         appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
         document.getElementById("app-container").classList.add("hidden");
         document.getElementById("auth-container").classList.remove("hidden");
@@ -651,12 +652,54 @@
 
     function initRealtime(){
       if(!tenantId()) return;
-      appState.unsub.forEach(u=>u()); appState.unsub=[];
+      appState.unsub.forEach(u=>u()); 
+      appState.unsub=[];
+      
+      // Limpiar listeners de stock anteriores para evitar duplicados al recargar
+      Object.values(stockUnsubscribers).forEach(unsub => unsub());
+      stockUnsubscribers = {};
+
       const add = (un)=> appState.unsub.push(un);
-      add(onSnapshot(query(colref.products, orderBy("nombre")), s=>{ appState.products = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
+
+      // El listener de productos ahora también gestiona los listeners de stock
+      add(onSnapshot(query(colref.products, orderBy("nombre")), (snapshot) => {
+          const newProducts = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+          const newProductIds = new Set(newProducts.map(p => p.id));
+
+          // Desuscribirse de listeners de stock para productos eliminados
+          for (const productId in stockUnsubscribers) {
+              if (!newProductIds.has(productId)) {
+                  stockUnsubscribers[productId].forEach(unsub => unsub());
+                  delete stockUnsubscribers[productId];
+                  delete appState.inventory[productId];
+              }
+          }
+
+          appState.products = newProducts;
+
+          // Crear listeners para productos nuevos
+          appState.products.forEach(product => {
+              if (!stockUnsubscribers[product.id]) {
+                  const unsubBodega = onSnapshot(stockRef(product.id, 'bodega'), (docSnap) => {
+                      if (!appState.inventory[product.id]) appState.inventory[product.id] = {};
+                      appState.inventory[product.id].bodega = docSnap.data() || { unidades: 0 };
+                      scheduleRender();
+                  });
+                  const unsubBarra = onSnapshot(stockRef(product.id, 'barra'), (docSnap) => {
+                      if (!appState.inventory[product.id]) appState.inventory[product.id] = {};
+                      appState.inventory[product.id].barra = docSnap.data() || { unidades: 0 };
+                      scheduleRender();
+                  });
+                  stockUnsubscribers[product.id] = [unsubBodega, unsubBarra];
+              }
+          });
+          scheduleRender();
+      }));
+
       add(onSnapshot(query(colref.providers, orderBy("nombre")), s=>{ appState.providers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.workers, orderBy("nombre")), s=>{ appState.workers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.cashflow, orderBy("date","desc")), s=>{ appState.cashflow = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
+      
       add(onSnapshot(query(colref.shifts, where("estado", "==", "abierto")), (snapshot) => {
         const currentShiftIds = snapshot.docs.map(doc => doc.id);
         const previousShiftIds = appState.activeShifts.map(shift => shift.id);
@@ -694,19 +737,6 @@
         appState.activeShifts = appState.activeShifts.filter(s => currentShiftIds.includes(s.id));
         scheduleRender();
       }));
-      add(onSnapshot(
-        query(collectionGroup(db, "stock"), where("tenantId","==", tenantId())),
-        snap => {
-          const inv = {};
-          snap.docs.forEach(ds => {
-            const parts = ds.ref.path.split("/");
-            const productId = parts[3];
-            const place = parts[5];
-            (inv[productId] ??= {})[place] = ds.data();
-          });
-          appState.inventory = inv; scheduleRender();
-        }
-      ));
     }
 
     const content = document.getElementById("content");
@@ -810,29 +840,45 @@
             const productId = document.getElementById("ficha-sale-product-id").value;
             const unidades = parseInt(document.getElementById("ficha-sale-quantity").value);
             const prod = appState.products.find(p => p.id === productId);
-            if (!prod || isNaN(unidades) || unidades <= 0) { showToast("Cantidad inválida", "error"); btn.disabled = false; return; }
+            if (!prod || isNaN(unidades) || unidades <= 0) { 
+                showToast("Cantidad inválida", "error"); 
+                btn.disabled = false; 
+                return; 
+            }
+
             try {
-                // *** FIX: Use manual read/write in transaction to guarantee listener update ***
+                // --- CORRECTO: Lógica de venta dentro de una transacción ---
+                // Esto garantiza que el stock se descuente y la venta se registre atómicamente.
                 await runTransaction(db, async (t) => {
                     const barraRef = stockRef(productId, "barra");
+                    const ventaRef = doc(collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "sales"));
+                    
                     const snap = await t.get(barraRef);
                     const currentStock = snap.data()?.unidades || 0;
-                    if (!snap.exists() || currentStock < unidades) { 
-                        throw new Error(`Stock insuficiente para ${prod.nombre}`); 
+                    
+                    if (currentStock < unidades) { 
+                        throw new Error(`Stock insuficiente para ${prod.nombre}. Solo hay ${currentStock}.`); 
                     }
+                    
                     const newStock = currentStock - unidades;
                     t.set(barraRef, { tenantId: tenantId(), unidades: newStock }, { merge: true });
+
+                    t.set(ventaRef, {
+                        type: 'ficha', productId: productId, unidades: unidades,
+                        totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0),
+                        fecha: serverTimestamp()
+                    });
                 });
-                await addDoc(collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "sales"), {
-                    type: 'ficha', productId: productId, unidades: unidades,
-                    totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0),
-                    fecha: serverTimestamp()
-                });
+                
                 showToast("Venta registrada");
                 modal.classList.remove("visible");
-            } catch(err) { showToast(err.message, "error"); }
-            finally { btn.disabled = false; }
+            } catch(err) { 
+                showToast(err.message, "error"); 
+            } finally { 
+                btn.disabled = false; 
+            }
         });
+
         const loanForm = document.getElementById("loan-form");
         if (loanForm) loanForm.addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -896,40 +942,56 @@
                     e.preventDefault();
                     const btn = purchaseForm.querySelector('button[type="submit"]');
                     btn.disabled = true;
+                    
                     const providerId = document.getElementById("purchase-provider").value;
                     const productId = document.getElementById("purchase-product").value;
                     const cantidad = parseInt(document.getElementById("purchase-quantity").value);
                     const unit = document.getElementById("purchase-unit").value;
                     const tipo = document.getElementById("purchase-type").value;
                     const prod = appState.products.find(p => p.id === productId);
-                    if (!prod || !providerId || isNaN(cantidad)) {
-                        showToast("Datos inválidos", "error");
+
+                    if (!prod || !providerId || isNaN(cantidad) || cantidad <= 0) {
+                        showToast("Datos de compra inválidos", "error");
                         btn.disabled = false;
                         return;
                     }
-                    const unidades = toUnidades(cantidad, unit, prod);
-                    const costo = unidades * (prod.precioCompra || 0);
+
                     try {
-                        const batch = writeBatch(db);
-                        batch.set(doc(colref.purchases), {
-                            providerId, productId, fecha: serverTimestamp(), tipo,
-                            cantidadUnidades: unidades, costoTotal: costo
-                        });
-                        batch.set(stockRef(productId, "bodega"), { tenantId: tenantId(), unidades: increment(unidades) }, { merge: true });
-                        if (tipo === "consignacion") {
-                            batch.set(doc(colref.providers, providerId), { saldoPendiente: increment(costo) }, { merge: true });
-                        } else {
-                             batch.set(doc(colref.cashflow), {
-                                type: "egreso", amount: costo,
-                                description: `Compra contado: ${unidades} x ${prod.nombre}`,
-                                date: serverTimestamp()
+                        const unidades = toUnidades(cantidad, unit, prod);
+                        const costo = unidades * (prod.precioCompra || 0);
+
+                        await runTransaction(db, async (t) => {
+                            const bodegaRef = stockRef(productId, "bodega");
+                            const purchaseRef = doc(colref.purchases);
+                            
+                            const bodegaSnap = await t.get(bodegaRef);
+                            const currentStock = bodegaSnap.data()?.unidades || 0;
+                            const newStock = currentStock + unidades;
+                            
+                            t.set(bodegaRef, { tenantId: tenantId(), unidades: newStock }, { merge: true });
+
+                            t.set(purchaseRef, {
+                                providerId, productId, fecha: serverTimestamp(), tipo,
+                                cantidadUnidades: unidades, costoTotal: costo
                             });
-                        }
-                        await batch.commit();
-                        showToast("Compra registrada");
+
+                            if (tipo === "consignacion") {
+                                const providerRef = doc(colref.providers, providerId);
+                                t.set(providerRef, { saldoPendiente: increment(costo) }, { merge: true });
+                            } else {
+                                const cashflowRef = doc(colref.cashflow); 
+                                t.set(cashflowRef, {
+                                    type: "egreso", amount: costo,
+                                    description: `Compra contado: ${unidades} x ${prod.nombre}`,
+                                    date: serverTimestamp()
+                                });
+                            }
+                        });
+
+                        showToast("Compra registrada exitosamente");
                         purchaseForm.reset();
                     } catch (err) {
-                        showToast(err.message, "error");
+                        showToast(`Error en la compra: ${err.message}`, "error");
                     } finally {
                         btn.disabled = false;
                     }
@@ -941,36 +1003,42 @@
                     e.preventDefault();
                     const btn = transferForm.querySelector('button[type="submit"]');
                     btn.disabled = true;
+
                     const productId = document.getElementById("transfer-product").value;
                     const cantidad = parseInt(document.getElementById("transfer-quantity").value);
                     const unit = document.getElementById("transfer-unit").value;
                     const prod = appState.products.find(p => p.id === productId);
-                    if (!prod || isNaN(cantidad)) {
-                        showToast("Datos inválidos", "error");
+                    
+                    if (!prod || isNaN(cantidad) || cantidad <= 0) {
+                        showToast("Datos de traslado inválidos", "error");
                         btn.disabled = false;
                         return;
                     }
+                    
                     const unidades = toUnidades(cantidad, unit, prod);
                     try {
-                        // *** FIX: Use manual read/write in transaction to guarantee listener update ***
                         await runTransaction(db, async (t) => {
                             const bodegaRef = stockRef(productId, "bodega");
                             const barraRef = stockRef(productId, "barra");
+                            
                             const [bodegaSnap, barraSnap] = await Promise.all([t.get(bodegaRef), t.get(barraRef)]);
+                            
                             const currentBodegaStock = bodegaSnap.data()?.unidades || 0;
-                            if (!bodegaSnap.exists() || currentBodegaStock < unidades) {
+                            if (currentBodegaStock < unidades) {
                                 throw new Error("Stock insuficiente en bodega.");
                             }
+                            
                             const currentBarraStock = barraSnap.data()?.unidades || 0;
                             const newBodegaStock = currentBodegaStock - unidades;
                             const newBarraStock = currentBarraStock + unidades;
+                            
                             t.set(bodegaRef, { tenantId: tenantId(), unidades: newBodegaStock }, { merge: true });
                             t.set(barraRef, { tenantId: tenantId(), unidades: newBarraStock }, { merge: true });
                         });
                         showToast("Traslado exitoso");
                         transferForm.reset();
                     } catch (err) {
-                        showToast(err.message, "error");
+                        showToast(`Error en traslado: ${err.message}`, "error");
                     } finally {
                         btn.disabled = false;
                     }
@@ -1065,10 +1133,11 @@
             content.querySelectorAll(".btn-edit-worker").forEach(b => b.addEventListener("click", () => {
                 const w = appState.workers.find(x => x.id === b.dataset.id);
                 if (!w) return;
-                document.getElementById("worker-id").value = w.id;
-                document.getElementById("worker-nombre").value = w.nombre || "";
-                document.getElementById("worker-pagoBase").value = w.pagoBase || 0;
-                document.getElementById("worker-activo").checked = w.activo;
+                const form = document.getElementById("worker-form");
+                form.querySelector("#worker-id").value = w.id;
+                form.querySelector("#worker-nombre").value = w.nombre || "";
+                form.querySelector("#worker-pagoBase").value = w.pagoBase || 0;
+                form.querySelector("#worker-activo").checked = w.activo === true;
             }));
             const form = document.getElementById("worker-form");
             if (form) {
@@ -1078,12 +1147,12 @@
                     btn.disabled = true;
                     const workerId = document.getElementById("worker-id").value;
                     const data = {
-                        nombre: document.getElementById("worker-nombre").value,
+                        nombre: document.getElementById("worker-nombre").value.trim(),
                         pagoBase: parseFloat(document.getElementById("worker-pagoBase").value) || 0,
                         activo: document.getElementById("worker-activo").checked,
                     };
                     if (!data.nombre) {
-                        showToast("El nombre es requerido", "error");
+                        showToast("El nombre del trabajador es requerido.", "error");
                         btn.disabled = false;
                         return;
                     }
@@ -1091,14 +1160,14 @@
                         if (workerId) {
                             await setDoc(doc(colref.workers, workerId), data, { merge: true });
                         } else {
-                            await addDoc(colref.workers, data);
+                            await addDoc(colref.workers, { ...data, createdAt: serverTimestamp() });
                         }
-                        showToast("Trabajador guardado");
+                        showToast("Trabajador guardado correctamente.");
                         form.reset();
                         document.getElementById("worker-id").value = "";
                         document.getElementById("worker-activo").checked = true;
                     } catch (err) {
-                        showToast(err.message, "error");
+                        showToast(`Error: ${err.message}`, "error");
                     } finally {
                         btn.disabled = false;
                     }
