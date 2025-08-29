@@ -144,7 +144,7 @@
     }
     tbody td { background: var(--bg-secondary); padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
     tbody tr:last-child td { border-bottom: none; }
-    .actions { display: flex; gap: 8px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .actions button { padding: 6px 10px; font-size: 14px; }
     #toast-container { position: fixed; right: 24px; bottom: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
     .toast {
@@ -165,7 +165,7 @@
     .modal.visible { opacity: 1; pointer-events: all; }
     .modal-content {
         background: var(--bg-primary); padding: 32px; border-radius: 12px;
-        width: 90%; max-width: 600px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        width: 90%; max-width: 800px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         transform: scale(0.95); transition: transform 0.3s ease;
     }
     .modal.visible .modal-content { transform: scale(1); }
@@ -357,10 +357,22 @@
     </div>
   </div>
 
+  <div id="sales-breakdown-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="sales-breakdown-modal-title">Desglose de Pago por Ventas</h3>
+            <button type="button" class="modal-close-btn">&times;</button>
+        </div>
+        <div id="sales-breakdown-modal-body" style="max-height: 60vh; overflow-y: auto;">
+            <p>Calculando reporte...</p>
+        </div>
+    </div>
+   </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, collectionGroup, doc, setDoc, addDoc, getDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, collectionGroup, doc, setDoc, addDoc, getDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // --- Inicialización de Firebase ---
     const firebaseConfig = {
@@ -636,7 +648,7 @@
         scheduleRender("dashboard-view");
       } else {
         appState.unsub.forEach(u => u());
-        Object.values(stockUnsubscribers).forEach(unsub => unsub());
+        Object.values(stockUnsubscribers).forEach(unsubArray => unsubArray.forEach(unsub => unsub()));
         stockUnsubscribers = {};
         appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
         document.getElementById("app-container").classList.add("hidden");
@@ -655,18 +667,15 @@
       appState.unsub.forEach(u=>u()); 
       appState.unsub=[];
       
-      // Limpiar listeners de stock anteriores para evitar duplicados al recargar
-      Object.values(stockUnsubscribers).forEach(unsub => unsub());
+      Object.values(stockUnsubscribers).forEach(unsubArray => unsubArray.forEach(unsub => unsub()));
       stockUnsubscribers = {};
 
       const add = (un)=> appState.unsub.push(un);
 
-      // El listener de productos ahora también gestiona los listeners de stock
       add(onSnapshot(query(colref.products, orderBy("nombre")), (snapshot) => {
           const newProducts = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
           const newProductIds = new Set(newProducts.map(p => p.id));
 
-          // Desuscribirse de listeners de stock para productos eliminados
           for (const productId in stockUnsubscribers) {
               if (!newProductIds.has(productId)) {
                   stockUnsubscribers[productId].forEach(unsub => unsub());
@@ -677,7 +686,6 @@
 
           appState.products = newProducts;
 
-          // Crear listeners para productos nuevos
           appState.products.forEach(product => {
               if (!stockUnsubscribers[product.id]) {
                   const unsubBodega = onSnapshot(stockRef(product.id, 'bodega'), (docSnap) => {
@@ -752,22 +760,36 @@
             html = `<div class="content-view"><h2>Panel de Control</h2><div class="form-grid"><div class="card"><h3>Saldo en Caja</h3><p>${COP(balance)}</p></div><div class="card"><h3>Ventas (Turnos Activos)</h3><p>${COP(totalSalesAllShifts)}</p></div><div class="card"><h3>Deuda Proveedores</h3><p>${COP(debt)}</p></div><div class="card"><h3>Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div></div></div>`;
         }
         if (id === 'products-view') {
+            const providersPorVentas = appState.providers.filter(p => p.tipoPago === 'porVentas');
+            const providerOpts = providersPorVentas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
             const rows = appState.products.map(p => row([ p.nombre, p.esFicha ? 'Sí' : 'No', COP(p.precioVenta || 0), COP(p.precioComision || 0), `<div class="actions"><button class="btn-edit" data-id="${p.id}">Editar</button></div>` ])).join("");
-            html = `<div class="content-view"><h2>Productos y Fichas</h2><form id="product-form" class="card"><input type="hidden" id="product-id"><div class="form-grid"><input id="product-nombre" placeholder="Nombre" required><input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required><input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required><input id="product-precioComision" type="number" step="any" min="0" placeholder="Valor para Pago (Comisión)"><input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja"><input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta"></div><div style="margin-top: 16px;"><label style="display:inline-flex; align-items:center; gap: 8px; font-size: 16px;"><input id="product-esFicha" type="checkbox"> Es una Ficha</label></div><button type="submit" style="margin-top: 16px;">Guardar</button></form><div class="table-wrapper" style="margin-top:24px"><table><thead><tr><th>Nombre</th><th>Es Ficha</th><th>P. Venta</th><th>Valor Pago</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+            html = `<div class="content-view"><h2>Productos y Fichas</h2><form id="product-form" class="card"><input type="hidden" id="product-id"><div class="form-grid"><div><label for="product-nombre">Nombre</label><input id="product-nombre" placeholder="Nombre" required></div><div><label for="product-precioVenta">Precio Venta</label><input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required></div><div><label for="product-precioCompra">Precio Compra</label><input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required></div><div><label for="product-precioComision">Valor para Pago (Comisión)</label><input id="product-precioComision" type="number" step="any" min="0" placeholder="Valor para Pago (Comisión)"></div><div><label for="product-unidadesPorCaja">Unidades por Caja</label><input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja"></div><div><label for="product-unidadesPorCanasta">Unidades por Canasta</label><input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta"></div></div><div id="provider-por-ventas-wrapper" style="margin-top: 16px;">
+            <label for="product-providerPorVentas">Proveedor para Pago por Ventas (Opcional)</label>
+            <select id="product-providerPorVentas"><option value="">Ninguno</option>${providerOpts}</select>
+            </div><div style="margin-top: 16px;"><label style="display:inline-flex; align-items:center; gap: 8px; font-size: 16px;"><input id="product-esFicha" type="checkbox"> Es una Ficha</label></div><button type="submit" style="margin-top: 16px;">Guardar</button></form><div class="table-wrapper" style="margin-top:24px"><table><thead><tr><th>Nombre</th><th>Es Ficha</th><th>P. Venta</th><th>Valor Pago</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
         }
         if (id === 'inventory-view') {
             const rows = appState.products.map(p=> row([ p.nombre, appState.inventory[p.id]?.bodega?.unidades ?? 0, appState.inventory[p.id]?.barra?.unidades ?? 0 ])).join("");
             const productOpts = appState.products.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
             const providerOpts = appState.providers.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
-            html = `<div class="content-view"><h2>Inventario y Compras</h2><div class="form-grid"><form id="purchase-form" class="card"><h3>Registrar Compra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="purchase-provider" required><option value="">Proveedor…</option>${providerOpts}</select><select id="purchase-product" required><option value="">Producto…</option>${productOpts}</select><input id="purchase-quantity" type="number" min="1" placeholder="Cantidad" required><select id="purchase-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><select id="purchase-type" required><option value="contado">Contado (Afecta caja)</option><option value="consignacion">Consignación</option></select><button type="submit">Registrar Compra</button></div></form><form id="transfer-form" class="card"><h3>Trasladar Bodega → Barra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="transfer-product" required><option value="">Producto…</option>${productOpts}</select><input id="transfer-quantity" type="number" min="1" placeholder="Cantidad" required><select id="transfer-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><button type="submit">Trasladar</button></div></form></div><h3 style="margin:24px 0 12px 0;">Stock Actual</h3><div class="table-wrapper"><table><thead><tr><th>Producto</th><th>Stock Bodega</th><th>Stock Barra</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin stock.</td></tr>`}</tbody></table></div></div>`;
+            html = `<div class="content-view"><h2>Inventario y Compras</h2><div class="form-grid"><form id="purchase-form" class="card"><h3>Registrar Compra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="purchase-provider" required><option value="">Proveedor…</option>${providerOpts}</select><div id="provider-payment-type-display" style="margin-top: -4px; margin-bottom: -4px; padding: 10px; background-color: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color); display: none;"><span style="color: var(--text-secondary); font-size: 14px;">Tipo de Pago: </span><strong style="font-weight: 500;"></strong></div><select id="purchase-product" required><option value="">Producto…</option>${productOpts}</select><input id="purchase-quantity" type="number" min="1" placeholder="Cantidad" required><select id="purchase-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><button type="submit">Registrar Compra</button></div></form><form id="transfer-form" class="card"><h3>Trasladar Bodega → Barra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="transfer-product" required><option value="">Producto…</option>${productOpts}</select><input id="transfer-quantity" type="number" min="1" placeholder="Cantidad" required><select id="transfer-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><button type="submit">Trasladar</button></div></form></div><h3 style="margin:24px 0 12px 0;">Stock Actual</h3><div class="table-wrapper"><table><thead><tr><th>Producto</th><th>Stock Bodega</th><th>Stock Barra</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin stock.</td></tr>`}</tbody></table></div></div>`;
         }
         if (id === 'cashflow-view') {
             const rows = appState.cashflow.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${e.description}</td><td class="${e.type==="ingreso"?"amount-positive":"amount-negative"}" style="font-weight: 500;">${COP(e.type==="ingreso"?e.amount:-e.amount)}</td></tr>`).join("");
             html = `<div class="content-view"><h2>Flujo de Caja</h2><form id="cashflow-form" class="card"><div class="form-grid" style="align-items: flex-end;"><select id="cashflow-type" required><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select><input id="cashflow-amount" type="number" step="any" min="1" placeholder="Monto" required></div><input id="cashflow-description" placeholder="Descripción" required style="margin: 12px 0;"><button type="submit">Registrar</button></form><h3 style="margin:24px 0 12px 0;">Historial</h3><div class="table-wrapper"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin movimientos.</td></tr>`}</tbody></table></div></div>`;
         }
         if (id === 'providers-view') {
-            const rows = appState.providers.map(p=> row([ p.nombre, (p.consignacion?"✅":"❌"), COP(p.saldoPendiente||0), `<div class="actions ${appState.role!=="admin"?"hidden":""}"><button class="btn-edit-provider" data-id="${p.id}">Editar</button><button class="btn-settle button-secondary" data-id="${p.id}">Liquidar</button></div>` ])).join("");
-            html = `<div class="content-view"><h2>Proveedores</h2><form id="provider-form" class="card ${appState.role==="admin"?"":"hidden"}"><input type="hidden" id="provider-id"><div class="form-grid" style="margin-bottom: 12px;"><input id="provider-nombre" placeholder="Nombre del proveedor" required><input id="provider-contacto" placeholder="Contacto"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="provider-consignacion" type="checkbox"> Acepta consignación</label><button type="submit">Guardar Proveedor</button></form><div id="settlement-details" class="hidden card" style="margin-top:12px; border-left: 4px solid var(--brand-primary);"><h4>Liquidar a: <span id="settlement-provider-name"></span></h4><p>Saldo: <strong id="settlement-provider-balance"></strong></p><button id="settle-provider-btn">Pagar y Registrar Egreso</button></div><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Consignación</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin proveedores.</td></tr>`}</tbody></table></div></div>`;
+            const getTipoPagoText = (tipo) => {
+                if (tipo === 'porVentas') return 'Por Ventas';
+                if (tipo === 'consignacion') return 'Consignación';
+                return 'Contado';
+            };
+            const rows = appState.providers.map(p => {
+                const actions = `<div class="actions"><button class="btn-edit-provider" data-id="${p.id}">Editar</button>${p.tipoPago === 'porVentas' ? `<button class="btn-view-sales-breakdown button-secondary" data-id="${p.id}">Desglose</button>` : ''}<button class="btn-settle" data-id="${p.id}">Liquidar</button></div>`;
+                return row([p.nombre, getTipoPagoText(p.tipoPago), COP(p.saldoPendiente || 0), actions]);
+            }).join("");
+
+            html = `<div class="content-view"><h2>Proveedores</h2><form id="provider-form" class="card ${appState.role==="admin"?"":"hidden"}"><input type="hidden" id="provider-id"><div class="form-grid" style="margin-bottom: 12px; align-items: end;"><div><label for="provider-nombre">Nombre del proveedor</label><input id="provider-nombre" placeholder="Nombre del proveedor" required></div><div><label for="provider-contacto">Contacto</label><input id="provider-contacto" placeholder="Contacto"></div><div><label for="provider-tipoPago">Tipo de Pago</label><select id="provider-tipoPago"><option value="contado">Contado</option><option value="consignacion">Consignación</option><option value="porVentas">Por Ventas</option></select></div></div><button type="submit">Guardar Proveedor</button></form><div id="settlement-details" class="hidden card" style="margin-top:12px; border-left: 4px solid var(--brand-primary);"><h4>Liquidar a: <span id="settlement-provider-name"></span></h4><p>Saldo: <strong id="settlement-provider-balance"></strong></p><button id="settle-provider-btn">Pagar y Registrar Egreso</button></div><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Tipo de Pago</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin proveedores.</td></tr>`}</tbody></table></div></div>`;
         }
         if (id === 'workers-view') {
             const rows = appState.workers.map(w=> row([ w.nombre, COP(w.pagoBase||0), (w.activo?"✅":"❌"), `<div class="actions"><button class="btn-edit-worker" data-id="${w.id}">Editar</button></div>` ])).join("");
@@ -839,22 +861,27 @@
             btn.disabled = true;
             const productId = document.getElementById("ficha-sale-product-id").value;
             const unidades = parseInt(document.getElementById("ficha-sale-quantity").value);
-            const prod = appState.products.find(p => p.id === productId);
-            if (!prod || isNaN(unidades) || unidades <= 0) { 
+            
+            if (isNaN(unidades) || unidades <= 0) { 
                 showToast("Cantidad inválida", "error"); 
                 btn.disabled = false; 
                 return; 
             }
 
             try {
-                // --- CORRECTO: Lógica de venta dentro de una transacción ---
-                // Esto garantiza que el stock se descuente y la venta se registre atómicamente.
                 await runTransaction(db, async (t) => {
+                    const productRef = doc(colref.products, productId);
                     const barraRef = stockRef(productId, "barra");
-                    const ventaRef = doc(collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "sales"));
+                    const ventaRef = doc(TCOL("shifts", appState.selectedShiftId, "sales"));
                     
-                    const snap = await t.get(barraRef);
-                    const currentStock = snap.data()?.unidades || 0;
+                    const productDoc = await t.get(productRef);
+                    const stockSnap = await t.get(barraRef);
+
+                    if (!productDoc.exists()) {
+                        throw new Error("El producto ya no existe.");
+                    }
+                    const prod = productDoc.data();
+                    const currentStock = stockSnap.data()?.unidades || 0;
                     
                     if (currentStock < unidades) { 
                         throw new Error(`Stock insuficiente para ${prod.nombre}. Solo hay ${currentStock}.`); 
@@ -866,12 +893,22 @@
                     t.set(ventaRef, {
                         type: 'ficha', productId: productId, unidades: unidades,
                         totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0),
-                        fecha: serverTimestamp()
+                        fecha: serverTimestamp(),
+                        tenantId: tenantId()
                     });
+
+                    if (prod.providerPorVentasId) {
+                        const costoVenta = unidades * (prod.precioCompra || 0);
+                        if (costoVenta > 0) {
+                            const providerRef = doc(colref.providers, prod.providerPorVentasId);
+                            t.update(providerRef, { saldoPendiente: increment(costoVenta) });
+                        }
+                    }
                 });
                 
                 showToast("Venta registrada");
                 modal.classList.remove("visible");
+
             } catch(err) { 
                 showToast(err.message, "error"); 
             } finally { 
@@ -886,7 +923,7 @@
             const valor = parseFloat(document.getElementById("loan-value").value);
             const desc = document.getElementById("loan-description").value;
             if (isNaN(valor) || !desc) return;
-            await addDoc(collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
+            await addDoc(TCOL("shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
             loanForm.reset();
             document.getElementById("loan-modal").classList.remove("visible");
         });
@@ -904,6 +941,7 @@
                 document.getElementById("product-unidadesPorCaja").value = p.unidadesPorCaja || 1;
                 document.getElementById("product-unidadesPorCanasta").value = p.unidadesPorCanasta || 1;
                 document.getElementById("product-esFicha").checked = !!p.esFicha;
+                document.getElementById("product-providerPorVentas").value = p.providerPorVentasId || "";
             }));
             const form = document.getElementById("product-form");
             if (form) form.addEventListener("submit", async (e) => {
@@ -918,6 +956,7 @@
                     unidadesPorCaja: parseInt(document.getElementById("product-unidadesPorCaja").value) || 1,
                     unidadesPorCanasta: parseInt(document.getElementById("product-unidadesPorCanasta").value) || 1,
                     esFicha: document.getElementById("product-esFicha").checked,
+                    providerPorVentasId: document.getElementById("product-providerPorVentas").value || null,
                     activo: true
                 };
                 try {
@@ -936,141 +975,141 @@
             });
         }
         if(id === 'inventory-view') {
+            const purchaseProviderSelect = document.getElementById("purchase-provider");
+            if (purchaseProviderSelect) {
+                purchaseProviderSelect.addEventListener('change', (e) => {
+                    const providerId = e.target.value;
+                    const displayDiv = document.getElementById('provider-payment-type-display');
+                    const strongEl = displayDiv.querySelector('strong');
+
+                    if (!providerId) {
+                        displayDiv.style.display = 'none';
+                        return;
+                    }
+
+                    const provider = appState.providers.find(p => p.id === providerId);
+                    if (provider) {
+                        let tipoPagoText = 'Contado';
+                        if (provider.tipoPago === 'consignacion') tipoPagoText = 'Consignación';
+                        if (provider.tipoPago === 'porVentas') tipoPagoText = 'Por Ventas';
+                        
+                        strongEl.textContent = tipoPagoText;
+                        displayDiv.style.display = 'block';
+                    } else {
+                        displayDiv.style.display = 'none';
+                    }
+                });
+            }
+
             const purchaseForm = document.getElementById("purchase-form");
-            if (purchaseForm) {
-                purchaseForm.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const btn = purchaseForm.querySelector('button[type="submit"]');
-                    btn.disabled = true;
-                    
-                    const providerId = document.getElementById("purchase-provider").value;
-                    const productId = document.getElementById("purchase-product").value;
-                    const cantidad = parseInt(document.getElementById("purchase-quantity").value);
-                    const unit = document.getElementById("purchase-unit").value;
-                    const tipo = document.getElementById("purchase-type").value;
-                    const prod = appState.products.find(p => p.id === productId);
+            if (purchaseForm) purchaseForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = purchaseForm.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                
+                const providerId = document.getElementById("purchase-provider").value;
+                const productId = document.getElementById("purchase-product").value;
+                const cantidad = parseInt(document.getElementById("purchase-quantity").value);
+                const unit = document.getElementById("purchase-unit").value;
+                const prod = appState.products.find(p => p.id === productId);
+                const provider = appState.providers.find(p => p.id === providerId);
 
-                    if (!prod || !providerId || isNaN(cantidad) || cantidad <= 0) {
-                        showToast("Datos de compra inválidos", "error");
-                        btn.disabled = false;
-                        return;
-                    }
+                if (!prod || !provider || isNaN(cantidad) || cantidad <= 0) {
+                    showToast("Datos de compra inválidos", "error");
+                    btn.disabled = false;
+                    return;
+                }
 
-                    try {
-                        const unidades = toUnidades(cantidad, unit, prod);
-                        const costo = unidades * (prod.precioCompra || 0);
-
-                        await runTransaction(db, async (t) => {
-                            const bodegaRef = stockRef(productId, "bodega");
-                            const purchaseRef = doc(colref.purchases);
-                            
-                            const bodegaSnap = await t.get(bodegaRef);
-                            const currentStock = bodegaSnap.data()?.unidades || 0;
-                            const newStock = currentStock + unidades;
-                            
-                            t.set(bodegaRef, { tenantId: tenantId(), unidades: newStock }, { merge: true });
-
-                            t.set(purchaseRef, {
-                                providerId, productId, fecha: serverTimestamp(), tipo,
-                                cantidadUnidades: unidades, costoTotal: costo
-                            });
-
-                            if (tipo === "consignacion") {
-                                const providerRef = doc(colref.providers, providerId);
-                                t.set(providerRef, { saldoPendiente: increment(costo) }, { merge: true });
-                            } else {
-                                const cashflowRef = doc(colref.cashflow); 
-                                t.set(cashflowRef, {
-                                    type: "egreso", amount: costo,
-                                    description: `Compra contado: ${unidades} x ${prod.nombre}`,
-                                    date: serverTimestamp()
-                                });
-                            }
-                        });
-
-                        showToast("Compra registrada exitosamente");
-                        purchaseForm.reset();
-                    } catch (err) {
-                        showToast(`Error en la compra: ${err.message}`, "error");
-                    } finally {
-                        btn.disabled = false;
-                    }
-                });
-            }
-            const transferForm = document.getElementById("transfer-form");
-            if (transferForm) {
-                transferForm.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const btn = transferForm.querySelector('button[type="submit"]');
-                    btn.disabled = true;
-
-                    const productId = document.getElementById("transfer-product").value;
-                    const cantidad = parseInt(document.getElementById("transfer-quantity").value);
-                    const unit = document.getElementById("transfer-unit").value;
-                    const prod = appState.products.find(p => p.id === productId);
-                    
-                    if (!prod || isNaN(cantidad) || cantidad <= 0) {
-                        showToast("Datos de traslado inválidos", "error");
-                        btn.disabled = false;
-                        return;
-                    }
-                    
+                try {
                     const unidades = toUnidades(cantidad, unit, prod);
-                    try {
-                        await runTransaction(db, async (t) => {
-                            const bodegaRef = stockRef(productId, "bodega");
-                            const barraRef = stockRef(productId, "barra");
-                            
-                            const [bodegaSnap, barraSnap] = await Promise.all([t.get(bodegaRef), t.get(barraRef)]);
-                            
-                            const currentBodegaStock = bodegaSnap.data()?.unidades || 0;
-                            if (currentBodegaStock < unidades) {
-                                throw new Error("Stock insuficiente en bodega.");
-                            }
-                            
-                            const currentBarraStock = barraSnap.data()?.unidades || 0;
-                            const newBodegaStock = currentBodegaStock - unidades;
-                            const newBarraStock = currentBarraStock + unidades;
-                            
-                            t.set(bodegaRef, { tenantId: tenantId(), unidades: newBodegaStock }, { merge: true });
-                            t.set(barraRef, { tenantId: tenantId(), unidades: newBarraStock }, { merge: true });
+                    const costo = unidades * (prod.precioCompra || 0);
+
+                    await runTransaction(db, async (t) => {
+                        const bodegaRef = stockRef(productId, "bodega");
+                        const purchaseRef = doc(colref.purchases);
+                        
+                        t.update(bodegaRef, { unidades: increment(unidades) });
+
+                        t.set(purchaseRef, {
+                            providerId, productId, fecha: serverTimestamp(),
+                            cantidadUnidades: unidades, costoTotal: costo
                         });
-                        showToast("Traslado exitoso");
-                        transferForm.reset();
-                    } catch (err) {
-                        showToast(`Error en traslado: ${err.message}`, "error");
-                    } finally {
-                        btn.disabled = false;
-                    }
-                });
-            }
+                        
+                        if (provider.tipoPago === "consignacion") {
+                            const providerRef = doc(colref.providers, providerId);
+                            t.update(providerRef, { saldoPendiente: increment(costo) });
+                        } else if (provider.tipoPago === "contado") {
+                            const cashflowRef = doc(colref.cashflow); 
+                            t.set(cashflowRef, {
+                                type: "egreso", amount: costo,
+                                description: `Compra contado: ${unidades} x ${prod.nombre}`,
+                                date: serverTimestamp()
+                            });
+                        }
+                    });
+
+                    showToast("Compra registrada exitosamente");
+                    purchaseForm.reset();
+                } catch (err) {
+                    showToast(`Error en la compra: ${err.message}`, "error");
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+            const transferForm = document.getElementById("transfer-form");
+            if (transferForm) transferForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = transferForm.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                const productId = document.getElementById("transfer-product").value;
+                const cantidad = parseInt(document.getElementById("transfer-quantity").value);
+                const unit = document.getElementById("transfer-unit").value;
+                const prod = appState.products.find(p => p.id === productId);
+                if (!prod || isNaN(cantidad) || cantidad <= 0) {
+                    showToast("Datos de traslado inválidos", "error");
+                    btn.disabled = false; return;
+                }
+                const unidades = toUnidades(cantidad, unit, prod);
+                try {
+                    await runTransaction(db, async (t) => {
+                        const bodegaRef = stockRef(productId, "bodega");
+                        const barraRef = stockRef(productId, "barra");
+                        const bodegaSnap = await t.get(bodegaRef);
+                        const currentBodegaStock = bodegaSnap.data()?.unidades || 0;
+                        if (currentBodegaStock < unidades) throw new Error("Stock insuficiente en bodega.");
+                        
+                        t.update(bodegaRef, { unidades: increment(-unidades) });
+                        t.update(barraRef, { unidades: increment(unidades) });
+                    });
+                    showToast("Traslado exitoso");
+                    transferForm.reset();
+                } catch (err) {
+                    showToast(`Error en traslado: ${err.message}`, "error");
+                } finally {
+                    btn.disabled = false;
+                }
+            });
         }
         if(id === 'cashflow-view') {
             const form = document.getElementById("cashflow-form");
-            if (form) {
-                form.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const btn = form.querySelector('button[type="submit"]');
-                    btn.disabled = true;
-                    const data = {
-                        type: document.getElementById("cashflow-type").value,
-                        amount: parseFloat(document.getElementById("cashflow-amount").value),
-                        description: document.getElementById("cashflow-description").value,
-                        date: serverTimestamp(),
-                        manual: true,
-                        userId: appState.user.uid
-                    };
-                    try {
-                        await addDoc(colref.cashflow, data);
-                        showToast("Movimiento registrado");
-                        form.reset();
-                    } catch (err) {
-                        showToast(err.message, "error");
-                    } finally {
-                        btn.disabled = false;
-                    }
-                });
-            }
+            if (form) form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = form.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                const data = {
+                    type: document.getElementById("cashflow-type").value,
+                    amount: parseFloat(document.getElementById("cashflow-amount").value),
+                    description: document.getElementById("cashflow-description").value,
+                    date: serverTimestamp(),
+                    manual: true,
+                    userId: appState.user.uid
+                };
+                try {
+                    await addDoc(colref.cashflow, data);
+                    showToast("Movimiento registrado");
+                    form.reset();
+                } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
+            });
         }
         if (id === 'providers-view') {
             content.querySelectorAll(".btn-edit-provider").forEach(b => b.addEventListener("click", () => {
@@ -1078,135 +1117,195 @@
                 document.getElementById("provider-id").value = p.id;
                 document.getElementById("provider-nombre").value = p.nombre || "";
                 document.getElementById("provider-contacto").value = p.contacto || "";
-                document.getElementById("provider-consignacion").checked = !!p.consignacion;
+                document.getElementById("provider-tipoPago").value = p.tipoPago || 'contado';
             }));
             const form = document.getElementById("provider-form");
-            if (form) {
-                form.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const btn = form.querySelector('button[type="submit"]'); btn.disabled = true;
-                    const id = document.getElementById("provider-id").value;
-                    const data = {
-                        nombre: document.getElementById("provider-nombre").value,
-                        contacto: document.getElementById("provider-contacto").value,
-                        consignacion: document.getElementById("provider-consignacion").checked
-                    };
-                    try {
-                        if (id) {
-                            await setDoc(doc(colref.providers, id), data, { merge: true });
-                        } else {
-                            await addDoc(colref.providers, { ...data, saldoPendiente: 0 });
-                        }
-                        showToast("Proveedor guardado");
-                        form.reset(); document.getElementById("provider-id").value = "";
-                    } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
-                });
-            }
+            if (form) form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = form.querySelector('button[type="submit"]'); btn.disabled = true;
+                const id = document.getElementById("provider-id").value;
+                const data = {
+                    nombre: document.getElementById("provider-nombre").value,
+                    contacto: document.getElementById("provider-contacto").value,
+                    tipoPago: document.getElementById("provider-tipoPago").value
+                };
+                try {
+                    if (id) {
+                        await setDoc(doc(colref.providers, id), data, { merge: true });
+                    } else {
+                        await addDoc(colref.providers, { ...data, saldoPendiente: 0 });
+                    }
+                    showToast("Proveedor guardado");
+                    form.reset(); document.getElementById("provider-id").value = "";
+                } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
+            });
             content.querySelectorAll(".btn-settle").forEach(b => b.addEventListener("click", () => {
                 const prov = appState.providers.find(x => x.id === b.dataset.id); if (!prov) return;
-                if ((prov.saldoPendiente || 0) <= 0) { showToast("Proveedor sin saldo pendiente", "error"); return; }
+                if ((prov.saldoPendiente || 0) <= 0) { showToast("Proveedor sin saldo pendiente.", "error"); return; }
                 document.getElementById("settlement-provider-name").textContent = prov.nombre;
                 document.getElementById("settlement-provider-balance").textContent = COP(prov.saldoPendiente || 0);
                 document.getElementById("settle-provider-btn").dataset.providerId = prov.id;
                 document.getElementById("settlement-details").classList.remove("hidden");
             }));
             const settleBtn = document.getElementById("settle-provider-btn");
-            if (settleBtn) {
-                settleBtn.addEventListener("click", async (e) => {
-                    const providerId = e.target.dataset.providerId;
-                    const prov = appState.providers.find(p => p.id === providerId); if (!prov) return;
-                    const batch = writeBatch(db);
-                    batch.set(doc(colref.cashflow), {
-                        type: "egreso", amount: prov.saldoPendiente,
-                        description: `Pago liquidación: ${prov.nombre}`, date: serverTimestamp()
-                    });
-                    batch.set(doc(colref.providers, providerId), { saldoPendiente: 0 }, { merge: true });
-                    try {
-                        await batch.commit();
-                        showToast("Liquidación realizada");
-                        document.getElementById("settlement-details").classList.add("hidden");
-                    } catch (err) { showToast(err.message, "error"); }
+            if (settleBtn) settleBtn.addEventListener("click", async (e) => {
+                const providerId = e.target.dataset.providerId;
+                const prov = appState.providers.find(p => p.id === providerId); if (!prov) return;
+                const batch = writeBatch(db);
+                batch.set(doc(colref.cashflow), {
+                    type: "egreso", amount: prov.saldoPendiente,
+                    description: `Pago liquidación: ${prov.nombre}`, date: serverTimestamp()
                 });
-            }
+                batch.set(doc(colref.providers, providerId), { saldoPendiente: 0 }, { merge: true });
+                try {
+                    await batch.commit();
+                    showToast("Liquidación realizada");
+                    document.getElementById("settlement-details").classList.add("hidden");
+                } catch (err) { showToast(err.message, "error"); }
+            });
+            
+            content.querySelectorAll(".btn-view-sales-breakdown").forEach(b => b.addEventListener("click", async (e) => {
+                const providerId = e.target.dataset.id;
+                const provider = appState.providers.find(p => p.id === providerId);
+                if (!provider) return;
+
+                const modal = document.getElementById("sales-breakdown-modal");
+                const modalTitle = document.getElementById("sales-breakdown-modal-title");
+                const modalBody = document.getElementById("sales-breakdown-modal-body");
+
+                modalTitle.textContent = `Desglose de ${provider.nombre}`;
+                modalBody.innerHTML = `<p>Calculando reporte...</p>`;
+                modal.classList.add("visible");
+
+                try {
+                    const associatedProducts = appState.products.filter(p => p.providerPorVentasId === providerId);
+                    if (associatedProducts.length === 0) {
+                        modalBody.innerHTML = `<p>Este proveedor no está asociado a ningún producto para pago por ventas.</p>`;
+                        return;
+                    }
+                    const associatedProductIds = associatedProducts.map(p => p.id);
+
+                    const purchasesQuery = query(colref.purchases, where("providerId", "==", providerId), where("productId", "in", associatedProductIds));
+                    const purchasesSnapshot = await getDocs(purchasesQuery);
+                    const purchasesByProduct = {};
+                    purchasesSnapshot.docs.forEach(d => {
+                        const data = d.data();
+                        purchasesByProduct[data.productId] = (purchasesByProduct[data.productId] || 0) + data.cantidadUnidades;
+                    });
+                    
+                    const shiftsSnapshot = await getDocs(colref.shifts);
+                    const salesByProduct = {};
+                    for (const shiftDoc of shiftsSnapshot.docs) {
+                        const salesQuery = query(TCOL('shifts', shiftDoc.id, 'sales'), where("productId", "in", associatedProductIds));
+                        const salesSnapshot = await getDocs(salesQuery);
+                        salesSnapshot.docs.forEach(d => {
+                            const data = d.data();
+                            salesByProduct[data.productId] = (salesByProduct[data.productId] || 0) + data.unidades;
+                        });
+                    }
+
+                    let totalDebtGenerated = 0;
+                    const tableRows = associatedProducts.map(p => {
+                        const purchased = purchasesByProduct[p.id] || 0;
+                        const sold = salesByProduct[p.id] || 0;
+                        const stock = purchased - sold;
+                        const debt = sold * (p.precioCompra || 0);
+                        totalDebtGenerated += debt;
+                        return row([p.nombre, purchased, sold, stock, COP(p.precioCompra || 0), COP(debt)]);
+                    }).join('');
+                    
+                    const previousLiquidations = totalDebtGenerated - (provider.saldoPendiente || 0);
+
+                    modalBody.innerHTML = `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Producto</th><th>Comprado</th><th>Vendido</th><th>Stock Prov.</th><th>Costo Unit.</th><th>Deuda Generada</th></tr></thead>
+                                <tbody>${tableRows}</tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top: 20px; text-align: right; font-size: 1.1em;">
+                            <p><strong>Deuda Total Generada por Ventas:</strong> ${COP(totalDebtGenerated)}</p>
+                            <p style="color: var(--text-secondary);">Liquidaciones Anteriores: ${COP(previousLiquidations)}</p>
+                            <h4 style="margin-top: 10px; font-size: 1.2em;">Saldo Pendiente Actual: <span style="color: var(--brand-primary);">${COP(provider.saldoPendiente || 0)}</span></h4>
+                        </div>
+                    `;
+
+                } catch (error) {
+                    console.error("Error generating breakdown:", error);
+                    modalBody.innerHTML = `<p class="toast error">Error al generar el reporte: ${error.message}</p>`;
+                }
+            }));
         }
         if (id === 'workers-view') {
             content.querySelectorAll(".btn-edit-worker").forEach(b => b.addEventListener("click", () => {
-                const w = appState.workers.find(x => x.id === b.dataset.id);
-                if (!w) return;
+                const worker = appState.workers.find(x => x.id === b.dataset.id);
+                if (!worker) return;
                 const form = document.getElementById("worker-form");
-                form.querySelector("#worker-id").value = w.id;
-                form.querySelector("#worker-nombre").value = w.nombre || "";
-                form.querySelector("#worker-pagoBase").value = w.pagoBase || 0;
-                form.querySelector("#worker-activo").checked = w.activo === true;
+                form.querySelector("#worker-id").value = worker.id;
+                form.querySelector("#worker-nombre").value = worker.nombre || "";
+                form.querySelector("#worker-pagoBase").value = worker.pagoBase || 0;
+                form.querySelector("#worker-activo").checked = worker.activo === true;
             }));
             const form = document.getElementById("worker-form");
-            if (form) {
-                form.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const btn = form.querySelector('button[type="submit"]');
-                    btn.disabled = true;
-                    const workerId = document.getElementById("worker-id").value;
-                    const data = {
-                        nombre: document.getElementById("worker-nombre").value.trim(),
-                        pagoBase: parseFloat(document.getElementById("worker-pagoBase").value) || 0,
-                        activo: document.getElementById("worker-activo").checked,
-                    };
-                    if (!data.nombre) {
-                        showToast("El nombre del trabajador es requerido.", "error");
-                        btn.disabled = false;
-                        return;
+            if (form) form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = form.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                const workerId = document.getElementById("worker-id").value;
+                const data = {
+                    nombre: document.getElementById("worker-nombre").value.trim(),
+                    pagoBase: parseFloat(document.getElementById("worker-pagoBase").value) || 0,
+                    activo: document.getElementById("worker-activo").checked,
+                };
+                if (!data.nombre) {
+                    showToast("El nombre del trabajador es requerido.", "error");
+                    btn.disabled = false; return;
+                }
+                try {
+                    if (workerId) {
+                        await setDoc(doc(colref.workers, workerId), data, { merge: true });
+                    } else {
+                        await addDoc(colref.workers, { ...data, createdAt: serverTimestamp() });
                     }
-                    try {
-                        if (workerId) {
-                            await setDoc(doc(colref.workers, workerId), data, { merge: true });
-                        } else {
-                            await addDoc(colref.workers, { ...data, createdAt: serverTimestamp() });
-                        }
-                        showToast("Trabajador guardado correctamente.");
-                        form.reset();
-                        document.getElementById("worker-id").value = "";
-                        document.getElementById("worker-activo").checked = true;
-                    } catch (err) {
-                        showToast(`Error: ${err.message}`, "error");
-                    } finally {
-                        btn.disabled = false;
-                    }
-                });
-            }
+                    showToast("Trabajador guardado correctamente.");
+                    form.reset();
+                    document.getElementById("worker-id").value = "";
+                    document.getElementById("worker-activo").checked = true;
+                } catch (err) { 
+                    console.error("Error guardando trabajador:", err);
+                    showToast(`Error: ${err.message}`, "error"); 
+                } finally { btn.disabled = false; }
+            });
         }
         if (id === 'profile-view') {
             const personalForm = document.getElementById("profile-personal-form");
-            if (personalForm) {
-                personalForm.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
-                    try {
-                        const tenantRef = doc(db, "tenants", appState.user.uid);
-                        const newDisplayName = document.getElementById("profile-name").value;
-                        const newPhone = document.getElementById("profile-phone").value;
-                        await setDoc(tenantRef, { ownerName: newDisplayName, phone: newPhone }, { merge: true });
-                        appState.userData.ownerName = newDisplayName;
-                        appState.userData.phone = newPhone;
-                        showToast("Datos personales actualizados");
-                    } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
-                });
-            }
+            if (personalForm) personalForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
+                try {
+                    const tenantRef = doc(db, "tenants", appState.user.uid);
+                    const newDisplayName = document.getElementById("profile-name").value;
+                    const newPhone = document.getElementById("profile-phone").value;
+                    await setDoc(tenantRef, { ownerName: newDisplayName, phone: newPhone }, { merge: true });
+                    appState.userData.ownerName = newDisplayName;
+                    appState.userData.phone = newPhone;
+                    showToast("Datos personales actualizados");
+                } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
+            });
             const businessForm = document.getElementById("profile-business-form");
-            if (businessForm) {
-                businessForm.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
-                    try {
-                        const tenantRef = doc(db, "tenants", appState.user.uid);
-                        const newBusinessName = document.getElementById("profile-business-name").value;
-                        const newBusinessType = document.getElementById("profile-business-type").value;
-                        await setDoc(tenantRef, { businessName: newBusinessName, businessType: newBusinessType }, { merge: true });
-                        appState.userData.businessName = newBusinessName;
-                        appState.userData.businessType = newBusinessType;
-                        showToast("Datos del negocio actualizados");
-                    } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
-                });
-            }
+            if (businessForm) businessForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
+                try {
+                    const tenantRef = doc(db, "tenants", appState.user.uid);
+                    const newBusinessName = document.getElementById("profile-business-name").value;
+                    const newBusinessType = document.getElementById("profile-business-type").value;
+                    await setDoc(tenantRef, { businessName: newBusinessName, businessType: newBusinessType }, { merge: true });
+                    appState.userData.businessName = newBusinessName;
+                    appState.userData.businessType = newBusinessType;
+                    showToast("Datos del negocio actualizados");
+                } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
+            });
         }
         if(id === 'shifts-view') {
             if (appState.selectedShiftId) {
