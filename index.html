@@ -83,8 +83,6 @@
       background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);
     }
     .button-secondary:hover { background: var(--border-color); }
-    .button-google { display: flex; align-items: center; justify-content: center; gap: 10px; }
-    .button-google svg { width: 18px; height: 18px; }
     label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 14px; text-align: left; }
     .table-wrapper { overflow: auto; border: 1px solid var(--border-color); border-radius: 8px; }
     table { width: 100%; border-collapse: collapse; border-spacing: 0; }
@@ -106,11 +104,6 @@
     .amount-positive { color: var(--accent-green); } .amount-negative { color: var(--accent-red); }
     #auth-container { display: flex; align-items: center; justify-content: center; padding: 24px; min-height: 100vh; }
     .auth-box { max-width: 420px; width: 100%; text-align: center; }
-    .auth-box h1 { justify-content: center; font-size: 32px; margin-bottom: 8px; }
-    .auth-box p { color: var(--text-secondary); margin-top: 0; }
-    .auth-box form { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
-    .auth-box a { color: var(--brand-primary); text-decoration: none; font-weight: 500; }
-    .auth-box a:hover { text-decoration: underline; }
     #product-stock-display { color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block; height: 14px; }
     .modal {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
@@ -127,6 +120,43 @@
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .modal-header h3 { margin: 0; }
     .modal-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); }
+    
+    #fichas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .ficha-card {
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .ficha-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px var(--shadow-color);
+    }
+    .ficha-card h4 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        color: var(--text-primary);
+        text-transform: uppercase;
+    }
+    .ficha-card-stock {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--brand-primary);
+    }
+    .ficha-card-stock span {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--text-secondary);
+    }
+
     @media (max-width: 1024px) {
       #main-nav { position: fixed; left: -270px; top: 60px; height: calc(100vh - 60px); z-index: 80; box-shadow: 4px 0 15px rgba(0,0,0,.1); }
       #main-nav.open { left: 0; }
@@ -142,9 +172,7 @@
 <body>
 
   <div id="toast-container"></div>
-
   <div id="auth-container"></div>
-
   <div id="app-container" class="hidden">
     <header>
       <button id="menu-toggle" title="Menú" class="button-secondary" style="padding: 8px 10px; display: none;">
@@ -173,8 +201,7 @@
         <a href="#" class="nav-link" data-view="shifts-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Turnos y Ventas</span></a>
         <a href="#" class="nav-link" data-view="inventory-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="m12 22.08V12"/></svg><span>Inventario</span></a>
         <a href="#" class="nav-link" data-view="cashflow-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Flujo de Caja</span></a>
-        <a href="#" class="nav-link" data-view="products-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>Productos</span></a>
-        <a href="#" class="nav-link" data-view="fichas-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="m16 8-4 4-4-4"/></svg><span>Fichas</span></a>
+        <a href="#" class="nav-link" data-view="products-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>Productos y Fichas</span></a>
         <a href="#" class="nav-link" data-view="providers-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M15 18H9"/><path d="M19 18h2a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.52a2 2 0 0 1-1.78-.9L14 3H9.28a2 2 0 0 0-1.78.9L6 6H3"/><circle cx="17" cy="15" r="2"/></svg><span>Proveedores</span></a>
         <a href="#" class="nav-link admin-only" data-view="workers-view"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Trabajadores</span></a>
         <a href="#" class="nav-link hidden" data-view="profile-view"></a>
@@ -185,16 +212,29 @@
 
   <div id="loan-modal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
-            <h3>Registrar Préstamo</h3>
-            <button class="modal-close-btn">&times;</button>
-        </div>
+        <div class="modal-header"><h3>Registrar Préstamo</h3><button class="modal-close-btn">&times;</button></div>
         <form id="loan-form">
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <input id="loan-description" placeholder="Descripción" required>
                 <input id="loan-value" type="number" step="any" min="1" placeholder="Valor" required>
                 <button type="submit">Añadir Préstamo</button>
             </div>
+        </form>
+    </div>
+  </div>
+  
+  <div id="ficha-sale-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="ficha-sale-modal-title">Vender Ficha</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <form id="ficha-sale-form">
+            <input type="hidden" id="ficha-sale-product-id">
+            <p>Stock disponible: <strong id="ficha-sale-stock"></strong></p>
+            <label for="ficha-sale-quantity">Cantidad a vender:</label>
+            <input id="ficha-sale-quantity" type="number" min="1" required>
+            <button type="submit" style="margin-top: 16px;">Confirmar Venta</button>
         </form>
     </div>
   </div>
@@ -221,7 +261,7 @@
 
     let appState = {
       user: null, userData: null, role: null, unsub: [],
-      products: [], providers: [], workers: [], fichas: [],
+      products: [], providers: [], workers: [],
       inventory: {}, cashflow: [], activeShift: null
     };
     let registrationData = {};
@@ -229,7 +269,7 @@
     const colref = {
       users: collection(db, "users"), products: collection(db, "products"), providers: collection(db, "providers"),
       workers: collection(db, "workers"), cashflow: collection(db, "cashflow_entries"),
-      shifts: collection(db, "shifts"), purchases: collection(db, "purchases"), fichas: collection(db, "fichas")
+      shifts: collection(db, "shifts"), purchases: collection(db, "purchases")
     };
     
     const showToast = (msg, type = "success") => {
@@ -287,7 +327,7 @@
       <div class="auth-box card">
         <h1>seb365 pro</h1><p>Gestión de inventario simplificada</p>
         <div id="login-view">
-          <form id="login-form" autocomplete="on"><input type="email" id="login-email" placeholder="Correo electrónico" required><input type="password" id="login-password" placeholder="Contraseña" required><button type="submit">Ingresar</button><button id="google-login-btn" type="button" class="button-secondary button-google"><svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button></form>
+          <form id="login-form" autocomplete="on"><input type="email" id="login-email" placeholder="Correo electrónico" required><input type="password" id="login-password" placeholder="Contraseña" required><button type="submit">Ingresar</button><button id="google-login-btn" type="button" class="button-secondary"><svg viewBox="0 0 48 48" style="width:18px;height:18px;margin-right:8px;"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button></form>
           <p style="margin-top:20px; font-size: 14px;">¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
         </div>
         <div id="register-view" class="hidden">
@@ -324,7 +364,7 @@
         scheduleRender("dashboard-view");
       } else {
         appState.unsub.forEach(u => u()); appState.unsub = [];
-        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], fichas: [], inventory: {}, cashflow: [], activeShift: null };
+        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShift: null };
         document.getElementById("app-container").classList.add("hidden");
         document.getElementById("auth-container").classList.remove("hidden");
       }
@@ -337,7 +377,6 @@
       add(onSnapshot(query(colref.providers, orderBy("nombre")), s=>{ appState.providers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.workers, orderBy("nombre")), s=>{ appState.workers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.cashflow, orderBy("date","desc")), s=>{ appState.cashflow = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
-      add(onSnapshot(query(colref.fichas, orderBy("nombre")), s=>{ appState.fichas = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.shifts, where("estado","==","abierto")), s=>{
         if(!s.empty){
           const sh=s.docs[0];
@@ -352,104 +391,149 @@
 
     const content = document.getElementById("content");
     const row = (cols)=> `<tr>${cols.map(c=>`<td>${c}</td>`).join("")}</tr>`;
-    function renderView(id){
-        let html="";
-        const views = {
-            'dashboard-view': () => {
-                const balance = appState.cashflow.reduce((b,e)=> b + (e.type==="ingreso"? e.amount : -e.amount),0);
-                const salesTurn = appState.activeShift?.sales.reduce((s,x)=>s+x.totalVenta,0) || 0;
-                const debt = appState.providers.reduce((s,p)=> s+(p.saldoPendiente||0),0);
-                const low = appState.products.filter(p => (appState.inventory[p.id]?.barra?.unidades||0) < 10).map(p => `<li>${p.nombre}: <strong>${appState.inventory[p.id]?.barra?.unidades||0} uds</strong></li>`).join("");
-                return `<div class="content-view"><h2>Panel de Control</h2><div class="dashboard-grid"><div class="card"><h3>Saldo en Caja</h3><p>${COP(balance)}</p></div><div class="card"><h3>Ventas Turno</h3><p>${COP(salesTurn)}</p></div><div class="card"><h3>Deuda Proveedores</h3><p>${COP(debt)}</p></div><div class="card"><h3>Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div></div></div>`;
-            },
-            'products-view': () => {
-                const rows = appState.products.map(p=> row([p.nombre, COP(p.precioVenta||0), COP(p.precioCompra||0), (p.activo?"✅":"❌"),`<div class="actions ${appState.role!=="admin"?"hidden":""}"><button class="btn-edit" data-id="${p.id}">Editar</button></div>`])).join("");
-                return `<div class="content-view"><h2>Productos</h2><form id="product-form" class="card ${appState.role==="admin"?"":"hidden"}"><input type="hidden" id="product-id"><div class="form-grid" style="margin-bottom: 16px;"><input id="product-nombre" placeholder="Nombre" required><input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required><input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required><input id="product-precioFicha" type="number" step="any" min="0" placeholder="Comisión Ficha (opcional)"><input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja"><input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="product-activo" type="checkbox" checked> Activo</label><button type="submit">Guardar Producto</button></form><div class="table-wrapper" style="margin-top:24px"><table><thead><tr><th>Nombre</th><th>P. Venta</th><th>P. Compra</th><th>Activo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="5">Sin productos.</td></tr>`}</tbody></table></div></div>`;
-            },
-            'inventory-view': () => { /* Logic from previous implementation */ return `...`; },
-            'cashflow-view': () => { /* Logic from previous implementation */ return `...`; },
-            'providers-view': () => { /* Logic from previous implementation */ return `...`; },
-            'workers-view': () => { /* Logic from previous implementation */ return `...`; },
-            'profile-view': () => { /* Logic from previous implementation */ return `...`; },
-            'fichas-view': () => {
-                const rows = appState.fichas.map(f => row([f.nombre, COP(f.valor || 0),`<div class="actions"><button class="btn-edit-ficha" data-id="${f.id}">Editar</button></div>`])).join("");
-                return `<div class="content-view"><h2>Gestión de Fichas</h2><form id="ficha-form" class="card"><input type="hidden" id="ficha-id"><div class="form-grid"><input id="ficha-nombre" placeholder="Nombre de la ficha (ej: Poker)" required><input id="ficha-valor" type="number" step="any" min="0" placeholder="Valor de la ficha" required></div><button type="submit" style="margin-top: 16px;">Guardar Ficha</button></form><h3 style="margin: 24px 0 12px 0;">Fichas Existentes</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Valor</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="3">No hay fichas creadas.</td></tr>`}</tbody></table></div></div>`;
-            },
-            'shifts-view': () => {
-                if(appState.activeShift){
-                    const worker = appState.workers.find(w=>w.id===appState.activeShift.workerId);
-                    const ingresos = appState.activeShift.sales.reduce((s,x)=>s+x.totalVenta,0);
-                    const fichasTotal = appState.activeShift.sales.reduce((s,x)=>s+(x.totalFichas || 0),0);
-                    const prestamos = appState.activeShift.loans.reduce((s,l)=>s+l.valor,0);
-                    const productOpts = appState.products.filter(p=>p.activo).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
-                    const fichaOpts = appState.fichas.map(f=>`<option value="${f.id}">${f.nombre} (${COP(f.valor)})</option>`).join("");
-                    return `<div class="content-view"><h2>Turno Activo: <span style="color: var(--brand-primary);">${worker?.nombre||"…"}</span></h2><div class="form-grid"><form id="sale-form" class="card"><h4>Vender Producto</h4><div style="display: flex; flex-direction: column; gap: 12px;"><div><select id="sale-product" required><option value="">Producto…</option>${productOpts}</select><span id="product-stock-display"></span></div><input id="sale-quantity" type="number" min="1" value="1" placeholder="Unidades" required><button type="submit">Vender</button></div></form><form id="ficha-sale-form" class="card"><h4>Vender Ficha</h4><div style="display: flex; flex-direction: column; gap: 12px;"><select id="sale-ficha" required><option value="">Ficha…</option>${fichaOpts}</select><input id="ficha-quantity" type="number" min="1" value="1" placeholder="Cantidad" required><button type="submit">Vender Ficha</button></div></form></div><div class="card" style="margin-top:24px"><h4>Resumen del Turno</h4><p><strong>Ingresos (Ventas):</strong> ${COP(ingresos)}</p><p><strong>Total en Fichas (para pago):</strong> ${COP(fichasTotal)}</p><p><strong>Préstamos:</strong> ${COP(prestamos)}</p><hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;"><div style="display: flex; gap: 12px; flex-wrap: wrap;"><button id="open-loan-modal-btn" class="button-secondary">Registrar Préstamo</button><button id="close-shift-btn" style="background-color: var(--accent-red); flex-grow: 1;">Cerrar y Liquidar</button></div></div></div>`;
-                }else{
-                    const workerOpts = appState.workers.filter(w=>w.activo).map(w=>`<option value="${w.id}">${w.nombre}</option>`).join("");
-                    return `<div class="content-view"><h2>Iniciar Turno</h2><div style="max-width: 400px;"><form id="open-shift-form" class="card"><select id="shift-worker" required style="margin-bottom: 12px;"><option value="">Seleccionar trabajador…</option>${workerOpts}</select><button type="submit">Iniciar Turno</button></form></div></div>`;
-                }
-            }
-        };
+    
+    function renderView(id) {
+        let html = "";
+        
+        if (id === 'dashboard-view') {
+            const balance = appState.cashflow.reduce((b, e) => b + (e.type === "ingreso" ? e.amount : -e.amount), 0);
+            const salesTurn = appState.activeShift?.sales.reduce((s, x) => s + x.totalVenta, 0) || 0;
+            const debt = appState.providers.reduce((s, p) => s + (p.saldoPendiente || 0), 0);
+            const low = appState.products.filter(p => (appState.inventory[p.id]?.barra?.unidades || 0) < 10).map(p => `<li>${p.nombre}: <strong>${appState.inventory[p.id]?.barra?.unidades || 0} uds</strong></li>`).join("");
+            html = `<div class="content-view"><h2>Panel de Control</h2><div class="dashboard-grid"><div class="card"><h3>Saldo en Caja</h3><p>${COP(balance)}</p></div><div class="card"><h3>Ventas Turno</h3><p>${COP(salesTurn)}</p></div><div class="card"><h3>Deuda Proveedores</h3><p>${COP(debt)}</p></div><div class="card"><h3>Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div></div></div>`;
+        }
 
-        // Fill in the missing views with their full logic
-        views['inventory-view'] = () => {
+        if (id === 'products-view') {
+            const rows = appState.products.map(p => row([ p.nombre, p.esFicha ? 'Sí' : 'No', COP(p.precioVenta || 0), COP(p.precioComision || 0), `<div class="actions"><button class="btn-edit" data-id="${p.id}">Editar</button></div>` ])).join("");
+            html = `<div class="content-view"><h2>Productos y Fichas</h2><form id="product-form" class="card"><input type="hidden" id="product-id"><div class="form-grid"><input id="product-nombre" placeholder="Nombre" required><input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required><input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required><input id="product-precioComision" type="number" step="any" min="0" placeholder="Valor para Pago (Comisión)"><input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja"><input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta"></div><div style="margin-top: 16px;"><label style="display:inline-flex; align-items:center; gap: 8px; font-size: 16px;"><input id="product-esFicha" type="checkbox"> Es una Ficha</label></div><button type="submit" style="margin-top: 16px;">Guardar</button></form><div class="table-wrapper" style="margin-top:24px"><table><thead><tr><th>Nombre</th><th>Es Ficha</th><th>P. Venta</th><th>Valor Pago</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+        }
+      
+        if (id === 'inventory-view') {
             const rows = appState.products.map(p=> row([ p.nombre, appState.inventory[p.id]?.bodega?.unidades ?? 0, appState.inventory[p.id]?.barra?.unidades ?? 0 ])).join("");
             const productOpts = appState.products.filter(p=>p.activo).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
             const providerOpts = appState.providers.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
-            return `<div class="content-view"><h2>Inventario y Compras</h2><div class="form-grid"><form id="purchase-form" class="card"><h3>Registrar Compra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="purchase-provider" required><option value="">Proveedor…</option>${providerOpts}</select><select id="purchase-product" required><option value="">Producto…</option>${productOpts}</select><input id="purchase-quantity" type="number" min="1" placeholder="Cantidad" required><select id="purchase-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><select id="purchase-type" required><option value="contado">Contado (Afecta caja)</option><option value="consignacion">Consignación</option></select><button type="submit">Registrar Compra</button></div></form><form id="transfer-form" class="card"><h3>Trasladar Bodega → Barra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="transfer-product" required><option value="">Producto…</option>${productOpts}</select><input id="transfer-quantity" type="number" min="1" placeholder="Cantidad" required><select id="transfer-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><button type="submit">Trasladar</button></div></form></div><h3 style="margin:24px 0 12px 0;">Stock Actual</h3><div class="table-wrapper"><table><thead><tr><th>Producto</th><th>Stock Bodega</th><th>Stock Barra</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin stock.</td></tr>`}</tbody></table></div></div>`;
-        };
-        views['cashflow-view'] = () => {
-            const rows = appState.cashflow.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${e.description}</td><td class="${e.type==="ingreso"?"amount-positive":"amount-negative"}" style="font-weight: 500;">${COP(e.type==="ingreso"?e.amount:-e.amount)}</td></tr>`).join("");
-            return `<div class="content-view"><h2>Flujo de Caja</h2><form id="cashflow-form" class="card"><div class="form-grid" style="align-items: flex-end;"><select id="cashflow-type" required><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select><input id="cashflow-amount" type="number" step="any" min="1" placeholder="Monto" required></div><input id="cashflow-description" placeholder="Descripción" required style="margin: 12px 0;"><button type="submit">Registrar</button></form><h3 style="margin:24px 0 12px 0;">Historial</h3><div class="table-wrapper"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin movimientos.</td></tr>`}</tbody></table></div></div>`;
-        };
-        views['providers-view'] = () => {
-            const rows = appState.providers.map(p=> row([ p.nombre, (p.consignacion?"✅":"❌"), COP(p.saldoPendiente||0), `<div class="actions ${appState.role!=="admin"?"hidden":""}"><button class="btn-edit-provider" data-id="${p.id}">Editar</button><button class="btn-settle button-secondary" data-id="${p.id}">Liquidar</button></div>` ])).join("");
-            return `<div class="content-view"><h2>Proveedores</h2><form id="provider-form" class="card ${appState.role==="admin"?"":"hidden"}"><input type="hidden" id="provider-id"><div class="form-grid" style="margin-bottom: 12px;"><input id="provider-nombre" placeholder="Nombre del proveedor" required><input id="provider-contacto" placeholder="Contacto"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="provider-consignacion" type="checkbox"> Acepta consignación</label><button type="submit">Guardar Proveedor</button></form><div id="settlement-details" class="hidden card" style="margin-top:12px; border-left: 4px solid var(--brand-primary);"><h4>Liquidar a: <span id="settlement-provider-name"></span></h4><p>Saldo: <strong id="settlement-provider-balance"></strong></p><button id="settle-provider-btn">Pagar y Registrar Egreso</button></div><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Consignación</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin proveedores.</td></tr>`}</tbody></table></div></div>`;
-        };
-        views['workers-view'] = () => {
-            const rows = appState.workers.map(w=> row([ w.nombre, COP(w.pagoBase||0), (w.activo?"✅":"❌"), `<div class="actions"><button class="btn-edit-worker" data-id="${w.id}">Editar</button></div>` ])).join("");
-            return `<div class="content-view"><h2>Trabajadores</h2><form id="worker-form" class="card"><input type="hidden" id="worker-id"><div class="form-grid" style="margin-bottom: 12px;"><input id="worker-nombre" placeholder="Nombre completo" required><input id="worker-pagoBase" type="number" step="any" min="0" placeholder="Pago base (opcional)"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="worker-activo" type="checkbox" checked> Activo</label><button type="submit">Guardar Trabajador</button></form><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Pago Base</th><th>Activo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin trabajadores.</td></tr>`}</tbody></table></div></div>`;
-        };
-        views['profile-view'] = () => {
-            const u = appState.userData || {};
-            return `<div class="content-view"><h2>Mi Perfil</h2><div class="form-grid"><div class="card"><h2>Datos Personales</h2><form id="profile-personal-form"><div class="form-grid" style="gap: 12px; margin-bottom: 12px;"><div><label for="profile-name">Nombre</label><input id="profile-name" value="${u.displayName || ''}"></div><div><label for="profile-phone">Teléfono</label><input id="profile-phone" type="tel" value="${u.phone || ''}"></div></div><label for="profile-email">Correo (no se puede cambiar)</label><input id="profile-email" type="email" value="${u.email || ''}" disabled><button type="submit" style="margin-top: 16px;">Guardar Datos Personales</button></form></div><div class="card"><h2>Datos del Negocio</h2><form id="profile-business-form"><div style="margin-bottom: 12px;"><label for="profile-business-name">Nombre del Negocio</label><input id="profile-business-name" value="${u.businessName || ''}"></div><div style="margin-bottom: 12px;"><label for="profile-business-type">Tipo de Negocio</label><select id="profile-business-type"><option value="bar" ${u.businessType === 'bar' ? 'selected' : ''}>Bar</option><option value="discoteca" ${u.businessType === 'discoteca' ? 'selected' : ''}>Discoteca</option><option value="cafeteria" ${u.businessType === 'cafeteria' ? 'selected' : ''}>Cafetería</option><option value="restaurante" ${u.businessType === 'restaurante' ? 'selected' : ''}>Restaurante</option></select></div><button type="submit" style="margin-top: 16px;">Guardar Datos del Negocio</button></form></div></div><div class="card" style="margin-top: 24px;"><h2>Licencia</h2><p><strong>Tipo de plan:</strong> PRO</p><p><strong>Estado:</strong> Activa</p><p style="color: var(--text-secondary);">Esta sección se habilitará en futuras actualizaciones.</p></div></div>`;
-        };
+            html = `<div class="content-view"><h2>Inventario y Compras</h2><div class="form-grid"><form id="purchase-form" class="card"><h3>Registrar Compra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="purchase-provider" required><option value="">Proveedor…</option>${providerOpts}</select><select id="purchase-product" required><option value="">Producto…</option>${productOpts}</select><input id="purchase-quantity" type="number" min="1" placeholder="Cantidad" required><select id="purchase-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><select id="purchase-type" required><option value="contado">Contado (Afecta caja)</option><option value="consignacion">Consignación</option></select><button type="submit">Registrar Compra</button></div></form><form id="transfer-form" class="card"><h3>Trasladar Bodega → Barra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="transfer-product" required><option value="">Producto…</option>${productOpts}</select><input id="transfer-quantity" type="number" min="1" placeholder="Cantidad" required><select id="transfer-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><button type="submit">Trasladar</button></div></form></div><h3 style="margin:24px 0 12px 0;">Stock Actual</h3><div class="table-wrapper"><table><thead><tr><th>Producto</th><th>Stock Bodega</th><th>Stock Barra</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin stock.</td></tr>`}</tbody></table></div></div>`;
+        }
 
-        html = (views[id] && views[id]()) || '';
-        
+        if (id === 'cashflow-view') {
+            const rows = appState.cashflow.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${e.description}</td><td class="${e.type==="ingreso"?"amount-positive":"amount-negative"}" style="font-weight: 500;">${COP(e.type==="ingreso"?e.amount:-e.amount)}</td></tr>`).join("");
+            html = `<div class="content-view"><h2>Flujo de Caja</h2><form id="cashflow-form" class="card"><div class="form-grid" style="align-items: flex-end;"><select id="cashflow-type" required><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select><input id="cashflow-amount" type="number" step="any" min="1" placeholder="Monto" required></div><input id="cashflow-description" placeholder="Descripción" required style="margin: 12px 0;"><button type="submit">Registrar</button></form><h3 style="margin:24px 0 12px 0;">Historial</h3><div class="table-wrapper"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin movimientos.</td></tr>`}</tbody></table></div></div>`;
+        }
+
+        if (id === 'providers-view') {
+            const rows = appState.providers.map(p=> row([ p.nombre, (p.consignacion?"✅":"❌"), COP(p.saldoPendiente||0), `<div class="actions ${appState.role!=="admin"?"hidden":""}"><button class="btn-edit-provider" data-id="${p.id}">Editar</button><button class="btn-settle button-secondary" data-id="${p.id}">Liquidar</button></div>` ])).join("");
+            html = `<div class="content-view"><h2>Proveedores</h2><form id="provider-form" class="card ${appState.role==="admin"?"":"hidden"}"><input type="hidden" id="provider-id"><div class="form-grid" style="margin-bottom: 12px;"><input id="provider-nombre" placeholder="Nombre del proveedor" required><input id="provider-contacto" placeholder="Contacto"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="provider-consignacion" type="checkbox"> Acepta consignación</label><button type="submit">Guardar Proveedor</button></form><div id="settlement-details" class="hidden card" style="margin-top:12px; border-left: 4px solid var(--brand-primary);"><h4>Liquidar a: <span id="settlement-provider-name"></span></h4><p>Saldo: <strong id="settlement-provider-balance"></strong></p><button id="settle-provider-btn">Pagar y Registrar Egreso</button></div><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Consignación</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin proveedores.</td></tr>`}</tbody></table></div></div>`;
+        }
+
+        if (id === 'workers-view') {
+            const rows = appState.workers.map(w=> row([ w.nombre, COP(w.pagoBase||0), (w.activo?"✅":"❌"), `<div class="actions"><button class="btn-edit-worker" data-id="${w.id}">Editar</button></div>` ])).join("");
+            html = `<div class="content-view"><h2>Trabajadores</h2><form id="worker-form" class="card"><input type="hidden" id="worker-id"><div class="form-grid" style="margin-bottom: 12px;"><input id="worker-nombre" placeholder="Nombre completo" required><input id="worker-pagoBase" type="number" step="any" min="0" placeholder="Pago base (opcional)"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="worker-activo" type="checkbox" checked> Activo</label><button type="submit">Guardar Trabajador</button></form><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Pago Base</th><th>Activo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin trabajadores.</td></tr>`}</tbody></table></div></div>`;
+        }
+
+        if (id === 'profile-view') {
+            const u = appState.userData || {};
+            html = `<div class="content-view"><h2>Mi Perfil</h2><div class="form-grid"><div class="card"><h2>Datos Personales</h2><form id="profile-personal-form"><div class="form-grid" style="gap: 12px; margin-bottom: 12px;"><div><label for="profile-name">Nombre</label><input id="profile-name" value="${u.displayName || ''}"></div><div><label for="profile-phone">Teléfono</label><input id="profile-phone" type="tel" value="${u.phone || ''}"></div></div><label for="profile-email">Correo (no se puede cambiar)</label><input id="profile-email" type="email" value="${u.email || ''}" disabled><button type="submit" style="margin-top: 16px;">Guardar Datos Personales</button></form></div><div class="card"><h2>Datos del Negocio</h2><form id="profile-business-form"><div style="margin-bottom: 12px;"><label for="profile-business-name">Nombre del Negocio</label><input id="profile-business-name" value="${u.businessName || ''}"></div><div style="margin-bottom: 12px;"><label for="profile-business-type">Tipo de Negocio</label><select id="profile-business-type"><option value="bar" ${u.businessType === 'bar' ? 'selected' : ''}>Bar</option><option value="discoteca" ${u.businessType === 'discoteca' ? 'selected' : ''}>Discoteca</option><option value="cafeteria" ${u.businessType === 'cafeteria' ? 'selected' : ''}>Cafetería</option><option value="restaurante" ${u.businessType === 'restaurante' ? 'selected' : ''}>Restaurante</option></select></div><button type="submit" style="margin-top: 16px;">Guardar Datos del Negocio</button></form></div></div><div class="card" style="margin-top: 24px;"><h2>Licencia</h2><p><strong>Tipo de plan:</strong> PRO</p><p><strong>Estado:</strong> Activa</p><p style="color: var(--text-secondary);">Esta sección se habilitará en futuras actualizaciones.</p></div></div>`;
+        }
+      
+        if (id === 'shifts-view') {
+            if (appState.activeShift) {
+                const worker = appState.workers.find(w => w.id === appState.activeShift.workerId);
+                const ingresos = appState.activeShift.sales.reduce((s, x) => s + x.totalVenta, 0);
+                const comisiones = appState.activeShift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
+                const prestamos = appState.activeShift.loans.reduce((s, l) => s + l.valor, 0);
+                
+                const fichaProducts = appState.products.filter(p => p.esFicha && p.activo);
+                const regularProducts = appState.products.filter(p => !p.esFicha && p.activo);
+                
+                const fichaCardsHTML = fichaProducts.map(ficha => {
+                    const stock = appState.inventory[ficha.id]?.barra?.unidades ?? 0;
+                    return `<div class="ficha-card" data-product-id="${ficha.id}"><h4>${ficha.nombre}</h4><div class="ficha-card-stock">${stock} <span>uds.</span></div></div>`;
+                }).join("");
+
+                const productOpts = regularProducts.map(p => `<option value="${p.id}">${p.nombre}</option>`).join("");
+
+                html = `<div class="content-view"><h2>Turno Activo: <span style="color: var(--brand-primary);">${worker?.nombre || "…"}</span></h2><h3 style="margin-top: 24px;">Fichas</h3><div id="fichas-grid">${fichaCardsHTML || "<p>No hay fichas activas configuradas.</p>"}</div><h3 style="margin-top: 24px;">Productos</h3><div class="form-grid"><form id="sale-form" class="card"><div style="display: flex; flex-direction: column; gap: 12px;"><div><select id="sale-product" required><option value="">Seleccionar producto…</option>${productOpts}</select><span id="product-stock-display"></span></div><input id="sale-quantity" type="number" min="1" value="1" placeholder="Unidades" required><button type="submit">Vender Producto</button></div></form></div><div class="card" style="margin-top:24px"><h4>Resumen del Turno</h4><p><strong>Ingresos (Ventas):</strong> ${COP(ingresos)}</p><p><strong>Total para Pago (Comisiones):</strong> ${COP(comisiones)}</p><p><strong>Préstamos:</strong> ${COP(prestamos)}</p><hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;"><div style="display: flex; gap: 12px; flex-wrap: wrap;"><button id="open-loan-modal-btn" class="button-secondary">Registrar Préstamo</button><button id="close-shift-btn" style="background-color: var(--accent-red); flex-grow: 1;">Cerrar y Liquidar</button></div></div></div>`;
+            } else {
+                const workerOpts = appState.workers.filter(w => w.activo).map(w => `<option value="${w.id}">${w.nombre}</option>`).join("");
+                html = `<div class="content-view"><h2>Iniciar Turno</h2><div style="max-width: 400px;"><form id="open-shift-form" class="card"><select id="shift-worker" required style="margin-bottom: 12px;"><option value="">Seleccionar trabajador…</option>${workerOpts}</select><button type="submit">Iniciar Turno</button></form></div></div>`;
+            }
+        }
+
         if (html) { content.innerHTML = html; attachHandlers(id); }
     }
     
-    // --- Attach Handlers (consolidated) ---
     function attachHandlers(id){
-        // Existing handlers for other views
-        if(id==="products-view"){ /* ... */ }
-        if(id==="inventory-view"){ /* ... */ }
-        if(id==="cashflow-view"){ /* ... */ }
-        if(id==="providers-view"){ /* ... */ }
-        if(id==="workers-view"){ /* ... */ }
-        if(id === "profile-view") { /* ... */ }
-
-        // Handlers for 'fichas-view'
-        if (id === "fichas-view") {
-            content.querySelectorAll(".btn-edit-ficha").forEach(b => b.addEventListener("click", () => { const f = appState.fichas.find(x => x.id === b.dataset.id); if (!f) return; document.getElementById("ficha-id").value = f.id; document.getElementById("ficha-nombre").value = f.nombre || ""; document.getElementById("ficha-valor").value = f.valor || 0; window.scrollTo(0,0); }));
-            const form = document.getElementById("ficha-form");
-            if (form) form.addEventListener("submit", async (e) => { e.preventDefault(); const btn = form.querySelector('button[type="submit"]'); btn.disabled = true; const id = document.getElementById("ficha-id").value; const data = { nombre: document.getElementById("ficha-nombre").value, valor: parseFloat(document.getElementById("ficha-valor").value) }; try { if (id) await setDoc(doc(colref.fichas, id), data, { merge: true }); else await addDoc(colref.fichas, data); showToast("Ficha guardada"); form.reset(); document.getElementById("ficha-id").value = ""; } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; } });
+        if (id === 'products-view') {
+            content.querySelectorAll(".btn-edit").forEach(b => b.addEventListener("click", () => {
+                const p = appState.products.find(x => x.id === b.dataset.id); if (!p) return;
+                document.getElementById("product-id").value = p.id;
+                document.getElementById("product-nombre").value = p.nombre || "";
+                document.getElementById("product-precioVenta").value = p.precioVenta || 0;
+                document.getElementById("product-precioCompra").value = p.precioCompra || 0;
+                document.getElementById("product-precioComision").value = p.precioComision || 0;
+                document.getElementById("product-unidadesPorCaja").value = p.unidadesPorCaja || 1;
+                document.getElementById("product-unidadesPorCanasta").value = p.unidadesPorCanasta || 1;
+                document.getElementById("product-esFicha").checked = !!p.esFicha;
+            }));
+            const form = document.getElementById("product-form");
+            if (form) form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const btn = form.querySelector('button[type="submit"]'); btn.disabled = true;
+                const id = document.getElementById("product-id").value;
+                const data = {
+                    nombre: document.getElementById("product-nombre").value,
+                    precioVenta: parseFloat(document.getElementById("product-precioVenta").value),
+                    precioCompra: parseFloat(document.getElementById("product-precioCompra").value),
+                    precioComision: parseFloat(document.getElementById("product-precioComision").value) || 0,
+                    unidadesPorCaja: parseInt(document.getElementById("product-unidadesPorCaja").value) || 1,
+                    unidadesPorCanasta: parseInt(document.getElementById("product-unidadesPorCanasta").value) || 1,
+                    esFicha: document.getElementById("product-esFicha").checked,
+                    activo: true
+                };
+                try {
+                    if (id) {
+                        await setDoc(doc(colref.products, id), data, { merge: true });
+                    } else {
+                        const ref = await addDoc(colref.products, data);
+                        const b = writeBatch(db);
+                        b.set(doc(db, "inventory", ref.id, "stock", "bodega"), { unidades: 0 });
+                        b.set(doc(db, "inventory", ref.id, "stock", "barra"), { unidades: 0 });
+                        await b.commit();
+                    }
+                    showToast("Guardado correctamente");
+                    form.reset(); document.getElementById("product-id").value = "";
+                } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
+            });
         }
         
-        // Handlers for 'shifts-view'
+        if(id==="inventory-view"){
+            const purchase=document.getElementById("purchase-form"); if(purchase) purchase.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=purchase.querySelector('button[type="submit"]'); btn.disabled=true; const providerId=document.getElementById("purchase-provider").value; const productId=document.getElementById("purchase-product").value; const cantidad=parseInt(document.getElementById("purchase-quantity").value); const unit=document.getElementById("purchase-unit").value; const tipo=document.getElementById("purchase-type").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || !providerId || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); const costo=unidades*(prod.precioCompra||0); try{ await Promise.all([ addDoc(colref.purchases,{providerId,productId,fecha:serverTimestamp(),tipo,cantidadUnidades:unidades,costoTotal:costo}), setDoc(doc(db,"inventory",productId,"stock","bodega"),{unidades: increment(unidades)},{merge:true}), (tipo==="consignacion") ? setDoc(doc(colref.providers,providerId),{saldoPendiente: increment(costo)},{merge:true}) : addDoc(colref.cashflow,{type:"egreso",amount:costo,description:`Compra contado: ${unidades} x ${prod.nombre}`,date:serverTimestamp()}) ]); showToast("Compra registrada"); purchase.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
+            const transfer=document.getElementById("transfer-form"); if(transfer) transfer.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=transfer.querySelector('button[type="submit"]'); btn.disabled=true; const productId=document.getElementById("transfer-product").value; const cantidad=parseInt(document.getElementById("transfer-quantity").value); const unit=document.getElementById("transfer-unit").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); try{ await runTransaction(db, async (t)=>{ const bRef=doc(db,"inventory",productId,"stock","bodega"); const rRef=doc(db,"inventory",productId,"stock","barra"); const bSnap=await t.get(bRef); if(!bSnap.exists() || (bSnap.data().unidades||0)<unidades) throw new Error("Stock insuficiente en bodega."); t.set(bRef,{unidades: increment(-unidades)},{merge:true}); t.set(rRef,{unidades: increment(unidades)},{merge:true}); }); showToast("Traslado exitoso"); transfer.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
+        }
+
+        if(id==="cashflow-view"){ const form=document.getElementById("cashflow-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const data={ type:document.getElementById("cashflow-type").value, amount:parseFloat(document.getElementById("cashflow-amount").value), description:document.getElementById("cashflow-description").value, date:serverTimestamp(), manual:true, userId:appState.user.uid }; try{ await addDoc(colref.cashflow,data); showToast("Movimiento registrado"); form.reset(); } catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
+
+        if(id==="providers-view"){ content.querySelectorAll(".btn-edit-provider").forEach(b=>b.addEventListener("click",()=>{ const p=appState.providers.find(x=>x.id===b.dataset.id); if(!p) return; document.getElementById("provider-id").value=p.id; document.getElementById("provider-nombre").value=p.nombre||""; document.getElementById("provider-contacto").value=p.contacto||""; document.getElementById("provider-consignacion").checked=!!p.consignacion; })); const form=document.getElementById("provider-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("provider-id").value; const data={ nombre:document.getElementById("provider-nombre").value, contacto:document.getElementById("provider-contacto").value, consignacion:document.getElementById("provider-consignacion").checked }; try{ if(id) await setDoc(doc(colref.providers,id), data, {merge:true}); else await addDoc(colref.providers, {...data, saldoPendiente:0}); showToast("Proveedor guardado"); form.reset(); document.getElementById("provider-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); content.querySelectorAll(".btn-settle").forEach(b=>b.addEventListener("click",()=>{ const prov=appState.providers.find(x=>x.id===b.dataset.id); if(!prov) return; if((prov.saldoPendiente||0)<=0){ showToast("Proveedor sin saldo pendiente","error"); return; } document.getElementById("settlement-provider-name").textContent=prov.nombre; document.getElementById("settlement-provider-balance").textContent=COP(prov.saldoPendiente||0); document.getElementById("settle-provider-btn").dataset.providerId=prov.id; document.getElementById("settlement-details").classList.remove("hidden"); })); const settle=document.getElementById("settle-provider-btn"); if(settle) settle.addEventListener("click", async (e)=>{ const providerId=e.target.dataset.providerId; const prov=appState.providers.find(p=>p.id===providerId); if(!prov) return; if(!confirm(`¿Pagar ${COP(prov.saldoPendiente)} a ${prov.nombre}?`)) return; try{ const b=writeBatch(db); b.set(doc(colref.cashflow), {type:"egreso",amount:prov.saldoPendiente,description:`Pago liquidación: ${prov.nombre}`,date:serverTimestamp()}); b.set(doc(colref.providers,providerId), {saldoPendiente:0}, {merge:true}); await b.commit(); showToast("Liquidación realizada"); document.getElementById("settlement-details").classList.add("hidden"); }catch(err){ showToast(err.message,"error"); } }); }
+
+        if(id==="workers-view"){ content.querySelectorAll(".btn-edit-worker").forEach(b=>b.addEventListener("click",()=>{ const w=appState.workers.find(x=>x.id===b.dataset.id); if(!w) return; document.getElementById("worker-id").value=w.id; document.getElementById("worker-nombre").value=w.nombre||""; document.getElementById("worker-pagoBase").value=w.pagoBase||0; document.getElementById("worker-activo").checked=!!w.activo; })); const form=document.getElementById("worker-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("worker-id").value; const data={ nombre:document.getElementById("worker-nombre").value, pagoBase:parseFloat(document.getElementById("worker-pagoBase").value)||0, activo:document.getElementById("worker-activo").checked }; try{ if(id) await setDoc(doc(colref.workers,id), data, {merge:true}); else await addDoc(colref.workers, data); showToast("Trabajador guardado"); form.reset(); document.getElementById("worker-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
+        
+        if(id === "profile-view") { const personalForm = document.getElementById("profile-personal-form"); if(personalForm) personalForm.addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; try { const userRef = doc(db, "users", appState.user.uid); const newDisplayName = document.getElementById("profile-name").value; const newPhone = document.getElementById("profile-phone").value; await setDoc(userRef, { displayName: newDisplayName, phone: newPhone }, { merge: true }); appState.userData.displayName = newDisplayName; appState.userData.phone = newPhone; showToast("Datos personales actualizados"); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled=false; } }); const businessForm = document.getElementById("profile-business-form"); if(businessForm) businessForm.addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; try { const userRef = doc(db, "users", appState.user.uid); const newBusinessName = document.getElementById("profile-business-name").value; const newBusinessType = document.getElementById("profile-business-type").value; await setDoc(userRef, { businessName: newBusinessName, businessType: newBusinessType }, { merge: true }); appState.userData.businessName = newBusinessName; appState.userData.businessType = newBusinessType; showToast("Datos del negocio actualizados"); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled=false; } }); }
+
         if(id==="shifts-view"){
             const openShiftForm=document.getElementById("open-shift-form");
             if(openShiftForm) openShiftForm.addEventListener("submit", async (e)=>{ e.preventDefault(); const workerId=document.getElementById("shift-worker").value; if(!workerId) return; const worker=appState.workers.find(w=>w.id===workerId); await addDoc(colref.shifts,{workerId,pagoBase:worker?.pagoBase||0,inicio:serverTimestamp(),estado:"abierto"}); });
-
             const productSelect = document.getElementById("sale-product");
             if (productSelect) { productSelect.addEventListener("change", () => { const stockDisplay = document.getElementById("product-stock-display"); const selectedId = productSelect.value; if (!selectedId) { stockDisplay.textContent = ""; return; } const stock = appState.inventory[selectedId]?.barra?.unidades ?? 0; stockDisplay.textContent = `Stock en barra: ${stock} uds.`; }); }
-            
             const saleForm=document.getElementById("sale-form");
-            if(saleForm) saleForm.addEventListener("submit", async (e)=>{ e.preventDefault(); if(!appState.activeShift) return; const productId=document.getElementById("sale-product").value; const unidades=parseInt(document.getElementById("sale-quantity").value); const prod=appState.products.find(p=>p.id===productId); if(!prod || isNaN(unidades)||unidades<=0){ showToast("Venta inválida","error"); return; } const btn=saleForm.querySelector('button[type="submit"]'); btn.disabled=true; try{ await runTransaction(db, async (t)=>{ const barraRef=doc(db,"inventory",productId,"stock","barra"); const snap=await t.get(barraRef); if(!snap.exists() || (snap.data().unidades||0)<unidades) throw new Error(`Stock insuficiente para ${prod.nombre}`); t.set(barraRef,{unidades: increment(-unidades)},{merge:true}); }); await addDoc(collection(db,"shifts", appState.activeShift.id, "sales"),{ type: 'product', productId, unidades, precioUnitVenta:prod.precioVenta||0, totalVenta:unidades*(prod.precioVenta||0), totalFichas:unidades*(prod.precioFicha||0), fecha:serverTimestamp() }); showToast("Venta de producto registrada"); saleForm.reset(); document.getElementById("product-stock-display").textContent = ""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
+            if(saleForm) saleForm.addEventListener("submit", async (e)=>{ e.preventDefault(); if(!appState.activeShift) return; const productId=document.getElementById("sale-product").value; const unidades=parseInt(document.getElementById("sale-quantity").value); const prod=appState.products.find(p=>p.id===productId); if(!prod || isNaN(unidades)||unidades<=0){ showToast("Venta inválida","error"); return; } const btn=saleForm.querySelector('button[type="submit"]'); btn.disabled=true; try{ await runTransaction(db, async (t)=>{ const barraRef=doc(db,"inventory",productId,"stock","barra"); const snap=await t.get(barraRef); if(!snap.exists() || (snap.data().unidades||0)<unidades) throw new Error(`Stock insuficiente para ${prod.nombre}`); t.set(barraRef,{unidades: increment(-unidades)},{merge:true}); }); await addDoc(collection(db,"shifts", appState.activeShift.id, "sales"),{ type: 'product', productId, unidades, totalVenta:unidades*(prod.precioVenta||0), totalComision:unidades*(prod.precioComision||0), fecha:serverTimestamp() }); showToast("Venta de producto registrada"); saleForm.reset(); document.getElementById("product-stock-display").textContent = ""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
+            
+            const fichasGrid = document.getElementById("fichas-grid");
+            if (fichasGrid) { fichasGrid.addEventListener("click", (e) => { const card = e.target.closest(".ficha-card"); if (!card) return; const productId = card.dataset.productId; const product = appState.products.find(p => p.id === productId); const stock = appState.inventory[productId]?.barra?.unidades ?? 0; const modal = document.getElementById("ficha-sale-modal"); modal.querySelector("#ficha-sale-modal-title").textContent = `Vender ${product.nombre}`; modal.querySelector("#ficha-sale-product-id").value = productId; modal.querySelector("#ficha-sale-stock").textContent = stock; modal.querySelector("#ficha-sale-quantity").value = 1; modal.classList.add("visible"); }); }
             
             const fichaSaleForm = document.getElementById("ficha-sale-form");
-            if (fichaSaleForm) fichaSaleForm.addEventListener("submit", async (e) => { e.preventDefault(); if(!appState.activeShift) return; const fichaId = document.getElementById("sale-ficha").value; const cantidad = parseInt(document.getElementById("ficha-quantity").value); const ficha = appState.fichas.find(f => f.id === fichaId); if (!ficha || isNaN(cantidad) || cantidad <= 0) { showToast("Venta de ficha inválida", "error"); return; } const btn = fichaSaleForm.querySelector('button[type="submit"]'); btn.disabled = true; try { await addDoc(collection(db, "shifts", appState.activeShift.id, "sales"), { type: 'ficha', fichaId, unidades: cantidad, totalVenta: cantidad * (ficha.valor || 0), totalFichas: cantidad * (ficha.valor || 0), fecha: serverTimestamp() }); showToast("Venta de ficha registrada"); fichaSaleForm.reset(); } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; } });
+            if(fichaSaleForm) fichaSaleForm.addEventListener("submit", async (e) => { e.preventDefault(); const modal = document.getElementById("ficha-sale-modal"); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; const productId = document.getElementById("ficha-sale-product-id").value; const unidades = parseInt(document.getElementById("ficha-sale-quantity").value); const prod = appState.products.find(p => p.id === productId); try { await runTransaction(db, async (t) => { const barraRef = doc(db, "inventory", productId, "stock", "barra"); const snap = await t.get(barraRef); if (!snap.exists() || (snap.data().unidades || 0) < unidades) throw new Error(`Stock insuficiente para ${prod.nombre}`); t.set(barraRef, { unidades: increment(-unidades) }, { merge: true }); }); await addDoc(collection(db, "shifts", appState.activeShift.id, "sales"), { type: 'ficha', productId: productId, unidades: unidades, totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0), fecha: serverTimestamp() }); showToast("Venta registrada"); modal.classList.remove("visible"); scheduleRender(); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled = false; } });
+            
+            const fichaModal = document.getElementById("ficha-sale-modal"); const closeFichaModalBtn = fichaModal.querySelector(".modal-close-btn"); if (closeFichaModalBtn) closeFichaModalBtn.addEventListener("click", () => fichaModal.classList.remove("visible")); fichaModal.addEventListener("click", (e) => { if(e.target === fichaModal) fichaModal.classList.remove("visible") });
             
             const loanModal = document.getElementById("loan-modal"), openLoanBtn = document.getElementById("open-loan-modal-btn"), closeLoanBtn = loanModal.querySelector(".modal-close-btn");
             if(openLoanBtn) openLoanBtn.addEventListener("click", () => loanModal.classList.add("visible"));
@@ -460,15 +544,8 @@
             if(loanForm) loanForm.addEventListener("submit", async (e)=>{ e.preventDefault(); if(!appState.activeShift) return; const valor=parseFloat(document.getElementById("loan-value").value); const desc=document.getElementById("loan-description").value; if(isNaN(valor)||!desc) return; await addDoc(collection(db,"shifts", appState.activeShift.id, "loans"), { descripcion:desc, valor, fecha:serverTimestamp() }); loanForm.reset(); loanModal.classList.remove("visible"); });
 
             const closeShiftBtn=document.getElementById("close-shift-btn");
-            if(closeShiftBtn) closeShiftBtn.addEventListener("click", async ()=>{ if(!appState.activeShift) return; if(!confirm("¿Cerrar y liquidar turno?")) return; const sh=appState.activeShift; const worker=appState.workers.find(w=>w.id===sh.workerId); const ingresos=sh.sales.reduce((s,x)=>s+x.totalVenta,0); const fichasTotal =sh.sales.reduce((s,x)=>s+(x.totalFichas||0),0); const prestamos=sh.loans.reduce((s,l)=>s+l.valor,0); const totalAPagar=(sh.pagoBase||0)+fichasTotal-prestamos; try{ const b=writeBatch(db); b.set(doc(colref.cashflow), {type:"ingreso",amount:ingresos,description:`Cierre turno ${worker?.nombre||""}`,date:serverTimestamp()}); if(totalAPagar>0) b.set(doc(colref.cashflow), {type:"egreso",amount:totalAPagar,description:`Pago liquidación ${worker?.nombre||""}`,date:serverTimestamp()}); b.set(doc(colref.shifts, sh.id), {estado:"cerrado", fin:serverTimestamp()}, {merge:true}); await b.commit(); showToast("Turno cerrado"); }catch(err){ showToast(err.message,"error"); } });
+            if(closeShiftBtn) closeShiftBtn.addEventListener("click", async ()=>{ if(!appState.activeShift) return; if(!confirm("¿Cerrar y liquidar turno?")) return; const sh=appState.activeShift; const worker=appState.workers.find(w=>w.id===sh.workerId); const ingresos=sh.sales.reduce((s,x)=>s+x.totalVenta,0); const comisiones =sh.sales.reduce((s,x)=>s+(x.totalComision||0),0); const prestamos=sh.loans.reduce((s,l)=>s+l.valor,0); const totalAPagar=(sh.pagoBase||0)+comisiones-prestamos; try{ const b=writeBatch(db); b.set(doc(colref.cashflow), {type:"ingreso",amount:ingresos,description:`Cierre turno ${worker?.nombre||""}`,date:serverTimestamp()}); if(totalAPagar>0) b.set(doc(colref.cashflow), {type:"egreso",amount:totalAPagar,description:`Pago liquidación ${worker?.nombre||""}`,date:serverTimestamp()}); b.set(doc(colref.shifts, sh.id), {estado:"cerrado", fin:serverTimestamp()}, {merge:true}); await b.commit(); showToast("Turno cerrado"); }catch(err){ showToast(err.message,"error"); } });
         }
-        
-        // --- Add other handlers back ---
-        // Placeholder for brevity - the full logic for these handlers is identical to the previous version and is assumed to be here.
-        // In a real file, you would copy the full `if` blocks for each of these.
-        if(id==="inventory-view"){ /* full handler */ }
-        if(id==="cashflow-view"){ /* full handler */ }
-        // etc. for all views
     }
   </script>
 </body>
