@@ -19,6 +19,10 @@
       --dark-border-color: #424548; --dark-text-primary: #e8eaed; --dark-text-secondary: #9aa0a6;
       --dark-brand-primary: #ff8f00; --dark-brand-secondary: #ffa000; --dark-accent-red: #f28b82;
       --dark-accent-green: #81c995; --dark-shadow-color: rgba(0, 0, 0, 0.3); --dark-logo-color: #ff8f00;
+      /* Paleta de degradado para el logo (amarillo → naranja → rojo) */
+      --grad-yellow: #ffc107;
+      --grad-orange: #ff6f00;
+      --grad-red: #ff3d00;
     }
     body[data-theme="dark"] {
       --bg-primary: var(--dark-bg-primary); --bg-secondary: var(--dark-bg-secondary);
@@ -29,66 +33,85 @@
       --shadow-color: var(--dark-shadow-color); --logo-color: var(--dark-logo-color);
     }
     * { box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      overflow-x: hidden; /* Evita el scroll horizontal */
-    }
+    html, body { height: 100%; overflow-x: hidden; }
     body {
       margin: 0; font-family: 'Roboto', sans-serif; background-color: var(--bg-primary);
       color: var(--text-primary); transition: background-color 0.2s, color 0.2s;
     }
     main { display: flex; min-height: calc(100vh - 60px); }
-    #content { flex: 1; padding: 24px; padding-bottom: 80px; } /* Add padding for mobile footer */
+    #content { flex: 1; padding: 24px; padding-bottom: 80px; }
     .hidden { display: none !important; }
 
-    /* --- Animación de Inicio --- */
+    /* --- Animación de Inicio (SVG cube line-by-line + fill) --- */
     #splash-screen {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background-color: #1a1a1a;
+      position: fixed; inset: 0;
+      background: #0f1115;
       z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
       transition: opacity 0.5s ease-out;
     }
-    #splash-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #splash-screen.hidden { opacity: 0; pointer-events: none; }
+
     .splash-title {
       font-size: clamp(2rem, 10vw, 3.5rem);
       font-weight: 700;
-      background: linear-gradient(45deg, #ff4800, #ff6f00, #ffc107);
+      background: linear-gradient(90deg, var(--grad-yellow), var(--grad-orange), var(--grad-red));
       background-size: 200% auto;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      white-space: nowrap;
-      overflow: hidden;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      white-space: nowrap; overflow: hidden;
       border-right: .15em solid var(--brand-primary);
-      animation: typing 2s steps(11, end), blink-caret .75s step-end infinite, color-pan 3s linear infinite;
+      animation: typing 2.2s steps(11, end), blink-caret .75s step-end infinite, color-pan 3s linear infinite;
       margin-top: 24px;
     }
     @keyframes typing { from { width: 0 } to { width: 100% } }
     @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--brand-primary); } }
     @keyframes color-pan { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-    .cube-container { width: 100px; height: 100px; perspective: 800px; }
-    .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: spin 8s infinite linear; }
-    .cube .face {
-      position: absolute; width: 100px; height: 100px;
-      border: 2px solid transparent; background: rgba(255, 111, 0, 0.1);
-      box-shadow: 0 0 25px rgba(255, 111, 0, 0.4), inset 0 0 15px rgba(255, 111, 0, 0.3); /* Efecto de Fuego/Brillo */
-      animation: draw-border 2s forwards;
+
+    .logo-cube-container{
+      width: clamp(120px, 22vw, 180px);
+      aspect-ratio: 1/1;
+      display: grid; place-items: center;
+      filter: drop-shadow(0 10px 30px rgba(255, 111, 0, .18));
+      transform: translateZ(0);
     }
-    @keyframes draw-border { 0% { border-color: transparent; box-shadow: none; } 100% { border-color: var(--brand-primary); } }
-    .face.front  { transform: rotateY(  0deg) translateZ(50px); } .face.back   { transform: rotateY(180deg) translateZ(50px); }
-    .face.right  { transform: rotateY( 90deg) translateZ(50px); } .face.left   { transform: rotateY(-90deg) translateZ(50px); }
-    .face.top    { transform: rotateX( 90deg) translateZ(50px); } .face.bottom { transform: rotateX(-90deg) translateZ(50px); }
-    @keyframes spin { from { transform: rotateX(0) rotateY(0); } to { transform: rotateX(360deg) rotateY(360deg); } }
-    /* --- Fin Animación de Inicio --- */
-    
+    /* Sutileza de presencia mientras se dibuja */
+    .logo-cube{
+      width: 100%; height: 100%;
+      transform: rotate(-2deg);
+    }
+
+    /* Trazos que se “escriben” */
+    .edge{
+      stroke: url(#brandStroke);
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      fill: none;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      filter: drop-shadow(0 0 6px rgba(255,111,0,.35));
+      animation: draw 0.85s ease forwards;
+      animation-delay: calc(var(--i) * 0.12s);
+    }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+
+    /* Caras: se pintan con el degradado después del trazado */
+    .face{
+      fill: url(#brandGradient);
+      fill-opacity: 0;
+      stroke: none;
+      animation: faceIn 0.9s ease forwards;
+      animation-delay: 1.8s; /* después de la mayoría de bordes */
+    }
+    @keyframes faceIn { to { fill-opacity: 1; } }
+
+    /* Brillo de barrido sobre el cubo ya pintado */
+    .shine{
+      opacity: 0;
+      animation: shineIn 2.2s ease-in-out 1.9s forwards;
+      mix-blend-mode: screen;
+    }
+    @keyframes shineIn { 10% {opacity:.0} 20%{opacity:.25} 70%{opacity:.12} 100%{opacity:0} }
+
     header {
       display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
       height: 60px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-secondary);
@@ -125,7 +148,7 @@
     }
     input:focus, select:focus { border-color: var(--brand-primary); }
     button {
-      background: linear-gradient(45deg, #ff4800, #ff6f00, #ffc107); background-size: 200% auto;
+      background: linear-gradient(45deg, var(--grad-red), var(--grad-orange), var(--grad-yellow)); background-size: 200% auto;
       border: none; color: #fff; padding: 12px 18px; border-radius: 8px; cursor: pointer;
       font-weight: 500; transition: background-position 0.4s ease, background-color 0.3s ease;
     }
@@ -230,12 +253,68 @@
 <body>
 
   <div id="splash-screen">
-    <div class="cube-container">
-      <div class="cube">
-        <div class="face front"></div> <div class="face back"></div>
-        <div class="face right"></div> <div class="face left"></div>
-        <div class="face top"></div>   <div class="face bottom"></div>
-      </div>
+    <div class="logo-cube-container" aria-label="Animación de cubo">
+      <!-- SVG: Cubo isométrico con trazos secuenciales y caras en degradado -->
+      <svg class="logo-cube" viewBox="0 0 120 120" role="img" aria-hidden="true">
+        <defs>
+          <!-- Degradado para las caras (amarillo → naranja → rojo) -->
+          <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"  stop-color="var(--grad-yellow)"/>
+            <stop offset="55%" stop-color="var(--grad-orange)"/>
+            <stop offset="100%" stop-color="var(--grad-red)"/>
+          </linearGradient>
+          <!-- Degradado para los bordes (ligero cambio para brillo) -->
+          <linearGradient id="brandStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="var(--grad-yellow)"/>
+            <stop offset="50%" stop-color="var(--grad-orange)"/>
+            <stop offset="100%" stop-color="var(--grad-red)"/>
+          </linearGradient>
+          <!-- Brillo de barrido -->
+          <linearGradient id="shineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+            <stop offset="40%" stop-color="rgba(255,255,255,.35)"/>
+            <stop offset="60%" stop-color="rgba(255,255,255,.0)"/>
+          </linearGradient>
+          <clipPath id="cubeClip">
+            <!-- mismo contorno que la proyección del cubo para recortar el brillo -->
+            <path d="M60 10 L100 30 L100 70 L60 90 L20 70 L20 30 Z"/>
+          </clipPath>
+        </defs>
+
+        <!-- Caras (pintado posterior) -->
+        <!-- Top -->
+        <polygon class="face" points="60,10 100,30 60,50 20,30"/>
+        <!-- Right -->
+        <polygon class="face" points="100,30 100,70 60,90 60,50"/>
+        <!-- Left -->
+        <polygon class="face" points="20,30 60,50 60,90 20,70"/>
+
+        <!-- Aristas (12), se dibujan secuenciales. pathLength=100 para facilitar la animación uniforme -->
+        <!-- Top perimeter -->
+        <path class="edge" style="--i:0"  d="M60 10 L100 30" pathLength="100"/>
+        <path class="edge" style="--i:1"  d="M100 30 L60 50" pathLength="100"/>
+        <path class="edge" style="--i:2"  d="M60 50 L20 30" pathLength="100"/>
+        <path class="edge" style="--i:3"  d="M20 30 L60 10" pathLength="100"/>
+        <!-- Verticals -->
+        <path class="edge" style="--i:4"  d="M100 30 L100 70" pathLength="100"/>
+        <path class="edge" style="--i:5"  d="M20 30  L20 70"  pathLength="100"/>
+        <!-- Bottom perimeter connections -->
+        <path class="edge" style="--i:6"  d="M100 70 L60 90" pathLength="100"/>
+        <path class="edge" style="--i:7"  d="M60 90  L20 70" pathLength="100"/>
+        <!-- Uprights to center (closing) -->
+        <path class="edge" style="--i:8"  d="M60 50 L60 90" pathLength="100"/>
+        <!-- diagonals (subtle structure/shine) -->
+        <path class="edge" style="--i:9"  d="M60 10 L60 50" pathLength="100"/>
+        <path class="edge" style="--i:10" d="M20 70 L60 50" pathLength="100"/>
+        <path class="edge" style="--i:11" d="M60 50 L100 70" pathLength="100"/>
+
+        <!-- Brillo animado que barre el cubo ya pintado -->
+        <g class="shine" clip-path="url(#cubeClip)">
+          <rect x="-120" y="0" width="240" height="120" fill="url(#shineGrad)">
+            <animate attributeName="x" from="-120" to="120" dur="1.8s" fill="freeze" begin="1.95s" />
+          </rect>
+        </g>
+      </svg>
     </div>
     <h1 class="splash-title">seb365 pro</h1>
   </div>
@@ -350,7 +429,7 @@
             const splash = document.getElementById('splash-screen');
             if (splash) {
                 splash.classList.add('hidden');
-                setTimeout(() => splash.remove(), 600); // Remove from DOM after transition
+                setTimeout(() => splash.remove(), 600);
             }
         }, 3800);
     });
