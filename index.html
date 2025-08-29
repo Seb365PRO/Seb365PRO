@@ -363,7 +363,6 @@
     import { getFirestore, collection, collectionGroup, doc, setDoc, addDoc, getDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // --- Inicialización de Firebase ---
-    // IMPORTANTE: Reemplaza este objeto con tu propia configuración de Firebase.
     const firebaseConfig = {
       apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
     authDomain: "seb360-pro.firebaseapp.com",
@@ -384,7 +383,7 @@
     const TDOC = (...segs) => doc(db, "tenants", tenantId(), ...segs);
     const stockRef = (productId, place) => TDOC("inventory", productId, "stock", place);
 
-    let colref = {}; // Se reconstruye después del login
+    let colref = {};
     function buildColRef() {
       if (!tenantId()) return;
       colref = {
@@ -432,7 +431,6 @@
       raf = requestAnimationFrame(() => {
         const activeId = forceId || (document.querySelector(".nav-link.active")?.dataset.view) || "dashboard-view";
         renderView(activeId);
-        
         document.querySelectorAll('.mobile-nav-link').forEach(link => {
             link.classList.toggle('active', link.dataset.view === activeId);
         });
@@ -450,18 +448,15 @@
       e.preventDefault();
       mainNav.classList.remove("open");
       const viewId = link.dataset.view;
-      
       document.querySelectorAll(".nav-link, .mobile-nav-link").forEach(n => {
         n.classList.toggle('active', n.dataset.view === viewId);
       });
-      
       appState.selectedShiftId = null;
       scheduleRender(viewId);
     }
 
     mainNav.addEventListener("click", handleNavClick);
     mobileFooterNav.addEventListener("click", handleNavClick);
-
     document.getElementById("menu-toggle").addEventListener("click", () => mainNav.classList.toggle("open"));
     document.getElementById("profile-btn").addEventListener("click", () => document.querySelector('.nav-link[data-view="profile-view"]').click());
     document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
@@ -574,16 +569,13 @@
             registrationData.businessType = document.getElementById("register-business-type").value; 
             try { 
                 const cred = await createUserWithEmailAndPassword(auth, registrationData.email, registrationData.password); 
-                
                 const batch = writeBatch(db);
-
                 const userRef = doc(db, "users", cred.user.uid);
                 batch.set(userRef, { 
                     email: registrationData.email, 
                     displayName: registrationData.displayName,
                     createdAt: serverTimestamp()
                 });
-
                 const tenantRef = doc(db, "tenants", cred.user.uid);
                 batch.set(tenantRef, {
                     ownerName: registrationData.displayName,
@@ -595,9 +587,7 @@
                     active: true,
                     createdAt: serverTimestamp()
                 });
-
                 await batch.commit();
-
                 showToast("Cuenta creada exitosamente"); 
                 registrationData = {}; 
             } catch(err) { 
@@ -610,7 +600,6 @@
         });
         document.getElementById("show-register-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("login-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("register-view").classList.remove("hidden"); });
         document.getElementById("show-login-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("register-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("login-view").classList.remove("hidden"); });
-       
         authContainer.addEventListener('click', (e) => {
             const toggleBtn = e.target.closest('.password-toggle-btn');
             if (toggleBtn) {
@@ -629,27 +618,21 @@
     let persistentHandlersAttached = false;
     onAuthStateChanged(auth, async (user) => {
       const splash = document.getElementById('splash-screen');
-      
       if (user) {
         buildColRef();
-
         const tenantDocRef = doc(db, "tenants", user.uid);
         const tenantDoc = await getDoc(tenantDocRef);
-
         appState.user = user;
         appState.userData = tenantDoc.exists() ? tenantDoc.data() : { email: user.email };
         appState.role = appState.userData.role || "admin";
-        
         document.body.dataset.role = appState.role;
         document.getElementById("auth-container").classList.add("hidden");
         document.getElementById("app-container").classList.remove("hidden");
         document.querySelector('.nav-link[data-view="dashboard-view"]').classList.add("active");
-       
         if (!persistentHandlersAttached) {
             attachPersistentHandlers();
             persistentHandlersAttached = true;
         }
-
         initRealtime();
         scheduleRender("dashboard-view");
       } else {
@@ -660,7 +643,6 @@
         renderAuthUI();
         persistentHandlersAttached = false;
       }
-      
       if (splash) {
           splash.classList.add('hidden');
           setTimeout(() => splash.remove(), 600);
@@ -671,31 +653,25 @@
       if(!tenantId()) return;
       appState.unsub.forEach(u=>u()); appState.unsub=[];
       const add = (un)=> appState.unsub.push(un);
-
       add(onSnapshot(query(colref.products, orderBy("nombre")), s=>{ appState.products = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.providers, orderBy("nombre")), s=>{ appState.providers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.workers, orderBy("nombre")), s=>{ appState.workers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.cashflow, orderBy("date","desc")), s=>{ appState.cashflow = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
-     
       add(onSnapshot(query(colref.shifts, where("estado", "==", "abierto")), (snapshot) => {
         const currentShiftIds = snapshot.docs.map(doc => doc.id);
         const previousShiftIds = appState.activeShifts.map(shift => shift.id);
-
         previousShiftIds.forEach(shiftId => {
             if (!currentShiftIds.includes(shiftId) && shiftSubListeners[shiftId]) {
                 shiftSubListeners[shiftId].forEach(unsub => unsub());
                 delete shiftSubListeners[shiftId];
             }
         });
-       
         const shiftsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-
         shiftsData.forEach((shiftData) => {
             const existingShiftIndex = appState.activeShifts.findIndex(s => s.id === shiftData.id);
             if (existingShiftIndex === -1) {
                 const newShift = { ...shiftData, sales: [], loans: [] };
                 appState.activeShifts.push(newShift);
-
                 const salesUnsub = onSnapshot(
                   collection(db, "tenants", tenantId(), "shifts", shiftData.id, "sales"),
                   (salesSnapshot) => {
@@ -718,7 +694,6 @@
         appState.activeShifts = appState.activeShifts.filter(s => currentShiftIds.includes(s.id));
         scheduleRender();
       }));
-
       add(onSnapshot(
         query(collectionGroup(db, "stock"), where("tenantId","==", tenantId())),
         snap => {
@@ -739,7 +714,6 @@
    
     function renderView(id) {
         let html = "";
-       
         if (id === 'dashboard-view') {
             const balance = appState.cashflow.reduce((b, e) => b + (e.type === "ingreso" ? e.amount : -e.amount), 0);
             const totalSalesAllShifts = appState.activeShifts.reduce((total, shift) => total + shift.sales.reduce((subtotal, sale) => subtotal + sale.totalVenta, 0), 0);
@@ -747,55 +721,45 @@
             const low = appState.products.filter(p => (appState.inventory[p.id]?.barra?.unidades || 0) < 10).map(p => `<li>${p.nombre}: <strong>${appState.inventory[p.id]?.barra?.unidades || 0} uds</strong></li>`).join("");
             html = `<div class="content-view"><h2>Panel de Control</h2><div class="form-grid"><div class="card"><h3>Saldo en Caja</h3><p>${COP(balance)}</p></div><div class="card"><h3>Ventas (Turnos Activos)</h3><p>${COP(totalSalesAllShifts)}</p></div><div class="card"><h3>Deuda Proveedores</h3><p>${COP(debt)}</p></div><div class="card"><h3>Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div></div></div>`;
         }
-
         if (id === 'products-view') {
             const rows = appState.products.map(p => row([ p.nombre, p.esFicha ? 'Sí' : 'No', COP(p.precioVenta || 0), COP(p.precioComision || 0), `<div class="actions"><button class="btn-edit" data-id="${p.id}">Editar</button></div>` ])).join("");
             html = `<div class="content-view"><h2>Productos y Fichas</h2><form id="product-form" class="card"><input type="hidden" id="product-id"><div class="form-grid"><input id="product-nombre" placeholder="Nombre" required><input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required><input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required><input id="product-precioComision" type="number" step="any" min="0" placeholder="Valor para Pago (Comisión)"><input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja"><input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta"></div><div style="margin-top: 16px;"><label style="display:inline-flex; align-items:center; gap: 8px; font-size: 16px;"><input id="product-esFicha" type="checkbox"> Es una Ficha</label></div><button type="submit" style="margin-top: 16px;">Guardar</button></form><div class="table-wrapper" style="margin-top:24px"><table><thead><tr><th>Nombre</th><th>Es Ficha</th><th>P. Venta</th><th>Valor Pago</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
         }
-       
         if (id === 'inventory-view') {
             const rows = appState.products.map(p=> row([ p.nombre, appState.inventory[p.id]?.bodega?.unidades ?? 0, appState.inventory[p.id]?.barra?.unidades ?? 0 ])).join("");
             const productOpts = appState.products.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
             const providerOpts = appState.providers.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
             html = `<div class="content-view"><h2>Inventario y Compras</h2><div class="form-grid"><form id="purchase-form" class="card"><h3>Registrar Compra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="purchase-provider" required><option value="">Proveedor…</option>${providerOpts}</select><select id="purchase-product" required><option value="">Producto…</option>${productOpts}</select><input id="purchase-quantity" type="number" min="1" placeholder="Cantidad" required><select id="purchase-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><select id="purchase-type" required><option value="contado">Contado (Afecta caja)</option><option value="consignacion">Consignación</option></select><button type="submit">Registrar Compra</button></div></form><form id="transfer-form" class="card"><h3>Trasladar Bodega → Barra</h3><div style="display: flex; flex-direction: column; gap: 12px;"><select id="transfer-product" required><option value="">Producto…</option>${productOpts}</select><input id="transfer-quantity" type="number" min="1" placeholder="Cantidad" required><select id="transfer-unit" required><option value="unidades">Unidades</option><option value="cajas">Cajas</option><option value="canastas">Canastas</option></select><button type="submit">Trasladar</button></div></form></div><h3 style="margin:24px 0 12px 0;">Stock Actual</h3><div class="table-wrapper"><table><thead><tr><th>Producto</th><th>Stock Bodega</th><th>Stock Barra</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin stock.</td></tr>`}</tbody></table></div></div>`;
         }
-
         if (id === 'cashflow-view') {
             const rows = appState.cashflow.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${e.description}</td><td class="${e.type==="ingreso"?"amount-positive":"amount-negative"}" style="font-weight: 500;">${COP(e.type==="ingreso"?e.amount:-e.amount)}</td></tr>`).join("");
             html = `<div class="content-view"><h2>Flujo de Caja</h2><form id="cashflow-form" class="card"><div class="form-grid" style="align-items: flex-end;"><select id="cashflow-type" required><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select><input id="cashflow-amount" type="number" step="any" min="1" placeholder="Monto" required></div><input id="cashflow-description" placeholder="Descripción" required style="margin: 12px 0;"><button type="submit">Registrar</button></form><h3 style="margin:24px 0 12px 0;">Historial</h3><div class="table-wrapper"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>${rows || `<tr><td colspan="3">Sin movimientos.</td></tr>`}</tbody></table></div></div>`;
         }
-
         if (id === 'providers-view') {
             const rows = appState.providers.map(p=> row([ p.nombre, (p.consignacion?"✅":"❌"), COP(p.saldoPendiente||0), `<div class="actions ${appState.role!=="admin"?"hidden":""}"><button class="btn-edit-provider" data-id="${p.id}">Editar</button><button class="btn-settle button-secondary" data-id="${p.id}">Liquidar</button></div>` ])).join("");
             html = `<div class="content-view"><h2>Proveedores</h2><form id="provider-form" class="card ${appState.role==="admin"?"":"hidden"}"><input type="hidden" id="provider-id"><div class="form-grid" style="margin-bottom: 12px;"><input id="provider-nombre" placeholder="Nombre del proveedor" required><input id="provider-contacto" placeholder="Contacto"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="provider-consignacion" type="checkbox"> Acepta consignación</label><button type="submit">Guardar Proveedor</button></form><div id="settlement-details" class="hidden card" style="margin-top:12px; border-left: 4px solid var(--brand-primary);"><h4>Liquidar a: <span id="settlement-provider-name"></span></h4><p>Saldo: <strong id="settlement-provider-balance"></strong></p><button id="settle-provider-btn">Pagar y Registrar Egreso</button></div><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Consignación</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin proveedores.</td></tr>`}</tbody></table></div></div>`;
         }
-
         if (id === 'workers-view') {
             const rows = appState.workers.map(w=> row([ w.nombre, COP(w.pagoBase||0), (w.activo?"✅":"❌"), `<div class="actions"><button class="btn-edit-worker" data-id="${w.id}">Editar</button></div>` ])).join("");
             html = `<div class="content-view"><h2>Trabajadores</h2><form id="worker-form" class="card"><input type="hidden" id="worker-id"><div class="form-grid" style="margin-bottom: 12px;"><input id="worker-nombre" placeholder="Nombre completo" required><input id="worker-pagoBase" type="number" step="any" min="0" placeholder="Pago base (opcional)"></div><label style="display:inline-flex; align-items:center; gap: 8px;"><input id="worker-activo" type="checkbox" checked> Activo</label><button type="submit">Guardar Trabajador</button></form><h3 style="margin:24px 0 12px 0;">Lista</h3><div class="table-wrapper"><table><thead><tr><th>Nombre</th><th>Pago Base</th><th>Activo</th><th>Acciones</th></tr></thead><tbody>${rows || `<tr><td colspan="4">Sin trabajadores.</td></tr>`}</tbody></table></div></div>`;
         }
-
         if (id === 'profile-view') {
             const u = appState.userData || {};
             html = `<div class="content-view"><h2>Mi Perfil</h2><div class="form-grid"><div class="card"><h2>Datos Personales</h2><form id="profile-personal-form"><div class="form-grid" style="gap: 12px; margin-bottom: 12px;"><div><label for="profile-name">Nombre</label><input id="profile-name" value="${u.ownerName || ''}"></div><div><label for="profile-phone">Teléfono</label><input id="profile-phone" type="tel" value="${u.phone || ''}"></div></div><label for="profile-email">Correo (no se puede cambiar)</label><input id="profile-email" type="email" value="${u.ownerEmail || ''}" disabled><button type="submit" style="margin-top: 16px;">Guardar Datos Personales</button></form></div><div class="card"><h2>Datos del Negocio</h2><form id="profile-business-form"><div style="margin-bottom: 12px;"><label for="profile-business-name">Nombre del Negocio</label><input id="profile-business-name" value="${u.businessName || ''}"></div><div style="margin-bottom: 12px;"><label for="profile-business-type">Tipo de Negocio</label><select id="profile-business-type"><option value="bar" ${u.businessType === 'bar' ? 'selected' : ''}>Bar</option><option value="discoteca" ${u.businessType === 'discoteca' ? 'selected' : ''}>Discoteca</option><option value="cafeteria" ${u.businessType === 'cafeteria' ? 'selected' : ''}>Cafetería</option><option value="restaurante" ${u.businessType === 'restaurante' ? 'selected' : ''}>Restaurante</option></select></div><button type="submit" style="margin-top: 16px;">Guardar Datos del Negocio</button></form></div></div><div class="card" style="margin-top: 24px;"><h2>Licencia</h2><p><strong>Tipo de plan:</strong> PRO</p><p><strong>Estado:</strong> Activa</p><p style="color: var(--text-secondary);">Esta sección se habilitará en futuras actualizaciones.</p></div></div>`;
         }
-       
         if (id === 'shifts-view') {
             if (appState.selectedShiftId) {
                 const shift = appState.activeShifts.find(s => s.id === appState.selectedShiftId);
                 if (!shift) { appState.selectedShiftId = null; return renderView('shifts-view'); }
-               
                 const worker = appState.workers.find(w => w.id === shift.workerId);
                 const ingresos = shift.sales.reduce((s, x) => s + x.totalVenta, 0);
                 const comisiones = shift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
                 const prestamos = shift.loans.reduce((s, l) => s + l.valor, 0);
-               
                 const fichaProducts = appState.products.filter(p => p.esFicha);
                 const fichaCardsHTML = fichaProducts.map(ficha => {
                     const stock = appState.inventory[ficha.id]?.barra?.unidades ?? 0;
                     return `<div class="ficha-card" data-product-id="${ficha.id}"><h4>${ficha.nombre}</h4><div class="ficha-card-stock">${stock} <span>uds.</span></div></div>`;
                 }).join("");
-
                 html = `<div class="content-view">
                     <button id="back-to-shifts-list" class="button-secondary" style="margin-bottom: 24px;">&larr; Volver a la lista de turnos</button>
                     <h2>Gestionando Turno: <span style="color: var(--brand-primary);">${worker?.nombre || "…"}</span></h2>
@@ -825,7 +789,6 @@
                         </div>
                     </div>`;
                 }).join("");
-
                 html = `<div class="content-view">
                     <h2>Turnos y Ventas</h2>
                     <div class="card"><h3>Iniciar Nuevo Turno</h3><form id="open-shift-form"><select id="shift-worker" required style="margin-bottom: 12px;"><option value="">Seleccionar trabajador…</option>${workerOpts}</select><button type="submit">Iniciar Turno</button></form></div>
@@ -834,7 +797,6 @@
                 </div>`;
             }
         }
-
         if (html) { content.innerHTML = html; attachHandlers(id); }
     }
    
@@ -845,19 +807,21 @@
             const modal = document.getElementById("ficha-sale-modal");
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
-
             const productId = document.getElementById("ficha-sale-product-id").value;
             const unidades = parseInt(document.getElementById("ficha-sale-quantity").value);
             const prod = appState.products.find(p => p.id === productId);
-           
             if (!prod || isNaN(unidades) || unidades <= 0) { showToast("Cantidad inválida", "error"); btn.disabled = false; return; }
-
             try {
+                // *** FIX: Use manual read/write in transaction to guarantee listener update ***
                 await runTransaction(db, async (t) => {
                     const barraRef = stockRef(productId, "barra");
                     const snap = await t.get(barraRef);
-                    if (!snap.exists() || (snap.data().unidades || 0) < unidades) { throw new Error(`Stock insuficiente para ${prod.nombre}`); }
-                    t.set(barraRef, { unidades: increment(-unidades) }, { merge: true });
+                    const currentStock = snap.data()?.unidades || 0;
+                    if (!snap.exists() || currentStock < unidades) { 
+                        throw new Error(`Stock insuficiente para ${prod.nombre}`); 
+                    }
+                    const newStock = currentStock - unidades;
+                    t.set(barraRef, { tenantId: tenantId(), unidades: newStock }, { merge: true });
                 });
                 await addDoc(collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "sales"), {
                     type: 'ficha', productId: productId, unidades: unidades,
@@ -869,7 +833,6 @@
             } catch(err) { showToast(err.message, "error"); }
             finally { btn.disabled = false; }
         });
-       
         const loanForm = document.getElementById("loan-form");
         if (loanForm) loanForm.addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -926,7 +889,6 @@
                 } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
             });
         }
-       
         if(id === 'inventory-view') {
             const purchaseForm = document.getElementById("purchase-form");
             if (purchaseForm) {
@@ -940,16 +902,13 @@
                     const unit = document.getElementById("purchase-unit").value;
                     const tipo = document.getElementById("purchase-type").value;
                     const prod = appState.products.find(p => p.id === productId);
-
                     if (!prod || !providerId || isNaN(cantidad)) {
                         showToast("Datos inválidos", "error");
                         btn.disabled = false;
                         return;
                     }
-                    
                     const unidades = toUnidades(cantidad, unit, prod);
                     const costo = unidades * (prod.precioCompra || 0);
-
                     try {
                         const batch = writeBatch(db);
                         batch.set(doc(colref.purchases), {
@@ -957,7 +916,6 @@
                             cantidadUnidades: unidades, costoTotal: costo
                         });
                         batch.set(stockRef(productId, "bodega"), { tenantId: tenantId(), unidades: increment(unidades) }, { merge: true });
-
                         if (tipo === "consignacion") {
                             batch.set(doc(colref.providers, providerId), { saldoPendiente: increment(costo) }, { merge: true });
                         } else {
@@ -977,7 +935,6 @@
                     }
                 });
             }
-
             const transferForm = document.getElementById("transfer-form");
             if (transferForm) {
                 transferForm.addEventListener("submit", async (e) => {
@@ -988,26 +945,27 @@
                     const cantidad = parseInt(document.getElementById("transfer-quantity").value);
                     const unit = document.getElementById("transfer-unit").value;
                     const prod = appState.products.find(p => p.id === productId);
-
                     if (!prod || isNaN(cantidad)) {
                         showToast("Datos inválidos", "error");
                         btn.disabled = false;
                         return;
                     }
-                    
                     const unidades = toUnidades(cantidad, unit, prod);
-
                     try {
+                        // *** FIX: Use manual read/write in transaction to guarantee listener update ***
                         await runTransaction(db, async (t) => {
                             const bodegaRef = stockRef(productId, "bodega");
                             const barraRef = stockRef(productId, "barra");
-                            const bodegaSnap = await t.get(bodegaRef);
-
-                            if (!bodegaSnap.exists() || (bodegaSnap.data().unidades || 0) < unidades) {
+                            const [bodegaSnap, barraSnap] = await Promise.all([t.get(bodegaRef), t.get(barraRef)]);
+                            const currentBodegaStock = bodegaSnap.data()?.unidades || 0;
+                            if (!bodegaSnap.exists() || currentBodegaStock < unidades) {
                                 throw new Error("Stock insuficiente en bodega.");
                             }
-                            t.set(bodegaRef, { unidades: increment(-unidades) }, { merge: true });
-                            t.set(barraRef, { tenantId: tenantId(), unidades: increment(unidades) }, { merge: true });
+                            const currentBarraStock = barraSnap.data()?.unidades || 0;
+                            const newBodegaStock = currentBodegaStock - unidades;
+                            const newBarraStock = currentBarraStock + unidades;
+                            t.set(bodegaRef, { tenantId: tenantId(), unidades: newBodegaStock }, { merge: true });
+                            t.set(barraRef, { tenantId: tenantId(), unidades: newBarraStock }, { merge: true });
                         });
                         showToast("Traslado exitoso");
                         transferForm.reset();
@@ -1019,7 +977,6 @@
                 });
             }
         }
-
         if(id === 'cashflow-view') {
             const form = document.getElementById("cashflow-form");
             if (form) {
@@ -1047,23 +1004,19 @@
                 });
             }
         }
-
         if (id === 'providers-view') {
             content.querySelectorAll(".btn-edit-provider").forEach(b => b.addEventListener("click", () => {
-                const p = appState.providers.find(x => x.id === b.dataset.id);
-                if (!p) return;
+                const p = appState.providers.find(x => x.id === b.dataset.id); if (!p) return;
                 document.getElementById("provider-id").value = p.id;
                 document.getElementById("provider-nombre").value = p.nombre || "";
                 document.getElementById("provider-contacto").value = p.contacto || "";
                 document.getElementById("provider-consignacion").checked = !!p.consignacion;
             }));
-
             const form = document.getElementById("provider-form");
             if (form) {
                 form.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                    const btn = form.querySelector('button[type="submit"]');
-                    btn.disabled = true;
+                    const btn = form.querySelector('button[type="submit"]'); btn.disabled = true;
                     const id = document.getElementById("provider-id").value;
                     const data = {
                         nombre: document.getElementById("provider-nombre").value,
@@ -1077,8 +1030,73 @@
                             await addDoc(colref.providers, { ...data, saldoPendiente: 0 });
                         }
                         showToast("Proveedor guardado");
+                        form.reset(); document.getElementById("provider-id").value = "";
+                    } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
+                });
+            }
+            content.querySelectorAll(".btn-settle").forEach(b => b.addEventListener("click", () => {
+                const prov = appState.providers.find(x => x.id === b.dataset.id); if (!prov) return;
+                if ((prov.saldoPendiente || 0) <= 0) { showToast("Proveedor sin saldo pendiente", "error"); return; }
+                document.getElementById("settlement-provider-name").textContent = prov.nombre;
+                document.getElementById("settlement-provider-balance").textContent = COP(prov.saldoPendiente || 0);
+                document.getElementById("settle-provider-btn").dataset.providerId = prov.id;
+                document.getElementById("settlement-details").classList.remove("hidden");
+            }));
+            const settleBtn = document.getElementById("settle-provider-btn");
+            if (settleBtn) {
+                settleBtn.addEventListener("click", async (e) => {
+                    const providerId = e.target.dataset.providerId;
+                    const prov = appState.providers.find(p => p.id === providerId); if (!prov) return;
+                    const batch = writeBatch(db);
+                    batch.set(doc(colref.cashflow), {
+                        type: "egreso", amount: prov.saldoPendiente,
+                        description: `Pago liquidación: ${prov.nombre}`, date: serverTimestamp()
+                    });
+                    batch.set(doc(colref.providers, providerId), { saldoPendiente: 0 }, { merge: true });
+                    try {
+                        await batch.commit();
+                        showToast("Liquidación realizada");
+                        document.getElementById("settlement-details").classList.add("hidden");
+                    } catch (err) { showToast(err.message, "error"); }
+                });
+            }
+        }
+        if (id === 'workers-view') {
+            content.querySelectorAll(".btn-edit-worker").forEach(b => b.addEventListener("click", () => {
+                const w = appState.workers.find(x => x.id === b.dataset.id);
+                if (!w) return;
+                document.getElementById("worker-id").value = w.id;
+                document.getElementById("worker-nombre").value = w.nombre || "";
+                document.getElementById("worker-pagoBase").value = w.pagoBase || 0;
+                document.getElementById("worker-activo").checked = w.activo;
+            }));
+            const form = document.getElementById("worker-form");
+            if (form) {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const btn = form.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    const workerId = document.getElementById("worker-id").value;
+                    const data = {
+                        nombre: document.getElementById("worker-nombre").value,
+                        pagoBase: parseFloat(document.getElementById("worker-pagoBase").value) || 0,
+                        activo: document.getElementById("worker-activo").checked,
+                    };
+                    if (!data.nombre) {
+                        showToast("El nombre es requerido", "error");
+                        btn.disabled = false;
+                        return;
+                    }
+                    try {
+                        if (workerId) {
+                            await setDoc(doc(colref.workers, workerId), data, { merge: true });
+                        } else {
+                            await addDoc(colref.workers, data);
+                        }
+                        showToast("Trabajador guardado");
                         form.reset();
-                        document.getElementById("provider-id").value = "";
+                        document.getElementById("worker-id").value = "";
+                        document.getElementById("worker-activo").checked = true;
                     } catch (err) {
                         showToast(err.message, "error");
                     } finally {
@@ -1086,54 +1104,13 @@
                     }
                 });
             }
-
-            content.querySelectorAll(".btn-settle").forEach(b => b.addEventListener("click", () => {
-                const prov = appState.providers.find(x => x.id === b.dataset.id);
-                if (!prov) return;
-                if ((prov.saldoPendiente || 0) <= 0) {
-                    showToast("Proveedor sin saldo pendiente", "error");
-                    return;
-                }
-                document.getElementById("settlement-provider-name").textContent = prov.nombre;
-                document.getElementById("settlement-provider-balance").textContent = COP(prov.saldoPendiente || 0);
-                document.getElementById("settle-provider-btn").dataset.providerId = prov.id;
-                document.getElementById("settlement-details").classList.remove("hidden");
-            }));
-            
-            const settleBtn = document.getElementById("settle-provider-btn");
-            if (settleBtn) {
-                settleBtn.addEventListener("click", async (e) => {
-                    const providerId = e.target.dataset.providerId;
-                    const prov = appState.providers.find(p => p.id === providerId);
-                    if (!prov) return;
-                    
-                    const batch = writeBatch(db);
-                    batch.set(doc(colref.cashflow), {
-                        type: "egreso",
-                        amount: prov.saldoPendiente,
-                        description: `Pago liquidación: ${prov.nombre}`,
-                        date: serverTimestamp()
-                    });
-                    batch.set(doc(colref.providers, providerId), { saldoPendiente: 0 }, { merge: true });
-                    
-                    try {
-                        await batch.commit();
-                        showToast("Liquidación realizada");
-                        document.getElementById("settlement-details").classList.add("hidden");
-                    } catch (err) {
-                        showToast(err.message, "error");
-                    }
-                });
-            }
         }
-        
         if (id === 'profile-view') {
             const personalForm = document.getElementById("profile-personal-form");
             if (personalForm) {
                 personalForm.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                    const btn = e.target.querySelector('button[type="submit"]');
-                    btn.disabled = true;
+                    const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
                     try {
                         const tenantRef = doc(db, "tenants", appState.user.uid);
                         const newDisplayName = document.getElementById("profile-name").value;
@@ -1142,20 +1119,14 @@
                         appState.userData.ownerName = newDisplayName;
                         appState.userData.phone = newPhone;
                         showToast("Datos personales actualizados");
-                    } catch (err) {
-                        showToast(err.message, "error");
-                    } finally {
-                        btn.disabled = false;
-                    }
+                    } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
                 });
             }
-
             const businessForm = document.getElementById("profile-business-form");
             if (businessForm) {
                 businessForm.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                    const btn = e.target.querySelector('button[type="submit"]');
-                    btn.disabled = true;
+                    const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
                     try {
                         const tenantRef = doc(db, "tenants", appState.user.uid);
                         const newBusinessName = document.getElementById("profile-business-name").value;
@@ -1164,22 +1135,16 @@
                         appState.userData.businessName = newBusinessName;
                         appState.userData.businessType = newBusinessType;
                         showToast("Datos del negocio actualizados");
-                    } catch (err) {
-                        showToast(err.message, "error");
-                    } finally {
-                        btn.disabled = false;
-                    }
+                    } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
                 });
             }
         }
-
         if(id === 'shifts-view') {
             if (appState.selectedShiftId) {
                 document.getElementById("back-to-shifts-list")?.addEventListener("click", () => {
                     appState.selectedShiftId = null;
                     scheduleRender();
                 });
-
                 document.getElementById("fichas-grid")?.addEventListener("click", (e) => {
                     const card = e.target.closest(".ficha-card");
                     if (!card) return;
@@ -1193,21 +1158,17 @@
                     modal.querySelector("#ficha-sale-quantity").value = 1;
                     modal.classList.add("visible");
                 });
-
                 document.getElementById("open-loan-modal-btn")?.addEventListener("click", () => {
                     document.getElementById("loan-modal").classList.add("visible");
                 });
-
                 document.getElementById("close-shift-btn")?.addEventListener("click", async (e) => {
                     const btn = e.target;
                     const isConfirmed = btn.dataset.confirmed === 'true';
-
                     if (!isConfirmed) {
                         btn.dataset.originalText = btn.textContent;
                         btn.textContent = '¿Confirmar Cierre?';
                         btn.style.background = 'var(--brand-secondary)';
                         btn.dataset.confirmed = 'true';
-                       
                         const timeoutId = setTimeout(() => {
                             btn.textContent = btn.dataset.originalText;
                             btn.style.background = '';
@@ -1216,22 +1177,16 @@
                         btn.dataset.timeoutId = timeoutId;
                         return;
                     }
-
                     clearTimeout(btn.dataset.timeoutId);
                     btn.disabled = true;
                     const shiftId = btn.dataset.shiftId;
                     const shift = appState.activeShifts.find(s => s.id === shiftId);
-                    if (!shift) {
-                        btn.disabled = false;
-                        return;
-                    }
-
+                    if (!shift) { btn.disabled = false; return; }
                     const worker = appState.workers.find(w => w.id === shift.workerId);
                     const ingresos = shift.sales.reduce((s, x) => s + x.totalVenta, 0);
                     const comisiones = shift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
                     const prestamos = shift.loans.reduce((s, l) => s + l.valor, 0);
                     const totalAPagar = (worker?.pagoBase || 0) + comisiones - prestamos;
-
                     try {
                         const batch = writeBatch(db);
                         batch.set(doc(colref.cashflow), { type: "ingreso", amount: ingresos, description: `Cierre turno ${worker?.nombre || ""}`, date: serverTimestamp() });
@@ -1263,20 +1218,15 @@
                         estado: "abierto"
                     });
                 });
-
                 content.querySelectorAll('.btn-manage-shift').forEach(btn => btn.addEventListener('click', (e) => {
                     appState.selectedShiftId = e.target.dataset.shiftId;
                     scheduleRender();
                 }));
-
                 content.querySelectorAll('.btn-view-desglose').forEach(btn => btn.addEventListener('click', (e) => {
                     const shiftId = e.target.dataset.shiftId;
-                    const shift = appState.activeShifts.find(s => s.id === shiftId);
-                    if (!shift) return;
-                    
+                    const shift = appState.activeShifts.find(s => s.id === shiftId); if (!shift) return;
                     const worker = appState.workers.find(w => w.id === shift.workerId);
                     document.getElementById('desglose-modal-title').textContent = `Desglose de ${worker?.nombre || '...'}`;
-                    
                     const combinedEvents = [
                         ...shift.sales.map(s => ({ ...s, eventType: 'sale' })),
                         ...shift.loans.map(l => ({ ...l, eventType: 'loan' }))
@@ -1284,7 +1234,6 @@
                     if (combinedEvents.length > 0 && combinedEvents[0].fecha?.toMillis) {
                         combinedEvents.sort((a, b) => a.fecha.toMillis() - b.fecha.toMillis());
                     }
-                    
                     const tableBody = combinedEvents.map(event => {
                         const time = event.fecha?.toDate().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) || 'N/A';
                         if (event.eventType === 'sale') {
@@ -1295,7 +1244,6 @@
                             return row([time, `Préstamo: ${event.descripcion}`, '', '', COP(event.valor)]);
                         }
                     }).join('');
-                    
                     document.getElementById('desglose-modal-body').innerHTML = `<table><thead><tr><th>Hora</th><th>Descripción</th><th>Ingreso</th><th>Comisión</th><th>Préstamo</th></tr></thead><tbody>${tableBody || `<tr><td colspan="5">No hay eventos registrados.</td></tr>`}</tbody></table>`;
                     document.getElementById('desglose-modal').classList.add('visible');
                 }));
