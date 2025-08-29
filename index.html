@@ -219,7 +219,7 @@
       #logout-btn { padding: 8px; }
     }
     @media (max-width: 640px) {
-      header { padding: 0 16px; } 
+      header { padding: 0 16px; }
       .form-grid { grid-template-columns: 1fr; }
       .active-shift-item { flex-direction: column; align-items: flex-start; gap: 12px; }
       table { font-size: 14px; }
@@ -326,7 +326,7 @@
         </form>
     </div>
   </div>
-  
+ 
   <div id="ficha-sale-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -357,90 +357,74 @@
     </div>
   </div>
 
-  <script>
-    window.__FIREBASE_CONFIG__ = {
-      apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
-      authDomain: "seb360-pro.firebaseapp.com",
-      projectId: "seb360-pro",
-      storageBucket: "seb360-pro.appspot.com",
-      messagingSenderId: "750401346580",
-      appId: "1:750401346580:web:a682fd6ae09292ff589b01"
-    };
-  </script>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, collectionGroup, doc, setDoc, addDoc, getDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            const splash = document.getElementById('splash-screen');
-            if (splash) {
-                splash.classList.add('hidden');
-                setTimeout(() => splash.remove(), 600);
-            }
-        }, 3800);
-    });
+    // --- Inicialización de Firebase ---
+    // IMPORTANTE: Reemplaza este objeto con tu propia configuración de Firebase.
+    const firebaseConfig = {
+      apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
+    authDomain: "seb360-pro.firebaseapp.com",
+    projectId: "seb360-pro",
+    storageBucket: "seb360-pro.firebasestorage.app",
+    messagingSenderId: "750401346580",
+    appId: "1:750401346580:web:a682fd6ae09292ff589b01"
+  };
 
-    const appFB = initializeApp(window.__FIREBASE_CONFIG__);
+
+    const appFB = initializeApp(firebaseConfig);
     const auth = getAuth(appFB);
     const db = getFirestore(appFB);
-    // ==== Helpers multi-tenant ====
-// uid actual
-const tenantId = () => (auth.currentUser?.uid || appState.user?.uid);
 
-// atajos a colecciones/documentos bajo /tenants/{uid}/...
-const TCOL = (...segs) => collection(db, "tenants", tenantId(), ...segs);
-const TDOC = (...segs) => doc(db, "tenants", tenantId(), ...segs);
+    // --- Helpers y Estado Global ---
+    const tenantId = () => auth.currentUser?.uid;
+    const TCOL = (...segs) => collection(db, "tenants", tenantId(), ...segs);
+    const TDOC = (...segs) => doc(db, "tenants", tenantId(), ...segs);
+    const stockRef = (productId, place) => TDOC("inventory", productId, "stock", place);
 
-// stockRef(productId, place='bodega'|'barra')
-const stockRef = (productId, place) =>
-  TDOC("inventory", productId, "stock", place);
-
-// colref se reconstruye DESPUÉS del login (en onAuthStateChanged)
-let colref = {};
-function buildColRef() {
-  colref = {
-    users: collection(db, "users"), // perfiles globales
-    products: TCOL("products"),
-    providers: TCOL("providers"),
-    workers: TCOL("workers"),
-    cashflow: TCOL("cashflow_entries"),
-    shifts: TCOL("shifts"),
-    purchases: TCOL("purchases")
-    // inventory se accede con stockRef() o collectionGroup("stock") filtrado por tenantId
-  };
-}
-2.2 Reemplaza tu colref global original
-BUSCA este bloque en tu archivo (está más arriba de tus funciones):
-
-js
-Copiar código
-// ANTES (bloque original a REEMPLAZAR completo)
-const colref = {
-  users: collection(db, "users"), products: collection(db, "products"), providers: collection(db, "providers"),
-  workers: collection(db, "workers"), cashflow: collection(db, "cashflow_entries"),
-  shifts: collection(db, "shifts"), purchases: collection(db, "purchases")
-};
+    let colref = {}; // Se reconstruye después del login
+    function buildColRef() {
+      if (!tenantId()) return;
+      colref = {
+        users: collection(db, "users"),
+        products: TCOL("products"),
+        providers: TCOL("providers"),
+        workers: TCOL("workers"),
+        cashflow: TCOL("cashflow_entries"),
+        shifts: TCOL("shifts"),
+        purchases: TCOL("purchases")
+      };
+    }
 
     let appState = {
       user: null, userData: null, role: null, unsub: [],
       products: [], providers: [], workers: [],
-      inventory: {}, cashflow: [], 
+      inventory: {}, cashflow: [],
       activeShifts: [], selectedShiftId: null
     };
     let registrationData = {}, shiftSubListeners = {};
 
-    
+    // --- Funciones de Utilidad ---
     const showToast = (msg, type = "success") => {
-        const c = document.getElementById("toast-container");
-        const t = document.createElement("div");
-        t.className = `toast ${type}`; t.textContent = msg;
-        c.appendChild(t); setTimeout(() => t.remove(), 3200);
+      const c = document.getElementById("toast-container");
+      const t = document.createElement("div");
+      t.className = `toast ${type}`;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 3200);
     };
+
     const COP = (v) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
     const fmtDate = (ts) => ts?.toDate().toLocaleString("es-CO", { hour12: true, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) ?? "—";
+
+    const toUnidades = (qty, unit, prod) => {
+        if (!prod) return qty;
+        if (unit === "cajas") return qty * (prod.unidadesPorCaja || 1);
+        if (unit === "canastas") return qty * (prod.unidadesPorCanasta || 1);
+        return qty;
+    };
 
     let raf = null;
     const scheduleRender = (forceId = null) => {
@@ -449,14 +433,14 @@ const colref = {
         const activeId = forceId || (document.querySelector(".nav-link.active")?.dataset.view) || "dashboard-view";
         renderView(activeId);
         
-        const mobileLinks = document.querySelectorAll('.mobile-nav-link');
-        mobileLinks.forEach(link => {
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
             link.classList.toggle('active', link.dataset.view === activeId);
         });
         raf = null;
       });
     };
 
+    // --- Manejadores de Eventos Principales ---
     const mainNav = document.getElementById("main-nav");
     const mobileFooterNav = document.getElementById("mobile-footer-nav");
     
@@ -471,7 +455,7 @@ const colref = {
         n.classList.toggle('active', n.dataset.view === viewId);
       });
       
-      appState.selectedShiftId = null; 
+      appState.selectedShiftId = null;
       scheduleRender(viewId);
     }
 
@@ -480,25 +464,28 @@ const colref = {
 
     document.getElementById("menu-toggle").addEventListener("click", () => mainNav.classList.toggle("open"));
     document.getElementById("profile-btn").addEventListener("click", () => document.querySelector('.nav-link[data-view="profile-view"]').click());
-    
+    document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
+
+    // --- Lógica del Tema (Claro/Oscuro) ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const updateThemeToggleIcon = (theme) => {
-        const icon = themeToggleBtn.querySelector('svg');
-        icon.innerHTML = theme === 'dark' 
-            ? `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`
-            : `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
+      const icon = themeToggleBtn.querySelector('svg');
+      icon.innerHTML = theme === 'dark'
+        ? `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`
+        : `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
     };
     themeToggleBtn.addEventListener('click', () => {
-        const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.body.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeToggleIcon(newTheme);
+      const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeToggleIcon(newTheme);
     });
     const savedTheme = localStorage.getItem('theme');
     const initialTheme = savedTheme || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.body.setAttribute('data-theme', initialTheme);
     updateThemeToggleIcon(initialTheme);
-    
+
+    // --- Flujo de Autenticación ---
     const authContainer = document.getElementById("auth-container");
     const ICONS = {
         eye: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
@@ -516,7 +503,6 @@ const colref = {
               <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
             </h1>
             <p>Gestión de inventario simplificada</p>
-
             <div id="login-view">
             <form id="login-form" autocomplete="on">
                 <div class="auth-form-fields">
@@ -531,7 +517,6 @@ const colref = {
             </form>
             <p style="margin-top:20px; font-size: 14px;">¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
             </div>
-            
             <div id="register-view" class="hidden">
             <h2>Paso 1: Datos Personales</h2>
             <form id="register-personal-form" autocomplete="on">
@@ -581,10 +566,51 @@ const colref = {
             document.getElementById("register-view").classList.add("hidden"); 
             document.getElementById("register-business-view").classList.remove("hidden"); 
         });
-        document.getElementById("register-business-form").addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; registrationData.businessName = document.getElementById("register-business-name").value; registrationData.businessType = document.getElementById("register-business-type").value; try { const cred = await createUserWithEmailAndPassword(auth, registrationData.email, registrationData.password); await setDoc(doc(colref.users, cred.user.uid), { email: registrationData.email, displayName: registrationData.displayName, phone: registrationData.phone, businessName: registrationData.businessName, businessType: registrationData.businessType, role: "admin", active: true, createdAt: serverTimestamp() }); showToast("Cuenta creada exitosamente"); registrationData = {}; } catch(err) { showToast(err.message, "error"); document.getElementById("register-view").classList.remove("hidden"); document.getElementById("register-business-view").classList.add("hidden"); } finally { btn.disabled = false; } });
+        document.getElementById("register-business-form").addEventListener("submit", async (e) => { 
+            e.preventDefault(); 
+            const btn = e.target.querySelector('button[type="submit"]'); 
+            btn.disabled = true; 
+            registrationData.businessName = document.getElementById("register-business-name").value; 
+            registrationData.businessType = document.getElementById("register-business-type").value; 
+            try { 
+                const cred = await createUserWithEmailAndPassword(auth, registrationData.email, registrationData.password); 
+                
+                const batch = writeBatch(db);
+
+                const userRef = doc(db, "users", cred.user.uid);
+                batch.set(userRef, { 
+                    email: registrationData.email, 
+                    displayName: registrationData.displayName,
+                    createdAt: serverTimestamp()
+                });
+
+                const tenantRef = doc(db, "tenants", cred.user.uid);
+                batch.set(tenantRef, {
+                    ownerName: registrationData.displayName,
+                    ownerEmail: registrationData.email,
+                    phone: registrationData.phone,
+                    businessName: registrationData.businessName,
+                    businessType: registrationData.businessType,
+                    role: "admin",
+                    active: true,
+                    createdAt: serverTimestamp()
+                });
+
+                await batch.commit();
+
+                showToast("Cuenta creada exitosamente"); 
+                registrationData = {}; 
+            } catch(err) { 
+                showToast(err.message, "error"); 
+                document.getElementById("register-view").classList.remove("hidden"); 
+                document.getElementById("register-business-view").classList.add("hidden"); 
+            } finally { 
+                btn.disabled = false; 
+            } 
+        });
         document.getElementById("show-register-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("login-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("register-view").classList.remove("hidden"); });
         document.getElementById("show-login-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("register-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("login-view").classList.remove("hidden"); });
-        
+       
         authContainer.addEventListener('click', (e) => {
             const toggleBtn = e.target.closest('.password-toggle-btn');
             if (toggleBtn) {
@@ -599,23 +625,26 @@ const colref = {
             }
         });
     }
-    
-    document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
-    
+   
     let persistentHandlersAttached = false;
     onAuthStateChanged(auth, async (user) => {
+      const splash = document.getElementById('splash-screen');
+      
       if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        appState.user = user;
-        appState.userData = userDoc.exists() ? userDoc.data() : { email: user.email };
-        appState.role = "admin";
         buildColRef();
+
+        const tenantDocRef = doc(db, "tenants", user.uid);
+        const tenantDoc = await getDoc(tenantDocRef);
+
+        appState.user = user;
+        appState.userData = tenantDoc.exists() ? tenantDoc.data() : { email: user.email };
+        appState.role = appState.userData.role || "admin";
+        
         document.body.dataset.role = appState.role;
         document.getElementById("auth-container").classList.add("hidden");
         document.getElementById("app-container").classList.remove("hidden");
         document.querySelector('.nav-link[data-view="dashboard-view"]').classList.add("active");
-        
+       
         if (!persistentHandlersAttached) {
             attachPersistentHandlers();
             persistentHandlersAttached = true;
@@ -624,23 +653,30 @@ const colref = {
         initRealtime();
         scheduleRender("dashboard-view");
       } else {
-        appState.unsub.forEach(u => u()); appState.unsub = [];
+        appState.unsub.forEach(u => u());
         appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
         document.getElementById("app-container").classList.add("hidden");
         document.getElementById("auth-container").classList.remove("hidden");
         renderAuthUI();
         persistentHandlersAttached = false;
       }
+      
+      if (splash) {
+          splash.classList.add('hidden');
+          setTimeout(() => splash.remove(), 600);
+      }
     });
 
     function initRealtime(){
+      if(!tenantId()) return;
       appState.unsub.forEach(u=>u()); appState.unsub=[];
       const add = (un)=> appState.unsub.push(un);
+
       add(onSnapshot(query(colref.products, orderBy("nombre")), s=>{ appState.products = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.providers, orderBy("nombre")), s=>{ appState.providers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.workers, orderBy("nombre")), s=>{ appState.workers = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
       add(onSnapshot(query(colref.cashflow, orderBy("date","desc")), s=>{ appState.cashflow = s.docs.map(d=>({id:d.id, ...d.data()})); scheduleRender(); }));
-      
+     
       add(onSnapshot(query(colref.shifts, where("estado", "==", "abierto")), (snapshot) => {
         const currentShiftIds = snapshot.docs.map(doc => doc.id);
         const previousShiftIds = appState.activeShifts.map(shift => shift.id);
@@ -651,7 +687,7 @@ const colref = {
                 delete shiftSubListeners[shiftId];
             }
         });
-        
+       
         const shiftsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
         shiftsData.forEach((shiftData) => {
@@ -659,22 +695,23 @@ const colref = {
             if (existingShiftIndex === -1) {
                 const newShift = { ...shiftData, sales: [], loans: [] };
                 appState.activeShifts.push(newShift);
-                const shiftIndex = appState.activeShifts.length - 1;
 
                 const salesUnsub = onSnapshot(
-  collection(db, "tenants", tenantId(), "shifts", shiftData.id, "sales"),
-  (salesSnapshot) => {
+                  collection(db, "tenants", tenantId(), "shifts", shiftData.id, "sales"),
+                  (salesSnapshot) => {
                     const shiftToUpdate = appState.activeShifts.find(s => s.id === shiftData.id);
                     if(shiftToUpdate) shiftToUpdate.sales = salesSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
                     scheduleRender();
-                });
+                  }
+                );
                 const loansUnsub = onSnapshot(
-  collection(db, "tenants", tenantId(), "shifts", shiftData.id, "loans"),
-  (loansSnapshot) => {
-                     const shiftToUpdate = appState.activeShifts.find(s => s.id === shiftData.id);
+                  collection(db, "tenants", tenantId(), "shifts", shiftData.id, "loans"),
+                  (loansSnapshot) => {
+                    const shiftToUpdate = appState.activeShifts.find(s => s.id === shiftData.id);
                     if(shiftToUpdate) shiftToUpdate.loans = loansSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
                     scheduleRender();
-                });
+                  }
+                );
                 shiftSubListeners[shiftData.id] = [salesUnsub, loansUnsub];
             }
         });
@@ -682,29 +719,27 @@ const colref = {
         scheduleRender();
       }));
 
-      // DESPUÉS (filtra por tenantId y corrige índices de path)
-add(onSnapshot(
-  query(collectionGroup(db, "stock"), where("tenantId","==", tenantId())),
-  snap => {
-    const inv = {};
-    // path: tenants/{uid}/inventory/{productId}/stock/{place}
-    snap.docs.forEach(ds => {
-      const parts = ds.ref.path.split("/"); // ["tenants", uid, "inventory", productId, "stock", place]
-      const productId = parts[3];
-      const place = parts[5];
-      (inv[productId] ??= {})[place] = ds.data();
-    });
-    appState.inventory = inv; scheduleRender();
-  }
-));
-
+      add(onSnapshot(
+        query(collectionGroup(db, "stock"), where("tenantId","==", tenantId())),
+        snap => {
+          const inv = {};
+          snap.docs.forEach(ds => {
+            const parts = ds.ref.path.split("/");
+            const productId = parts[3];
+            const place = parts[5];
+            (inv[productId] ??= {})[place] = ds.data();
+          });
+          appState.inventory = inv; scheduleRender();
+        }
+      ));
+    }
 
     const content = document.getElementById("content");
     const row = (cols)=> `<tr>${cols.map(c=>`<td>${c}</td>`).join("")}</tr>`;
-    
+   
     function renderView(id) {
         let html = "";
-        
+       
         if (id === 'dashboard-view') {
             const balance = appState.cashflow.reduce((b, e) => b + (e.type === "ingreso" ? e.amount : -e.amount), 0);
             const totalSalesAllShifts = appState.activeShifts.reduce((total, shift) => total + shift.sales.reduce((subtotal, sale) => subtotal + sale.totalVenta, 0), 0);
@@ -717,7 +752,7 @@ add(onSnapshot(
             const rows = appState.products.map(p => row([ p.nombre, p.esFicha ? 'Sí' : 'No', COP(p.precioVenta || 0), COP(p.precioComision || 0), `<div class="actions"><button class="btn-edit" data-id="${p.id}">Editar</button></div>` ])).join("");
             html = `<div class="content-view"><h2>Productos y Fichas</h2><form id="product-form" class="card"><input type="hidden" id="product-id"><div class="form-grid"><input id="product-nombre" placeholder="Nombre" required><input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required><input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required><input id="product-precioComision" type="number" step="any" min="0" placeholder="Valor para Pago (Comisión)"><input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja"><input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta"></div><div style="margin-top: 16px;"><label style="display:inline-flex; align-items:center; gap: 8px; font-size: 16px;"><input id="product-esFicha" type="checkbox"> Es una Ficha</label></div><button type="submit" style="margin-top: 16px;">Guardar</button></form><div class="table-wrapper" style="margin-top:24px"><table><thead><tr><th>Nombre</th><th>Es Ficha</th><th>P. Venta</th><th>Valor Pago</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
         }
-        
+       
         if (id === 'inventory-view') {
             const rows = appState.products.map(p=> row([ p.nombre, appState.inventory[p.id]?.bodega?.unidades ?? 0, appState.inventory[p.id]?.barra?.unidades ?? 0 ])).join("");
             const productOpts = appState.products.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
@@ -742,20 +777,20 @@ add(onSnapshot(
 
         if (id === 'profile-view') {
             const u = appState.userData || {};
-            html = `<div class="content-view"><h2>Mi Perfil</h2><div class="form-grid"><div class="card"><h2>Datos Personales</h2><form id="profile-personal-form"><div class="form-grid" style="gap: 12px; margin-bottom: 12px;"><div><label for="profile-name">Nombre</label><input id="profile-name" value="${u.displayName || ''}"></div><div><label for="profile-phone">Teléfono</label><input id="profile-phone" type="tel" value="${u.phone || ''}"></div></div><label for="profile-email">Correo (no se puede cambiar)</label><input id="profile-email" type="email" value="${u.email || ''}" disabled><button type="submit" style="margin-top: 16px;">Guardar Datos Personales</button></form></div><div class="card"><h2>Datos del Negocio</h2><form id="profile-business-form"><div style="margin-bottom: 12px;"><label for="profile-business-name">Nombre del Negocio</label><input id="profile-business-name" value="${u.businessName || ''}"></div><div style="margin-bottom: 12px;"><label for="profile-business-type">Tipo de Negocio</label><select id="profile-business-type"><option value="bar" ${u.businessType === 'bar' ? 'selected' : ''}>Bar</option><option value="discoteca" ${u.businessType === 'discoteca' ? 'selected' : ''}>Discoteca</option><option value="cafeteria" ${u.businessType === 'cafeteria' ? 'selected' : ''}>Cafetería</option><option value="restaurante" ${u.businessType === 'restaurante' ? 'selected' : ''}>Restaurante</option></select></div><button type="submit" style="margin-top: 16px;">Guardar Datos del Negocio</button></form></div></div><div class="card" style="margin-top: 24px;"><h2>Licencia</h2><p><strong>Tipo de plan:</strong> PRO</p><p><strong>Estado:</strong> Activa</p><p style="color: var(--text-secondary);">Esta sección se habilitará en futuras actualizaciones.</p></div></div>`;
+            html = `<div class="content-view"><h2>Mi Perfil</h2><div class="form-grid"><div class="card"><h2>Datos Personales</h2><form id="profile-personal-form"><div class="form-grid" style="gap: 12px; margin-bottom: 12px;"><div><label for="profile-name">Nombre</label><input id="profile-name" value="${u.ownerName || ''}"></div><div><label for="profile-phone">Teléfono</label><input id="profile-phone" type="tel" value="${u.phone || ''}"></div></div><label for="profile-email">Correo (no se puede cambiar)</label><input id="profile-email" type="email" value="${u.ownerEmail || ''}" disabled><button type="submit" style="margin-top: 16px;">Guardar Datos Personales</button></form></div><div class="card"><h2>Datos del Negocio</h2><form id="profile-business-form"><div style="margin-bottom: 12px;"><label for="profile-business-name">Nombre del Negocio</label><input id="profile-business-name" value="${u.businessName || ''}"></div><div style="margin-bottom: 12px;"><label for="profile-business-type">Tipo de Negocio</label><select id="profile-business-type"><option value="bar" ${u.businessType === 'bar' ? 'selected' : ''}>Bar</option><option value="discoteca" ${u.businessType === 'discoteca' ? 'selected' : ''}>Discoteca</option><option value="cafeteria" ${u.businessType === 'cafeteria' ? 'selected' : ''}>Cafetería</option><option value="restaurante" ${u.businessType === 'restaurante' ? 'selected' : ''}>Restaurante</option></select></div><button type="submit" style="margin-top: 16px;">Guardar Datos del Negocio</button></form></div></div><div class="card" style="margin-top: 24px;"><h2>Licencia</h2><p><strong>Tipo de plan:</strong> PRO</p><p><strong>Estado:</strong> Activa</p><p style="color: var(--text-secondary);">Esta sección se habilitará en futuras actualizaciones.</p></div></div>`;
         }
-        
+       
         if (id === 'shifts-view') {
             if (appState.selectedShiftId) {
                 const shift = appState.activeShifts.find(s => s.id === appState.selectedShiftId);
                 if (!shift) { appState.selectedShiftId = null; return renderView('shifts-view'); }
-                
+               
                 const worker = appState.workers.find(w => w.id === shift.workerId);
                 const ingresos = shift.sales.reduce((s, x) => s + x.totalVenta, 0);
                 const comisiones = shift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
                 const prestamos = shift.loans.reduce((s, l) => s + l.valor, 0);
-                
-                const fichaProducts = appState.products.filter(p => p.esFicha && p.activo);
+               
+                const fichaProducts = appState.products.filter(p => p.esFicha);
                 const fichaCardsHTML = fichaProducts.map(ficha => {
                     const stock = appState.inventory[ficha.id]?.barra?.unidades ?? 0;
                     return `<div class="ficha-card" data-product-id="${ficha.id}"><h4>${ficha.nombre}</h4><div class="ficha-card-stock">${stock} <span>uds.</span></div></div>`;
@@ -802,7 +837,7 @@ add(onSnapshot(
 
         if (html) { content.innerHTML = html; attachHandlers(id); }
     }
-    
+   
     function attachPersistentHandlers() {
         const fichaSaleForm = document.getElementById("ficha-sale-form");
         if(fichaSaleForm) fichaSaleForm.addEventListener("submit", async (e) => {
@@ -814,7 +849,7 @@ add(onSnapshot(
             const productId = document.getElementById("ficha-sale-product-id").value;
             const unidades = parseInt(document.getElementById("ficha-sale-quantity").value);
             const prod = appState.products.find(p => p.id === productId);
-            
+           
             if (!prod || isNaN(unidades) || unidades <= 0) { showToast("Cantidad inválida", "error"); btn.disabled = false; return; }
 
             try {
@@ -824,23 +859,17 @@ add(onSnapshot(
                     if (!snap.exists() || (snap.data().unidades || 0) < unidades) { throw new Error(`Stock insuficiente para ${prod.nombre}`); }
                     t.set(barraRef, { unidades: increment(-unidades) }, { merge: true });
                 });
-                await addDoc(
-  collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "sales"),
-  {
-    type: 'ficha', productId, unidades,
-    totalVenta: unidades * (prod.precioVenta || 0),
-    totalComision: unidades * (prod.precioComision || 0),
-    fecha: serverTimestamp(),
-    tenantId: tenantId()
-  }
-);
-
+                await addDoc(collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "sales"), {
+                    type: 'ficha', productId: productId, unidades: unidades,
+                    totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0),
+                    fecha: serverTimestamp()
+                });
                 showToast("Venta registrada");
                 modal.classList.remove("visible");
             } catch(err) { showToast(err.message, "error"); }
             finally { btn.disabled = false; }
         });
-        
+       
         const loanForm = document.getElementById("loan-form");
         if (loanForm) loanForm.addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -848,8 +877,7 @@ add(onSnapshot(
             const valor = parseFloat(document.getElementById("loan-value").value);
             const desc = document.getElementById("loan-description").value;
             if (isNaN(valor) || !desc) return;
-            await addDoc(
-  collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
+            await addDoc(collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
             loanForm.reset();
             document.getElementById("loan-modal").classList.remove("visible");
         });
@@ -886,73 +914,290 @@ add(onSnapshot(
                 try {
                     if (id) {
                         await setDoc(doc(colref.products, id), data, { merge: true });
-                    if (id) {
-  await setDoc(doc(colref.products, id), data, { merge: true });
-} else {
-  const ref = await addDoc(colref.products, { ...data, tenantId: tenantId() });
-  const b = writeBatch(db);
-  b.set(stockRef(ref.id, "bodega"), { unidades: 0, tenantId: tenantId() }, { merge: true });
-  b.set(stockRef(ref.id, "barra"),  { unidades: 0, tenantId: tenantId() }, { merge: true });
-  await b.commit();
-}
-
+                    } else {
+                        const ref = await addDoc(colref.products, data);
+                        const b = writeBatch(db);
+                        b.set(stockRef(ref.id, "bodega"), { tenantId: tenantId(), unidades: 0 }, { merge: true });
+                        b.set(stockRef(ref.id, "barra"), { tenantId: tenantId(), unidades: 0 }, { merge: true });
+                        await b.commit();
+                    }
                     showToast("Guardado correctamente");
                     form.reset(); document.getElementById("product-id").value = "";
                 } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
             });
         }
-        
-        if(id==="inventory-view"){
-            const purchase=document.getElementById("purchase-form"); if(purchase) purchase.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=purchase.querySelector('button[type="submit"]'); btn.disabled=true; const providerId=document.getElementById("purchase-provider").value; const productId=document.getElementById("purchase-product").value; const cantidad=parseInt(document.getElementById("purchase-quantity").value); const unit=document.getElementById("purchase-unit").value; const tipo=document.getElementById("purchase-type").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || !providerId || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); const costo=unidades*(prod.precioCompra||0); try{ await Promise.all([
-  addDoc(colref.purchases, {
-    providerId, productId, fecha: serverTimestamp(), tipo,
-    cantidadUnidades: unidades, costoTotal: costo, tenantId: tenantId()
-  }),
-  setDoc(stockRef(productId, "bodega"),
-    { unidades: increment(unidades), tenantId: tenantId() }, { merge:true }),
-  (tipo === "consignacion")
-    ? setDoc(doc(colref.providers, providerId), { saldoPendiente: increment(costo) }, { merge:true })
-    : addDoc(colref.cashflow, {
-        type: "egreso", amount: costo,
-        description: `Compra contado: ${unidades} x ${prod.nombre}`,
-        date: serverTimestamp(),
-        tenantId: tenantId()
-      })
-]);
- ]); showToast("Compra registrada"); purchase.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
-            const transfer=document.getElementById("transfer-form"); if(transfer) transfer.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=transfer.querySelector('button[type="submit"]'); btn.disabled=true; const productId=document.getElementById("transfer-product").value; const cantidad=parseInt(document.getElementById("transfer-quantity").value); const unit=document.getElementById("transfer-unit").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); try{ await runTransaction(db, async (t)=>{
-  const bRef = stockRef(productId, "bodega");
-  const rRef = stockRef(productId, "barra");
-  const bSnap = await t.get(bRef);
-  if (!bSnap.exists() || (bSnap.data().unidades || 0) < unidades)
-    throw new Error("Stock insuficiente en bodega.");
-  t.set(bRef, { unidades: increment(-unidades), tenantId: tenantId() }, { merge:true });
-  t.set(rRef, { unidades: increment(unidades),  tenantId: tenantId() }, { merge:true });
-});
- showToast("Traslado exitoso"); transfer.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
+       
+        if(id === 'inventory-view') {
+            const purchaseForm = document.getElementById("purchase-form");
+            if (purchaseForm) {
+                purchaseForm.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const btn = purchaseForm.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    const providerId = document.getElementById("purchase-provider").value;
+                    const productId = document.getElementById("purchase-product").value;
+                    const cantidad = parseInt(document.getElementById("purchase-quantity").value);
+                    const unit = document.getElementById("purchase-unit").value;
+                    const tipo = document.getElementById("purchase-type").value;
+                    const prod = appState.products.find(p => p.id === productId);
+
+                    if (!prod || !providerId || isNaN(cantidad)) {
+                        showToast("Datos inválidos", "error");
+                        btn.disabled = false;
+                        return;
+                    }
+                    
+                    const unidades = toUnidades(cantidad, unit, prod);
+                    const costo = unidades * (prod.precioCompra || 0);
+
+                    try {
+                        const batch = writeBatch(db);
+                        batch.set(doc(colref.purchases), {
+                            providerId, productId, fecha: serverTimestamp(), tipo,
+                            cantidadUnidades: unidades, costoTotal: costo
+                        });
+                        batch.set(stockRef(productId, "bodega"), { tenantId: tenantId(), unidades: increment(unidades) }, { merge: true });
+
+                        if (tipo === "consignacion") {
+                            batch.set(doc(colref.providers, providerId), { saldoPendiente: increment(costo) }, { merge: true });
+                        } else {
+                             batch.set(doc(colref.cashflow), {
+                                type: "egreso", amount: costo,
+                                description: `Compra contado: ${unidades} x ${prod.nombre}`,
+                                date: serverTimestamp()
+                            });
+                        }
+                        await batch.commit();
+                        showToast("Compra registrada");
+                        purchaseForm.reset();
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            const transferForm = document.getElementById("transfer-form");
+            if (transferForm) {
+                transferForm.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const btn = transferForm.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    const productId = document.getElementById("transfer-product").value;
+                    const cantidad = parseInt(document.getElementById("transfer-quantity").value);
+                    const unit = document.getElementById("transfer-unit").value;
+                    const prod = appState.products.find(p => p.id === productId);
+
+                    if (!prod || isNaN(cantidad)) {
+                        showToast("Datos inválidos", "error");
+                        btn.disabled = false;
+                        return;
+                    }
+                    
+                    const unidades = toUnidades(cantidad, unit, prod);
+
+                    try {
+                        await runTransaction(db, async (t) => {
+                            const bodegaRef = stockRef(productId, "bodega");
+                            const barraRef = stockRef(productId, "barra");
+                            const bodegaSnap = await t.get(bodegaRef);
+
+                            if (!bodegaSnap.exists() || (bodegaSnap.data().unidades || 0) < unidades) {
+                                throw new Error("Stock insuficiente en bodega.");
+                            }
+                            t.set(bodegaRef, { unidades: increment(-unidades) }, { merge: true });
+                            t.set(barraRef, { tenantId: tenantId(), unidades: increment(unidades) }, { merge: true });
+                        });
+                        showToast("Traslado exitoso");
+                        transferForm.reset();
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
         }
 
-        if(id==="cashflow-view"){ const form=document.getElementById("cashflow-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const data={ type:document.getElementById("cashflow-type").value, amount:parseFloat(document.getElementById("cashflow-amount").value), description:document.getElementById("cashflow-description").value, date:serverTimestamp(), manual:true, userId:appState.user.uid }; try{ await addDoc(colref.cashflow,data); showToast("Movimiento registrado"); form.reset(); } catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
+        if(id === 'cashflow-view') {
+            const form = document.getElementById("cashflow-form");
+            if (form) {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const btn = form.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    const data = {
+                        type: document.getElementById("cashflow-type").value,
+                        amount: parseFloat(document.getElementById("cashflow-amount").value),
+                        description: document.getElementById("cashflow-description").value,
+                        date: serverTimestamp(),
+                        manual: true,
+                        userId: appState.user.uid
+                    };
+                    try {
+                        await addDoc(colref.cashflow, data);
+                        showToast("Movimiento registrado");
+                        form.reset();
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
+        }
 
-        if(id==="providers-view"){ content.querySelectorAll(".btn-edit-provider").forEach(b=>b.addEventListener("click",()=>{ const p=appState.providers.find(x=>x.id===b.dataset.id); if(!p) return; document.getElementById("provider-id").value=p.id; document.getElementById("provider-nombre").value=p.nombre||""; document.getElementById("provider-contacto").value=p.contacto||""; document.getElementById("provider-consignacion").checked=!!p.consignacion; })); const form=document.getElementById("provider-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("provider-id").value; const data={ nombre:document.getElementById("provider-nombre").value, contacto:document.getElementById("provider-contacto").value, consignacion:document.getElementById("provider-consignacion").checked }; try{ if(id) await setDoc(doc(colref.providers,id), data, {merge:true}); else await addDoc(colref.providers, {...data, saldoPendiente:0}); showToast("Proveedor guardado"); form.reset(); document.getElementById("provider-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); content.querySelectorAll(".btn-settle").forEach(b=>b.addEventListener("click",()=>{ const prov=appState.providers.find(x=>x.id===b.dataset.id); if(!prov) return; if((prov.saldoPendiente||0)<=0){ showToast("Proveedor sin saldo pendiente","error"); return; } document.getElementById("settlement-provider-name").textContent=prov.nombre; document.getElementById("settlement-provider-balance").textContent=COP(prov.saldoPendiente||0); document.getElementById("settle-provider-btn").dataset.providerId=prov.id; document.getElementById("settlement-details").classList.remove("hidden"); })); const settle=document.getElementById("settle-provider-btn"); if(settle) settle.addEventListener("click", async (e)=>{ const providerId=e.target.dataset.providerId; const prov=appState.providers.find(p=>p.id===providerId); if(!prov) return; const b = writeBatch(db);
-b.set(doc(colref.cashflow), {
-  type: "egreso", amount: prov.saldoPendiente,
-  description: `Pago liquidación: ${prov.nombre}`,
-  date: serverTimestamp(), tenantId: tenantId()
-});
-b.set(doc(colref.providers, providerId), { saldoPendiente: 0 }, { merge:true });
-await b.commit();
- showToast("Liquidación realizada"); document.getElementById("settlement-details").classList.add("hidden"); } catch(err) { showToast(err.message, "error"); } }); }
+        if (id === 'providers-view') {
+            content.querySelectorAll(".btn-edit-provider").forEach(b => b.addEventListener("click", () => {
+                const p = appState.providers.find(x => x.id === b.dataset.id);
+                if (!p) return;
+                document.getElementById("provider-id").value = p.id;
+                document.getElementById("provider-nombre").value = p.nombre || "";
+                document.getElementById("provider-contacto").value = p.contacto || "";
+                document.getElementById("provider-consignacion").checked = !!p.consignacion;
+            }));
 
-        if(id==="workers-view"){ content.querySelectorAll(".btn-edit-worker").forEach(b=>b.addEventListener("click",()=>{ const w=appState.workers.find(x=>x.id===b.dataset.id); if(!w) return; document.getElementById("worker-id").value=w.id; document.getElementById("worker-nombre").value=w.nombre||""; document.getElementById("worker-pagoBase").value=w.pagoBase||0; document.getElementById("worker-activo").checked=!!w.activo; })); const form=document.getElementById("worker-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("worker-id").value; const data={ nombre:document.getElementById("worker-nombre").value, pagoBase:parseFloat(document.getElementById("worker-pagoBase").value)||0, activo:document.getElementById("worker-activo").checked }; try{ if(id) await setDoc(doc(colref.workers,id), data, {merge:true}); else await addDoc(colref.workers, data); showToast("Trabajador guardado"); form.reset(); document.getElementById("worker-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
+            const form = document.getElementById("provider-form");
+            if (form) {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const btn = form.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    const id = document.getElementById("provider-id").value;
+                    const data = {
+                        nombre: document.getElementById("provider-nombre").value,
+                        contacto: document.getElementById("provider-contacto").value,
+                        consignacion: document.getElementById("provider-consignacion").checked
+                    };
+                    try {
+                        if (id) {
+                            await setDoc(doc(colref.providers, id), data, { merge: true });
+                        } else {
+                            await addDoc(colref.providers, { ...data, saldoPendiente: 0 });
+                        }
+                        showToast("Proveedor guardado");
+                        form.reset();
+                        document.getElementById("provider-id").value = "";
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            content.querySelectorAll(".btn-settle").forEach(b => b.addEventListener("click", () => {
+                const prov = appState.providers.find(x => x.id === b.dataset.id);
+                if (!prov) return;
+                if ((prov.saldoPendiente || 0) <= 0) {
+                    showToast("Proveedor sin saldo pendiente", "error");
+                    return;
+                }
+                document.getElementById("settlement-provider-name").textContent = prov.nombre;
+                document.getElementById("settlement-provider-balance").textContent = COP(prov.saldoPendiente || 0);
+                document.getElementById("settle-provider-btn").dataset.providerId = prov.id;
+                document.getElementById("settlement-details").classList.remove("hidden");
+            }));
+            
+            const settleBtn = document.getElementById("settle-provider-btn");
+            if (settleBtn) {
+                settleBtn.addEventListener("click", async (e) => {
+                    const providerId = e.target.dataset.providerId;
+                    const prov = appState.providers.find(p => p.id === providerId);
+                    if (!prov) return;
+                    
+                    const batch = writeBatch(db);
+                    batch.set(doc(colref.cashflow), {
+                        type: "egreso",
+                        amount: prov.saldoPendiente,
+                        description: `Pago liquidación: ${prov.nombre}`,
+                        date: serverTimestamp()
+                    });
+                    batch.set(doc(colref.providers, providerId), { saldoPendiente: 0 }, { merge: true });
+                    
+                    try {
+                        await batch.commit();
+                        showToast("Liquidación realizada");
+                        document.getElementById("settlement-details").classList.add("hidden");
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    }
+                });
+            }
+        }
         
-        if(id === "profile-view") { const personalForm = document.getElementById("profile-personal-form"); if(personalForm) personalForm.addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; try { const userRef = doc(db, "users", appState.user.uid); const newDisplayName = document.getElementById("profile-name").value; const newPhone = document.getElementById("profile-phone").value; await setDoc(userRef, { displayName: newDisplayName, phone: newPhone }, { merge: true }); appState.userData.displayName = newDisplayName; appState.userData.phone = newPhone; showToast("Datos personales actualizados"); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled=false; } }); const businessForm = document.getElementById("profile-business-form"); if(businessForm) businessForm.addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; try { const userRef = doc(db, "users", appState.user.uid); const newBusinessName = document.getElementById("profile-business-name").value; const newBusinessType = document.getElementById("profile-business-type").value; await setDoc(userRef, { businessName: newBusinessName, businessType: newBusinessType }, { merge: true }); appState.userData.businessName = newBusinessName; appState.userData.businessType = newBusinessType; showToast("Datos del negocio actualizados"); } catch(err) { showToast(err.message, "error"); } finally { btn.disabled=false; } }); }
+        if (id === 'profile-view') {
+            const personalForm = document.getElementById("profile-personal-form");
+            if (personalForm) {
+                personalForm.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    try {
+                        const tenantRef = doc(db, "tenants", appState.user.uid);
+                        const newDisplayName = document.getElementById("profile-name").value;
+                        const newPhone = document.getElementById("profile-phone").value;
+                        await setDoc(tenantRef, { ownerName: newDisplayName, phone: newPhone }, { merge: true });
+                        appState.userData.ownerName = newDisplayName;
+                        appState.userData.phone = newPhone;
+                        showToast("Datos personales actualizados");
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
 
-        if(id==="shifts-view"){
+            const businessForm = document.getElementById("profile-business-form");
+            if (businessForm) {
+                businessForm.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    try {
+                        const tenantRef = doc(db, "tenants", appState.user.uid);
+                        const newBusinessName = document.getElementById("profile-business-name").value;
+                        const newBusinessType = document.getElementById("profile-business-type").value;
+                        await setDoc(tenantRef, { businessName: newBusinessName, businessType: newBusinessType }, { merge: true });
+                        appState.userData.businessName = newBusinessName;
+                        appState.userData.businessType = newBusinessType;
+                        showToast("Datos del negocio actualizados");
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
+        }
+
+        if(id === 'shifts-view') {
             if (appState.selectedShiftId) {
-                document.getElementById("back-to-shifts-list")?.addEventListener("click", () => { appState.selectedShiftId = null; scheduleRender(); });
-                document.getElementById("fichas-grid")?.addEventListener("click", (e) => { const card = e.target.closest(".ficha-card"); if (!card) return; const productId = card.dataset.productId; const product = appState.products.find(p => p.id === productId); const stock = appState.inventory[productId]?.barra?.unidades ?? 0; const modal = document.getElementById("ficha-sale-modal"); modal.querySelector("#ficha-sale-modal-title").textContent = `Vender ${product.nombre}`; modal.querySelector("#ficha-sale-product-id").value = productId; modal.querySelector("#ficha-sale-stock").textContent = stock; modal.querySelector("#ficha-sale-quantity").value = 1; modal.classList.add("visible"); });
-                document.getElementById("open-loan-modal-btn")?.addEventListener("click", () => { document.getElementById("loan-modal").classList.add("visible"); });
+                document.getElementById("back-to-shifts-list")?.addEventListener("click", () => {
+                    appState.selectedShiftId = null;
+                    scheduleRender();
+                });
+
+                document.getElementById("fichas-grid")?.addEventListener("click", (e) => {
+                    const card = e.target.closest(".ficha-card");
+                    if (!card) return;
+                    const productId = card.dataset.productId;
+                    const product = appState.products.find(p => p.id === productId);
+                    const stock = appState.inventory[productId]?.barra?.unidades ?? 0;
+                    const modal = document.getElementById("ficha-sale-modal");
+                    modal.querySelector("#ficha-sale-modal-title").textContent = `Vender ${product.nombre}`;
+                    modal.querySelector("#ficha-sale-product-id").value = productId;
+                    modal.querySelector("#ficha-sale-stock").textContent = stock;
+                    modal.querySelector("#ficha-sale-quantity").value = 1;
+                    modal.classList.add("visible");
+                });
+
+                document.getElementById("open-loan-modal-btn")?.addEventListener("click", () => {
+                    document.getElementById("loan-modal").classList.add("visible");
+                });
+
                 document.getElementById("close-shift-btn")?.addEventListener("click", async (e) => {
                     const btn = e.target;
                     const isConfirmed = btn.dataset.confirmed === 'true';
@@ -962,7 +1207,7 @@ await b.commit();
                         btn.textContent = '¿Confirmar Cierre?';
                         btn.style.background = 'var(--brand-secondary)';
                         btn.dataset.confirmed = 'true';
-                        
+                       
                         const timeoutId = setTimeout(() => {
                             btn.textContent = btn.dataset.originalText;
                             btn.style.background = '';
@@ -976,34 +1221,25 @@ await b.commit();
                     btn.disabled = true;
                     const shiftId = btn.dataset.shiftId;
                     const shift = appState.activeShifts.find(s => s.id === shiftId);
-                    if (!shift) { btn.disabled = false; return; }
+                    if (!shift) {
+                        btn.disabled = false;
+                        return;
+                    }
 
                     const worker = appState.workers.find(w => w.id === shift.workerId);
                     const ingresos = shift.sales.reduce((s, x) => s + x.totalVenta, 0);
                     const comisiones = shift.sales.reduce((s, x) => s + (x.totalComision || 0), 0);
                     const prestamos = shift.loans.reduce((s, l) => s + l.valor, 0);
                     const totalAPagar = (worker?.pagoBase || 0) + comisiones - prestamos;
-                    try {
-                        const b = writeBatch(db);
-b.set(doc(colref.cashflow), {
-  type: "ingreso", amount: ingresos,
-  description: `Cierre turno ${worker?.nombre || ""}`,
-  date: serverTimestamp(), tenantId: tenantId()
-});
-if (totalAPagar > 0) {
-  b.set(doc(colref.cashflow), {
-    type: "egreso", amount: totalAPagar,
-    description: `Pago liquidación ${worker?.nombre || ""}`,
-    date: serverTimestamp(), tenantId: tenantId()
-  });
-}
-b.set(doc(colref.shifts, shift.id), {
-  estado: "cerrado", fin: serverTimestamp(),
-  totalIngresos: ingresos, totalComisiones: comisiones,
-  totalPrestamos: prestamos, totalPagado: totalAPagar
-}, { merge: true });
-await b.commit();
 
+                    try {
+                        const batch = writeBatch(db);
+                        batch.set(doc(colref.cashflow), { type: "ingreso", amount: ingresos, description: `Cierre turno ${worker?.nombre || ""}`, date: serverTimestamp() });
+                        if (totalAPagar > 0) {
+                            batch.set(doc(colref.cashflow), { type: "egreso", amount: totalAPagar, description: `Pago liquidación ${worker?.nombre || ""}`, date: serverTimestamp() });
+                        }
+                        batch.set(doc(colref.shifts, shift.id), { estado: "cerrado", fin: serverTimestamp(), totalIngresos: ingresos, totalComisiones: comisiones, totalPrestamos: prestamos, totalPagado: totalAPagar }, { merge: true });
+                        await batch.commit();
                         appState.selectedShiftId = null;
                         showToast("Turno cerrado y liquidado");
                     } catch (err) {
@@ -1015,32 +1251,71 @@ await b.commit();
                     }
                 });
             } else {
-                document.getElementById("open-shift-form")?.addEventListener("submit", async (e) => { e.preventDefault(); const workerId = document.getElementById("shift-worker").value; if (!workerId) return; const worker = appState.workers.find(w => w.id === workerId); await addDoc(colref.shifts, {
-  workerId, pagoBase: worker?.pagoBase || 0,
-  inicio: serverTimestamp(), estado: "abierto",
-  tenantId: tenantId()
-});
+                document.getElementById("open-shift-form")?.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const workerId = document.getElementById("shift-worker").value;
+                    if (!workerId) return;
+                    const worker = appState.workers.find(w => w.id === workerId);
+                    await addDoc(colref.shifts, {
+                        workerId,
+                        pagoBase: worker?.pagoBase || 0,
+                        inicio: serverTimestamp(),
+                        estado: "abierto"
+                    });
+                });
 
-                content.querySelectorAll('.btn-manage-shift').forEach(btn => btn.addEventListener('click', (e) => { appState.selectedShiftId = e.target.dataset.shiftId; scheduleRender(); }));
+                content.querySelectorAll('.btn-manage-shift').forEach(btn => btn.addEventListener('click', (e) => {
+                    appState.selectedShiftId = e.target.dataset.shiftId;
+                    scheduleRender();
+                }));
+
                 content.querySelectorAll('.btn-view-desglose').forEach(btn => btn.addEventListener('click', (e) => {
-                    const shiftId = e.target.dataset.shiftId; const shift = appState.activeShifts.find(s => s.id === shiftId); if (!shift) return;
+                    const shiftId = e.target.dataset.shiftId;
+                    const shift = appState.activeShifts.find(s => s.id === shiftId);
+                    if (!shift) return;
+                    
                     const worker = appState.workers.find(w => w.id === shift.workerId);
                     document.getElementById('desglose-modal-title').textContent = `Desglose de ${worker?.nombre || '...'}`;
-                    const combinedEvents = [ ...shift.sales.map(s => ({ ...s, eventType: 'sale' })), ...shift.loans.map(l => ({ ...l, eventType: 'loan' })) ];
-                    combinedEvents.sort((a, b) => a.fecha.toMillis() - b.fecha.toMillis());
-                    const tableBody = combinedEvents.map(event => { const time = event.fecha.toDate().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }); if (event.eventType === 'sale') { const product = appState.products.find(p => p.id === event.productId); const description = `${event.unidades} x ${product?.nombre || 'Ficha vendida'}`; return row([time, description, COP(event.totalVenta), COP(event.totalComision), '']); } else { return row([time, `Préstamo: ${event.descripcion}`, '', '', COP(event.valor)]); } }).join('');
+                    
+                    const combinedEvents = [
+                        ...shift.sales.map(s => ({ ...s, eventType: 'sale' })),
+                        ...shift.loans.map(l => ({ ...l, eventType: 'loan' }))
+                    ];
+                    if (combinedEvents.length > 0 && combinedEvents[0].fecha?.toMillis) {
+                        combinedEvents.sort((a, b) => a.fecha.toMillis() - b.fecha.toMillis());
+                    }
+                    
+                    const tableBody = combinedEvents.map(event => {
+                        const time = event.fecha?.toDate().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) || 'N/A';
+                        if (event.eventType === 'sale') {
+                            const product = appState.products.find(p => p.id === event.productId);
+                            const description = `${event.unidades} x ${product?.nombre || 'Ficha vendida'}`;
+                            return row([time, description, COP(event.totalVenta), COP(event.totalComision), '']);
+                        } else {
+                            return row([time, `Préstamo: ${event.descripcion}`, '', '', COP(event.valor)]);
+                        }
+                    }).join('');
+                    
                     document.getElementById('desglose-modal-body').innerHTML = `<table><thead><tr><th>Hora</th><th>Descripción</th><th>Ingreso</th><th>Comisión</th><th>Préstamo</th></tr></thead><tbody>${tableBody || `<tr><td colspan="5">No hay eventos registrados.</td></tr>`}</tbody></table>`;
                     document.getElementById('desglose-modal').classList.add('visible');
                 }));
             }
         }
     }
-    const modals = document.querySelectorAll(".modal");
-    modals.forEach(modal => {
+    
+    // --- Manejo de Modales ---
+    document.querySelectorAll(".modal").forEach(modal => {
         const closeBtn = modal.querySelector(".modal-close-btn");
-        if (closeBtn) closeBtn.addEventListener("click", () => modal.classList.remove("visible"));
-        modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("visible") });
+        if (closeBtn) {
+            closeBtn.addEventListener("click", () => modal.classList.remove("visible"));
+        }
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                modal.classList.remove("visible");
+            }
+        });
     });
   </script>
 </body>
 </html>
+
