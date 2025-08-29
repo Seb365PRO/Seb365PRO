@@ -1,115 +1,840 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockFlow Neon</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StockFlow — Ultra Rápida</title>
+
+  <!-- Fuente -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0f1a; --panel:#121828; --panel-2:#0f1424;
+      --stroke:#1d2540; --text:#eaf0ff; --muted:#b6c1e4;
+      --brand:#aa33ff; --brand-2:#7a1fe8; --ok:#20e3b2; --bad:#ff5470;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;background:#0b0f1a;color:var(--text)}
+
+    header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--stroke);background:rgba(0,0,0,.2);backdrop-filter:blur(6px)}
+    header h1{margin:0;font-size:18px;color:#fff;text-shadow:0 0 18px rgba(170,51,255,.55)}
+    main{display:flex;min-height:calc(100vh - 56px)}
+    #main-nav{width:250px;padding:12px;border-right:1px solid var(--stroke);background:var(--panel-2)}
+    #main-nav .nav-link{display:flex;gap:10px;align-items:center;color:var(--muted);padding:12px;border-radius:12px;text-decoration:none;margin-bottom:8px}
+    #main-nav .nav-link.active{background:rgba(170,51,255,.12);color:#fff;box-shadow:inset 0 0 0 1px rgba(170,51,255,.2)}
+    #content{flex:1;padding:18px}
+
+    .card{background:var(--panel);border:1px solid var(--stroke);border-radius:16px;padding:16px}
+    .dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:16px}
+    .content-view h2{margin:6px 0 16px}
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    input,select,button{font:inherit}
+    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--stroke);background:#0e1426;color:#dfe5ff;outline:none}
+    button{background:linear-gradient(90deg,var(--brand) 0%, var(--brand-2) 100%);border:none;color:#fff;padding:10px 14px;border-radius:12px;cursor:pointer}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    label{display:flex;align-items:center;gap:8px}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    thead th{font-weight:600;color:#a6b3db;text-align:left;padding:10px 12px}
+    tbody td{background:var(--panel);border:1px solid var(--stroke);border-left:none;border-right:none;padding:12px}
+    .table-wrapper{overflow:auto}
+    .actions{display:flex;gap:8px}
+    .hidden{display:none !important}
+    .neon-text-main{color:#fff;text-shadow:0 0 18px rgba(170,51,255,.55)}
+    .neon-text-secondary{color:#b277ff}
+
+    /* Toasts */
+    #toast-container{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+    .toast{padding:12px 14px;border-radius:12px;border:1px solid var(--stroke);background:#0e1426}
+    .toast.success{border-color:#114d3a;box-shadow:0 0 0 1px rgba(32,227,178,.25) inset}
+    .toast.error{border-color:#5c1730;box-shadow:0 0 0 1px rgba(255,84,112,.25) inset}
+    .amount-positive{color:var(--ok)} .amount-negative{color:var(--bad)}
+
+    /* Apagar loaders globales por completo */
+    #loader,.loader-overlay,.loader-spinner{display:none !important}
+
+    @media (max-width: 1024px){
+      .dashboard-grid{grid-template-columns:repeat(2,1fr)}
+      #main-nav{position:fixed;left:-270px;top:56px;height:calc(100vh - 56px);z-index:80;transition:all .25s}
+      #main-nav.open{left:0}
+      #content{padding:14px;margin-left:0}
+    }
+    @media (max-width: 640px){ .dashboard-grid{grid-template-columns:1fr} .form-grid{grid-template-columns:1fr} }
+    body[data-role="vendedor"] .admin-only{display:none !important}
+  </style>
 </head>
 <body>
+  <div id="toast-container"></div>
 
-    <div id="loader" class="loader-overlay">
-        <div class="loader-spinner"></div>
+  <!-- Auth -->
+  <div id="auth-container" style="display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="auth-box card" style="max-width:420px;width:100%">
+      <h1>StockFlow</h1>
+      <p class="neon-text-secondary">Inventario ultra-rápido</p>
+
+      <div id="login-view">
+        <h2>Iniciar Sesión</h2>
+        <form id="login-form" autocomplete="on">
+          <input type="email" id="login-email" placeholder="Correo electrónico" required>
+          <input type="password" id="login-password" placeholder="Contraseña" required>
+          <button type="submit">Ingresar</button>
+        </form>
+        <button id="google-login-btn" style="margin-top:10px">Entrar con Google</button>
+        <p style="margin-top:10px">¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
+      </div>
+
+      <div id="register-view" class="hidden">
+        <h2>Registro</h2>
+        <form id="register-form" autocomplete="on">
+          <input type="text" id="register-name" placeholder="Nombre completo" required>
+          <input type="email" id="register-email" placeholder="Correo electrónico" required>
+          <input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required>
+          <button type="submit">Crear Cuenta</button>
+        </form>
+        <p style="margin-top:10px">¿Ya tienes cuenta? <a href="#" id="show-login-link">Inicia sesión</a></p>
+      </div>
     </div>
+  </div>
 
-    <div id="toast-container"></div>
+  <!-- App -->
+  <div id="app-container" class="hidden">
+    <header>
+      <button id="menu-toggle" title="Menú" style="background:#20263d;border:1px solid var(--stroke);border-radius:10px;padding:8px 10px">☰</button>
+      <h1 class="neon-text-main">StockFlow</h1>
+      <div class="user-info" style="display:flex;align-items:center;gap:10px">
+        <span id="user-email"></span>
+        <button id="logout-btn" style="background:#252c47;border:1px solid var(--stroke)">Salir</button>
+      </div>
+    </header>
+    <main>
+      <nav id="main-nav">
+        <a href="#" class="nav-link active" data-view="dashboard-view">📊 <span>Reportes</span></a>
+        <a href="#" class="nav-link" data-view="shifts-view">⏱️ <span>Turnos y Ventas</span></a>
+        <a href="#" class="nav-link" data-view="inventory-view">📦 <span>Inventario</span></a>
+        <a href="#" class="nav-link" data-view="cashflow-view">💸 <span>Flujo de Caja</span></a>
+        <a href="#" class="nav-link" data-view="products-view">🧰 <span>Productos</span></a>
+        <a href="#" class="nav-link" data-view="providers-view">🚚 <span>Proveedores</span></a>
+        <a href="#" class="nav-link admin-only" data-view="workers-view">👥 <span>Trabajadores</span></a>
+      </nav>
+      <div id="content"></div>
+    </main>
+  </div>
 
-    <div id="auth-container" class="view">
-        <div class="auth-box">
-            <h1>StockFlow</h1>
-            <p class="neon-text-secondary">Inventario con energía Neon</p>
-            <div id="login-view">
-                <h2>Iniciar Sesión</h2>
-                <form id="login-form">
-                    <input type="email" id="login-email" placeholder="Correo electrónico" required>
-                    <input type="password" id="login-password" placeholder="Contraseña" required>
-                    <button type="submit">Ingresar</button>
-                </form>
-                <button id="google-login-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                    <span>Entrar con Google</span>
-                </button>
-                <p>¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
+  <!-- Config Firebase (tu proyecto) -->
+  <script>
+    window.__FIREBASE_CONFIG__ = {
+      apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
+      authDomain: "seb360-pro.firebaseapp.com",
+      projectId: "seb360-pro",
+      storageBucket: "seb360-pro.appspot.com",
+      messagingSenderId: "750401346580",
+      appId: "1:750401346580:web:a682fd6ae09292ff589b01"
+    };
+  </script>
+
+  <!-- App (ESM, sin loaders, UI optimista) -->
+  <script type="module">
+    // 1) Firebase SDK ESM
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
+      createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, collectionGroup, doc, setDoc, addDoc,
+      onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction,
+      increment
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // 2) Inicialización
+    const appFB = initializeApp(window.__FIREBASE_CONFIG__);
+    const auth = getAuth(appFB);
+    const db   = getFirestore(appFB);
+
+    // 3) Estado
+    let appState = {
+      user:null, role:null, unsub:[],
+      products:[], providers:[], workers:[],
+      inventory:{}, cashflow:[], activeShift:null
+    };
+    const colref = {
+      users: collection(db,"users"),
+      products: collection(db,"products"),
+      providers: collection(db,"providers"),
+      workers: collection(db,"workers"),
+      cashflow: collection(db,"cashflow_entries"),
+      shifts: collection(db,"shifts"),
+      purchases: collection(db,"purchases")
+    };
+
+    // 4) Utilidades (sin loaders)
+    const showToast = (msg,type="success")=>{
+      const c=document.getElementById("toast-container");
+      const t=document.createElement("div");
+      t.className=`toast ${type}`;
+      t.textContent=msg;
+      c.appendChild(t);
+      setTimeout(()=>t.remove(),3200);
+    };
+    const COP = (v)=> new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(v);
+    const fmtDate = (ts)=> ts?.toDate().toLocaleString("es-CO") ?? "—";
+
+    // 5) Motor de render (1 por frame)
+    let raf=null;
+    const scheduleRender=(forceId=null)=>{
+      if(raf) return;
+      raf=requestAnimationFrame(()=>{
+        const active= forceId || (document.querySelector(".nav-link.active")?.dataset.view) || "dashboard-view";
+        renderView(active);
+        raf=null;
+      });
+    };
+
+    // 6) Navegación
+    const mainNav = document.getElementById("main-nav");
+    document.getElementById("menu-toggle").addEventListener("click",()=> mainNav.classList.toggle("open"));
+    mainNav.addEventListener("click",(e)=>{
+      const link = e.target.closest(".nav-link");
+      if(!link) return;
+      e.preventDefault();
+      mainNav.classList.remove("open");
+      document.querySelectorAll(".nav-link").forEach(n=>n.classList.remove("active"));
+      link.classList.add("active");
+      scheduleRender(link.dataset.view);
+    });
+
+    // 7) Auth — UI INMEDIATA (botón solo se deshabilita para evitar doble click)
+    document.getElementById("login-form").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled=true;
+      signInWithEmailAndPassword(auth,
+        document.getElementById("login-email").value,
+        document.getElementById("login-password").value
+      ).catch(err=>showToast(err.message,"error")).finally(()=>{btn.disabled=false;});
+    });
+    document.getElementById("google-login-btn").addEventListener("click", async ()=>{
+      try{ await signInWithPopup(auth, new GoogleAuthProvider()); }
+      catch(err){ showToast(err.message,"error"); }
+    });
+    document.getElementById("register-form").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const email=document.getElementById("register-email").value;
+      const password=document.getElementById("register-password").value;
+      const displayName=document.getElementById("register-name").value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled=true;
+
+      // Registro sin lecturas previas (evita “Creando…”): crea Auth y luego su doc.
+      try{
+        const cred = await createUserWithEmailAndPassword(auth,email,password);
+        await setDoc(doc(colref.users, cred.user.uid), {
+          email, displayName, role: "admin", active:true, createdAt: serverTimestamp()
+        });
+        showToast("Cuenta creada");
+      }catch(err){ showToast(err.message,"error"); }
+      finally{ btn.disabled=false; }
+    });
+    document.getElementById("show-register-link").addEventListener("click",(e)=>{
+      e.preventDefault(); document.getElementById("login-view").classList.add("hidden"); document.getElementById("register-view").classList.remove("hidden");
+    });
+    document.getElementById("show-login-link").addEventListener("click",(e)=>{
+      e.preventDefault(); document.getElementById("register-view").classList.add("hidden"); document.getElementById("login-view").classList.remove("hidden");
+    });
+    document.getElementById("logout-btn").addEventListener("click",()=>signOut(auth));
+
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        // mostrar app inmediatamente
+        appState.user=user;
+        appState.role="admin";
+        document.body.dataset.role = appState.role;
+        document.getElementById("user-email").textContent=user.email;
+        document.getElementById("auth-container").classList.add("hidden");
+        document.getElementById("app-container").classList.remove("hidden");
+        initRealtime();
+        scheduleRender("dashboard-view");
+      }else{
+        appState.unsub.forEach(u=>u()); appState.unsub=[];
+        appState={user:null,role:null,unsub:[],products:[],providers:[],workers:[],inventory:{},cashflow:[],activeShift:null};
+        document.getElementById("app-container").classList.add("hidden");
+        document.getElementById("auth-container").classList.remove("hidden");
+      }
+    });
+
+    // 8) Listeners ultra-ligeros
+    function initRealtime(){
+      appState.unsub.forEach(u=>u()); appState.unsub=[];
+      const add = (un)=> appState.unsub.push(un);
+
+      add(onSnapshot(query(colref.products, orderBy("nombre")), s=>{
+        appState.products = s.docs.map(d=>({id:d.id, ...d.data()}));
+        scheduleRender();
+      }));
+      add(onSnapshot(query(colref.providers, orderBy("nombre")), s=>{
+        appState.providers = s.docs.map(d=>({id:d.id, ...d.data()}));
+        scheduleRender();
+      }));
+      add(onSnapshot(query(colref.workers, orderBy("nombre")), s=>{
+        appState.workers = s.docs.map(d=>({id:d.id, ...d.data()}));
+        scheduleRender();
+      }));
+      add(onSnapshot(query(colref.cashflow, orderBy("date","desc")), s=>{
+        appState.cashflow = s.docs.map(d=>({id:d.id, ...d.data()}));
+        scheduleRender();
+      }));
+
+      // Turno activo + subcolecciones
+      add(onSnapshot(query(colref.shifts, where("estado","==","abierto")), s=>{
+        if(!s.empty){
+          const sh=s.docs[0];
+          appState.activeShift = { id: sh.id, ...sh.data(), sales:[], loans:[] };
+          appState.unsub.push(onSnapshot(collection(db,"shifts", sh.id, "sales"), ss=>{
+            if(appState.activeShift) appState.activeShift.sales = ss.docs.map(d=>d.data()); scheduleRender();
+          }));
+          appState.unsub.push(onSnapshot(collection(db,"shifts", sh.id, "loans"), ls=>{
+            if(appState.activeShift) appState.activeShift.loans = ls.docs.map(d=>d.data()); scheduleRender();
+          }));
+        }else{
+          appState.activeShift=null;
+        }
+        scheduleRender();
+      }));
+
+      // Inventario con un solo canal
+      add(onSnapshot(collectionGroup(db,"stock"), snap=>{
+        const inv={};
+        snap.docs.forEach(ds=>{
+          const parts=ds.ref.path.split("/");  // inventory/<pid>/stock/<place>
+          const pid=parts[1], place=parts[3];
+          (inv[pid]??={})[place]=ds.data();
+        });
+        appState.inventory=inv;
+        scheduleRender();
+      }));
+    }
+
+    // 9) Render
+    const content = document.getElementById("content");
+    const row = (cols)=> `<tr>${cols.map(c=>`<td>${c}</td>`).join("")}</tr>`;
+    function renderView(id){
+      let html="";
+      if(id==="dashboard-view"){
+        const balance = appState.cashflow.reduce((b,e)=> b + (e.type==="ingreso"? e.amount : -e.amount),0);
+        const salesTurn = appState.activeShift?.sales.reduce((s,x)=>s+x.totalVenta,0) || 0;
+        const debt = appState.providers.reduce((s,p)=> s+(p.saldoPendiente||0),0);
+        const low = appState.products
+          .filter(p => (appState.inventory[p.id]?.barra?.unidades||0) < 10)
+          .map(p => `<li>${p.nombre}: ${appState.inventory[p.id]?.barra?.unidades||0} uds</li>`).join("");
+        html = `
+          <div class="content-view">
+            <h2>Panel de Control</h2>
+            <div class="dashboard-grid">
+              <div class="card"><h3 class="neon-text-secondary">Saldo en Caja</h3><p style="font-size:20px">${COP(balance)}</p></div>
+              <div class="card"><h3 class="neon-text-secondary">Ventas Turno</h3><p style="font-size:20px">${COP(salesTurn)}</p></div>
+              <div class="card"><h3 class="neon-text-secondary">Deuda Proveedores</h3><p style="font-size:20px">${COP(debt)}</p></div>
+              <div class="card"><h3 class="neon-text-secondary">Stock Crítico (Barra)</h3><ul>${low || "<li>Todo en orden</li>"}</ul></div>
             </div>
-            <div id="register-view" style="display: none;">
-                <h2>Registro</h2>
-                <form id="register-form">
-                    <input type="text" id="register-name" placeholder="Nombre completo" required>
-                    <input type="email" id="register-email" placeholder="Correo electrónico" required>
-                    <input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required>
-                    <button type="submit">Crear Cuenta</button>
-                </form>
-                <p>¿Ya tienes cuenta? <a href="#" id="show-login-link">Inicia sesión</a></p>
+          </div>`;
+      }
+
+      if(id==="products-view"){
+        const rows = appState.products.map(p=> row([
+          p.nombre, COP(p.precioVenta||0), COP(p.precioCompra||0), (p.activo?"✅":"❌"),
+          `<div class="actions ${appState.role!=="admin"?"hidden":""}">
+             <button class="btn-edit" data-id="${p.id}">Editar</button>
+           </div>`
+        ])).join("");
+        html = `
+        <div class="content-view">
+          <h2>Productos</h2>
+          <form id="product-form" class="${appState.role==="admin"?"":"hidden"}">
+            <input type="hidden" id="product-id">
+            <div class="form-grid">
+              <input id="product-nombre" placeholder="Nombre" required>
+              <input id="product-precioVenta" type="number" step="any" min="0" placeholder="Precio Venta" required>
+              <input id="product-precioCompra" type="number" step="any" min="0" placeholder="Precio Compra" required>
+              <input id="product-precioFicha" type="number" step="any" min="0" placeholder="Precio Ficha (opcional)">
+              <input id="product-unidadesPorCaja" type="number" min="1" placeholder="Unid. por Caja">
+              <input id="product-unidadesPorCanasta" type="number" min="1" placeholder="Unid. por Canasta">
             </div>
-        </div>
-    </div>
+            <label><input id="product-activo" type="checkbox" checked> Activo</label>
+            <button type="submit">Guardar Producto</button>
+          </form>
+          <div class="table-wrapper" style="margin-top:12px">
+            <table>
+              <thead><tr><th>Nombre</th><th>P. Venta</th><th>P. Compra</th><th>Activo</th><th>Acciones</th></tr></thead>
+              <tbody>${rows || `<tr><td colspan="5">Sin productos.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
 
-    <div id="app-container" class="view" style="display: none;">
-        <header>
-            <button id="menu-toggle">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
-            <h1 class="neon-text-main">StockFlow</h1>
-            <div class="user-info">
-                <span id="user-email"></span>
-                <button id="logout-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                </button>
+      if(id==="inventory-view"){
+        const rows = appState.products.map(p=> row([
+          p.nombre,
+          appState.inventory[p.id]?.bodega?.unidades ?? 0,
+          appState.inventory[p.id]?.barra?.unidades ?? 0
+        ])).join("");
+        const productOpts = appState.products.filter(p=>p.activo).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
+        const providerOpts = appState.providers.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
+        html = `
+        <div class="content-view">
+          <h2>Inventario y Compras</h2>
+          <div class="form-grid">
+            <form id="purchase-form">
+              <h3>Registrar Compra</h3>
+              <select id="purchase-provider" required><option value="">Proveedor…</option>${providerOpts}</select>
+              <select id="purchase-product" required><option value="">Producto…</option>${productOpts}</select>
+              <input id="purchase-quantity" type="number" min="1" placeholder="Cantidad" required>
+              <select id="purchase-unit" required>
+                <option value="unidades">Unidades</option>
+                <option value="cajas">Cajas</option>
+                <option value="canastas">Canastas</option>
+              </select>
+              <select id="purchase-type" required>
+                <option value="contado">Contado (Afecta caja)</option>
+                <option value="consignacion">Consignación</option>
+              </select>
+              <button type="submit">Registrar Compra</button>
+            </form>
+            <form id="transfer-form">
+              <h3>Trasladar Bodega → Barra</h3>
+              <select id="transfer-product" required><option value="">Producto…</option>${productOpts}</select>
+              <input id="transfer-quantity" type="number" min="1" placeholder="Cantidad" required>
+              <select id="transfer-unit" required>
+                <option value="unidades">Unidades</option>
+                <option value="cajas">Cajas</option>
+                <option value="canastas">Canastas</option>
+              </select>
+              <button type="submit">Trasladar</button>
+            </form>
+          </div>
+          <h3 style="margin-top:14px">Stock Actual</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Producto</th><th>Stock Bodega</th><th>Stock Barra</th></tr></thead>
+              <tbody>${rows || `<tr><td colspan="3">Sin stock.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+
+      if(id==="cashflow-view"){
+        const rows = appState.cashflow.map(e=>`
+          <tr>
+            <td>${fmtDate(e.date)}</td>
+            <td>${e.description}</td>
+            <td class="${e.type==="ingreso"?"amount-positive":"amount-negative"}">${COP(e.type==="ingreso"?e.amount:-e.amount)}</td>
+          </tr>`).join("");
+        html = `
+        <div class="content-view">
+          <h2>Flujo de Caja</h2>
+          <form id="cashflow-form">
+            <div class="form-grid">
+              <select id="cashflow-type" required>
+                <option value="ingreso">Ingreso</option>
+                <option value="egreso">Egreso</option>
+              </select>
+              <input id="cashflow-amount" type="number" step="any" min="1" placeholder="Monto" required>
             </div>
-        </header>
-        <main>
-            <nav id="main-nav">
-                <a href="#" class="nav-link active" data-view="dashboard-view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M12 8V4M6 20v-4M18 20v-2M6 12V4M18 14V4"/></svg>
-                    <span>Reportes</span>
-                </a>
-                <a href="#" class="nav-link" data-view="shifts-view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>Turnos y Ventas</span>
-                </a>
-                <a href="#" class="nav-link" data-view="inventory-view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                    <span>Inventario</span>
-                </a>
-                <a href="#" class="nav-link" data-view="cashflow-view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <span>Flujo de Caja</span>
-                </a>
-                <a href="#" class="nav-link" data-view="products-view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                    <span>Productos</span>
-                </a>
-                <a href="#" class="nav-link" data-view="providers-view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                    <span>Proveedores</span>
-                </a>
-                <a href="#" class="nav-link admin-only" data-view="workers-view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    <span>Trabajadores</span>
-                </a>
-            </nav>
-            <div id="content">
-                </div>
-        </main>
-    </div>
+            <input id="cashflow-description" placeholder="Descripción" required>
+            <button type="submit">Registrar</button>
+          </form>
+          <h3 style="margin-top:14px">Historial</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th></tr></thead>
+              <tbody>${rows || `<tr><td colspan="3">Sin movimientos.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
 
-    <script>
-        // Esta configuración se mantiene igual
-        window.__FIREBASE_CONFIG__ = {
-            apiKey: "AIzaSyDm2g7JwRNwF9Xgktj9ATPkJM8qnss8eNg",
-            authDomain: "seb360-pro.firebaseapp.com",
-            projectId: "seb360-pro",
-            storageBucket: "seb360-pro.appspot.com",
-            messagingSenderId: "750401346580",
-            appId: "1:750401346580:web:a682fd6ae09292ff589b01"
-        };
-    </script>
-    
-    <script type="module" src="app.js"></script>
+      if(id==="providers-view"){
+        const rows = appState.providers.map(p=> row([
+          p.nombre, (p.consignacion?"✅":"❌"), COP(p.saldoPendiente||0),
+          `<div class="actions ${appState.role!=="admin"?"hidden":""}">
+             <button class="btn-edit-provider" data-id="${p.id}">Editar</button>
+             <button class="btn-settle" data-id="${p.id}">Liquidar</button>
+           </div>`
+        ])).join("");
+        html = `
+        <div class="content-view">
+          <h2>Proveedores</h2>
+          <form id="provider-form" class="${appState.role==="admin"?"":"hidden"}">
+            <input type="hidden" id="provider-id">
+            <input id="provider-nombre" placeholder="Nombre del proveedor" required>
+            <input id="provider-contacto" placeholder="Contacto">
+            <label><input id="provider-consignacion" type="checkbox"> Acepta consignación</label>
+            <button type="submit">Guardar Proveedor</button>
+          </form>
+          <h3 style="margin-top:14px">Lista</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Nombre</th><th>Consignación</th><th>Saldo</th><th>Acciones</th></tr></thead>
+              <tbody>${rows || `<tr><td colspan="4">Sin proveedores.</td></tr>`}</tbody>
+            </table>
+          </div>
+          <div id="settlement-details" class="hidden card" style="margin-top:12px">
+            <h4>Liquidar a: <span id="settlement-provider-name"></span></h4>
+            <p>Saldo: <strong id="settlement-provider-balance"></strong></p>
+            <button id="settle-provider-btn">Pagar y Registrar Egreso</button>
+          </div>
+        </div>`;
+      }
 
+      if(id==="workers-view"){
+        const rows = appState.workers.map(w=> row([
+          w.nombre, COP(w.pagoBase||0), (w.activo?"✅":"❌"),
+          `<div class="actions"><button class="btn-edit-worker" data-id="${w.id}">Editar</button></div>`
+        ])).join("");
+        html = `
+        <div class="content-view">
+          <h2>Trabajadores</h2>
+          <form id="worker-form">
+            <input type="hidden" id="worker-id">
+            <input id="worker-nombre" placeholder="Nombre completo" required>
+            <input id="worker-pagoBase" type="number" step="any" min="0" placeholder="Pago base (opcional)">
+            <label><input id="worker-activo" type="checkbox" checked> Activo</label>
+            <button type="submit">Guardar Trabajador</button>
+          </form>
+          <h3 style="margin-top:14px">Lista</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Nombre</th><th>Pago Base</th><th>Activo</th><th>Acciones</th></tr></thead>
+              <tbody>${rows || `<tr><td colspan="4">Sin trabajadores.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+
+      if(id==="shifts-view"){
+        if(appState.activeShift){
+          const worker = appState.workers.find(w=>w.id===appState.activeShift.workerId);
+          const ingresos = appState.activeShift.sales.reduce((s,x)=>s+x.totalVenta,0);
+          const fichas   = appState.activeShift.sales.reduce((s,x)=>s+x.totalFichas,0);
+          const prestamos= appState.activeShift.loans.reduce((s,l)=>s+l.valor,0);
+          const opts = appState.products.filter(p=>p.activo).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join("");
+          html = `
+          <div class="content-view">
+            <h2>Turno Activo: <span class="neon-text-main">${worker?.nombre||"…"}</span></h2>
+            <div class="form-grid">
+              <form id="sale-form">
+                <h4>Registrar Venta</h4>
+                <select id="sale-product" required><option value="">Producto…</option>${opts}</select>
+                <input id="sale-quantity" type="number" min="1" value="1" placeholder="Unidades" required>
+                <button type="submit">Vender</button>
+              </form>
+              <form id="loan-form">
+                <h4>Registrar Préstamo</h4>
+                <input id="loan-description" placeholder="Descripción" required>
+                <input id="loan-value" type="number" step="any" min="1" placeholder="Valor" required>
+                <button type="submit">Añadir Préstamo</button>
+              </form>
+            </div>
+            <div class="card" style="margin-top:12px">
+              <h4>Resumen</h4>
+              <p><strong>Ingresos:</strong> ${COP(ingresos)}</p>
+              <p><strong>Fichas:</strong> ${COP(fichas)}</p>
+              <p><strong>Préstamos:</strong> ${COP(prestamos)}</p>
+              <hr>
+              <button id="close-shift-btn">Cerrar y Liquidar</button>
+            </div>
+          </div>`;
+        }else{
+          const workerOpts = appState.workers.filter(w=>w.activo).map(w=>`<option value="${w.id}">${w.nombre}</option>`).join("");
+          html = `
+          <div class="content-view">
+            <h2>Turnos y Ventas</h2>
+            <form id="open-shift-form">
+              <select id="shift-worker" required><option value="">Trabajador…</option>${workerOpts}</select>
+              <button type="submit">Iniciar Turno</button>
+            </form>
+          </div>`;
+        }
+      }
+
+      content.innerHTML=html;
+      attachHandlers(id);
+    }
+
+    // 10) Handlers (UI instantánea: sin loaders; solo deshabilitar botón)
+    const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty;
+
+    function attachHandlers(id){
+      if(id==="products-view"){
+        content.querySelectorAll(".btn-edit").forEach(b=>b.addEventListener("click",()=>{
+          const p=appState.products.find(x=>x.id===b.dataset.id); if(!p) return;
+          document.getElementById("product-id").value=p.id;
+          document.getElementById("product-nombre").value=p.nombre||"";
+          document.getElementById("product-precioVenta").value=p.precioVenta||0;
+          document.getElementById("product-precioCompra").value=p.precioCompra||0;
+          document.getElementById("product-precioFicha").value=p.precioFicha||0;
+          document.getElementById("product-unidadesPorCaja").value=p.unidadesPorCaja||1;
+          document.getElementById("product-unidadesPorCanasta").value=p.unidadesPorCanasta||1;
+          document.getElementById("product-activo").checked=!!p.activo;
+        }));
+        const form=document.getElementById("product-form");
+        if(form) form.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
+          const id=document.getElementById("product-id").value;
+          const data={
+            nombre:document.getElementById("product-nombre").value,
+            precioVenta:parseFloat(document.getElementById("product-precioVenta").value),
+            precioCompra:parseFloat(document.getElementById("product-precioCompra").value),
+            precioFicha:parseFloat(document.getElementById("product-precioFicha").value)||0,
+            unidadesPorCaja:parseInt(document.getElementById("product-unidadesPorCaja").value)||1,
+            unidadesPorCanasta:parseInt(document.getElementById("product-unidadesPorCanasta").value)||1,
+            activo:document.getElementById("product-activo").checked
+          };
+          try{
+            if(id){
+              await setDoc(doc(colref.products,id), data, {merge:true});
+            }else{
+              const ref = await addDoc(colref.products, data);
+              const b=writeBatch(db);
+              b.set(doc(db,"inventory",ref.id,"stock","bodega"),{unidades:0});
+              b.set(doc(db,"inventory",ref.id,"stock","barra"),{unidades:0});
+              await b.commit();
+            }
+            showToast("Producto guardado");
+            form.reset(); document.getElementById("product-id").value="";
+          }catch(err){ showToast(err.message,"error"); }
+          finally{ btn.disabled=false; }
+        });
+      }
+
+      if(id==="inventory-view"){
+        const purchase=document.getElementById("purchase-form");
+        if(purchase) purchase.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          const btn=purchase.querySelector('button[type="submit"]'); btn.disabled=true;
+
+          const providerId=document.getElementById("purchase-provider").value;
+          const productId=document.getElementById("purchase-product").value;
+          const cantidad=parseInt(document.getElementById("purchase-quantity").value);
+          const unit=document.getElementById("purchase-unit").value;
+          const tipo=document.getElementById("purchase-type").value;
+          const prod=appState.products.find(p=>p.id===productId);
+          if(!prod || !providerId || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; }
+
+          const unidades=toUnidades(cantidad,unit,prod);
+          const costo=unidades*(prod.precioCompra||0);
+
+          try{
+            await Promise.all([
+              addDoc(colref.purchases,{providerId,productId,fecha:serverTimestamp(),tipo,cantidadUnidades:unidades,costoTotal:costo}),
+              setDoc(doc(db,"inventory",productId,"stock","bodega"),{unidades: increment(unidades)},{merge:true}),
+              (tipo==="consignacion")
+                ? setDoc(doc(colref.providers,providerId),{saldoPendiente: increment(costo)},{merge:true})
+                : addDoc(colref.cashflow,{type:"egreso",amount:costo,description:`Compra contado: ${unidades} x ${prod.nombre}`,date:serverTimestamp()})
+            ]);
+            showToast("Compra registrada");
+            purchase.reset();
+          }catch(err){ showToast(err.message,"error"); }
+          finally{ btn.disabled=false; }
+        });
+
+        const transfer=document.getElementById("transfer-form");
+        if(transfer) transfer.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          const btn=transfer.querySelector('button[type="submit"]'); btn.disabled=true;
+          const productId=document.getElementById("transfer-product").value;
+          const cantidad=parseInt(document.getElementById("transfer-quantity").value);
+          const unit=document.getElementById("transfer-unit").value;
+          const prod=appState.products.find(p=>p.id===productId);
+          if(!prod || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; }
+          const unidades=toUnidades(cantidad,unit,prod);
+          try{
+            await runTransaction(db, async (t)=>{
+              const bRef=doc(db,"inventory",productId,"stock","bodega");
+              const rRef=doc(db,"inventory",productId,"stock","barra");
+              const bSnap=await t.get(bRef);
+              if(!bSnap.exists() || (bSnap.data().unidades||0)<unidades) throw new Error("Stock insuficiente en bodega.");
+              t.set(bRef,{unidades: increment(-unidades)},{merge:true});
+              t.set(rRef,{unidades: increment(unidades)},{merge:true});
+            });
+            showToast("Traslado exitoso");
+            transfer.reset();
+          }catch(err){ showToast(err.message,"error"); }
+          finally{ btn.disabled=false; }
+        });
+      }
+
+      if(id==="cashflow-view"){
+        const form=document.getElementById("cashflow-form");
+        if(form) form.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
+          const data={
+            type:document.getElementById("cashflow-type").value,
+            amount:parseFloat(document.getElementById("cashflow-amount").value),
+            description:document.getElementById("cashflow-description").value,
+            date:serverTimestamp(), manual:true, userId:appState.user.uid
+          };
+          try{ await addDoc(colref.cashflow,data); showToast("Movimiento registrado"); form.reset(); }
+          catch(err){ showToast(err.message,"error"); }
+          finally{ btn.disabled=false; }
+        });
+      }
+
+      if(id==="providers-view"){
+        content.querySelectorAll(".btn-edit-provider").forEach(b=>b.addEventListener("click",()=>{
+          const p=appState.providers.find(x=>x.id===b.dataset.id); if(!p) return;
+          document.getElementById("provider-id").value=p.id;
+          document.getElementById("provider-nombre").value=p.nombre||"";
+          document.getElementById("provider-contacto").value=p.contacto||"";
+          document.getElementById("provider-consignacion").checked=!!p.consignacion;
+        }));
+        const form=document.getElementById("provider-form");
+        if(form) form.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
+          const id=document.getElementById("provider-id").value;
+          const data={
+            nombre:document.getElementById("provider-nombre").value,
+            contacto:document.getElementById("provider-contacto").value,
+            consignacion:document.getElementById("provider-consignacion").checked
+          };
+          try{
+            if(id) await setDoc(doc(colref.providers,id), data, {merge:true});
+            else await addDoc(colref.providers, {...data, saldoPendiente:0});
+            showToast("Proveedor guardado");
+            form.reset(); document.getElementById("provider-id").value="";
+          }catch(err){ showToast(err.message,"error"); }
+          finally{ btn.disabled=false; }
+        });
+
+        content.querySelectorAll(".btn-settle").forEach(b=>b.addEventListener("click",()=>{
+          const prov=appState.providers.find(x=>x.id===b.dataset.id); if(!prov) return;
+          if((prov.saldoPendiente||0)<=0){ showToast("Proveedor sin saldo pendiente","error"); return; }
+          document.getElementById("settlement-provider-name").textContent=prov.nombre;
+          document.getElementById("settlement-provider-balance").textContent=COP(prov.saldoPendiente||0);
+          document.getElementById("settle-provider-btn").dataset.providerId=prov.id;
+          document.getElementById("settlement-details").classList.remove("hidden");
+        }));
+        const settle=document.getElementById("settle-provider-btn");
+        if(settle) settle.addEventListener("click", async (e)=>{
+          const providerId=e.target.dataset.providerId;
+          const prov=appState.providers.find(p=>p.id===providerId);
+          if(!prov) return;
+          if(!confirm(`¿Pagar ${COP(prov.saldoPendiente)} a ${prov.nombre}?`)) return;
+          try{
+            const b=writeBatch(db);
+            b.set(doc(colref.cashflow), {type:"egreso",amount:prov.saldoPendiente,description:`Pago liquidación: ${prov.nombre}`,date:serverTimestamp()});
+            b.set(doc(colref.providers,providerId), {saldoPendiente:0}, {merge:true});
+            await b.commit();
+            showToast("Liquidación realizada");
+            document.getElementById("settlement-details").classList.add("hidden");
+          }catch(err){ showToast(err.message,"error"); }
+        });
+      }
+
+      if(id==="workers-view"){
+        content.querySelectorAll(".btn-edit-worker").forEach(b=>b.addEventListener("click",()=>{
+          const w=appState.workers.find(x=>x.id===b.dataset.id); if(!w) return;
+          document.getElementById("worker-id").value=w.id;
+          document.getElementById("worker-nombre").value=w.nombre||"";
+          document.getElementById("worker-pagoBase").value=w.pagoBase||0;
+          document.getElementById("worker-activo").checked=!!w.activo;
+        }));
+        const form=document.getElementById("worker-form");
+        if(form) form.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          const btn=form.querySelector('button[type="submit"]'); btn.disabled=true;
+          const id=document.getElementById("worker-id").value;
+          const data={
+            nombre:document.getElementById("worker-nombre").value,
+            pagoBase:parseFloat(document.getElementById("worker-pagoBase").value)||0,
+            activo:document.getElementById("worker-activo").checked
+          };
+          try{
+            if(id) await setDoc(doc(colref.workers,id), data, {merge:true});
+            else await addDoc(colref.workers, data);
+            showToast("Trabajador guardado");
+            form.reset(); document.getElementById("worker-id").value="";
+          }catch(err){ showToast(err.message,"error"); }
+          finally{ btn.disabled=false; }
+        });
+      }
+
+      if(id==="shifts-view"){
+        const open=document.getElementById("open-shift-form");
+        if(open) open.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          const workerId=document.getElementById("shift-worker").value;
+          if(!workerId) return;
+          const worker=appState.workers.find(w=>w.id===workerId);
+          await addDoc(colref.shifts,{workerId,pagoBase:worker?.pagoBase||0,inicio:serverTimestamp(),estado:"abierto"});
+        });
+
+        const sale=document.getElementById("sale-form");
+        if(sale) sale.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          if(!appState.activeShift) return;
+          const productId=document.getElementById("sale-product").value;
+          const unidades=parseInt(document.getElementById("sale-quantity").value);
+          const prod=appState.products.find(p=>p.id===productId);
+          if(!prod || isNaN(unidades)||unidades<=0){ showToast("Venta inválida","error"); return; }
+          const btn=sale.querySelector('button[type="submit"]'); btn.disabled=true;
+          try{
+            await runTransaction(db, async (t)=>{
+              const barraRef=doc(db,"inventory",productId,"stock","barra");
+              const snap=await t.get(barraRef);
+              if(!snap.exists() || (snap.data().unidades||0)<unidades) throw new Error(`Stock insuficiente para ${prod.nombre}`);
+              t.set(barraRef,{unidades: increment(-unidades)},{merge:true});
+            });
+            await addDoc(collection(db,"shifts", appState.activeShift.id, "sales"),{
+              productId, unidades, precioUnitVenta:prod.precioVenta||0, precioFicha:prod.precioFicha||0,
+              totalVenta:unidades*(prod.precioVenta||0), totalFichas:unidades*(prod.precioFicha||0),
+              fecha:serverTimestamp()
+            });
+            showToast("Venta registrada");
+            sale.reset();
+          }catch(err){ showToast(err.message,"error"); }
+          finally{ btn.disabled=false; }
+        });
+
+        const loan=document.getElementById("loan-form");
+        if(loan) loan.addEventListener("submit", async (e)=>{
+          e.preventDefault();
+          if(!appState.activeShift) return;
+          const valor=parseFloat(document.getElementById("loan-value").value);
+          const desc=document.getElementById("loan-description").value;
+          if(isNaN(valor)||!desc) return;
+          await addDoc(collection(db,"shifts", appState.activeShift.id, "loans"), { descripcion:desc, valor, fecha:serverTimestamp() });
+          loan.reset();
+        });
+
+        const close=document.getElementById("close-shift-btn");
+        if(close) close.addEventListener("click", async ()=>{
+          if(!appState.activeShift) return;
+          if(!confirm("¿Cerrar y liquidar turno?")) return;
+          const sh=appState.activeShift;
+          const worker=appState.workers.find(w=>w.id===sh.workerId);
+          const ingresos=sh.sales.reduce((s,x)=>s+x.totalVenta,0);
+          const fichas =sh.sales.reduce((s,x)=>s+x.totalFichas,0);
+          const prestamos=sh.loans.reduce((s,l)=>s+l.valor,0);
+          const totalAPagar=(sh.pagoBase||0)+fichas-prestamos;
+          try{
+            const b=writeBatch(db);
+            b.set(doc(colref.cashflow), {type:"ingreso",amount:ingresos,description:`Cierre turno ${worker?.nombre||""}`,date:serverTimestamp()});
+            if(totalAPagar>0) b.set(doc(colref.cashflow), {type:"egreso",amount:totalAPagar,description:`Pago liquidación ${worker?.nombre||""}`,date:serverTimestamp()});
+            b.set(doc(colref.shifts, sh.id), {estado:"cerrado", fin:serverTimestamp()}, {merge:true});
+            await b.commit();
+            showToast("Turno cerrado");
+          }catch(err){ showToast(err.message,"error"); }
+        });
+      }
+    }
+
+    // vista inicial
+    document.querySelector('.nav-link[data-view="dashboard-view"]').classList.add("active");
+  </script>
 </body>
 </html>
