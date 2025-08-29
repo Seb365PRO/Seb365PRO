@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Seb365 PRO</title>
+  <title>seb365 pro</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -386,6 +386,43 @@
     const appFB = initializeApp(window.__FIREBASE_CONFIG__);
     const auth = getAuth(appFB);
     const db = getFirestore(appFB);
+    // ==== Helpers multi-tenant ====
+// uid actual
+const tenantId = () => (auth.currentUser?.uid || appState.user?.uid);
+
+// atajos a colecciones/documentos bajo /tenants/{uid}/...
+const TCOL = (...segs) => collection(db, "tenants", tenantId(), ...segs);
+const TDOC = (...segs) => doc(db, "tenants", tenantId(), ...segs);
+
+// stockRef(productId, place='bodega'|'barra')
+const stockRef = (productId, place) =>
+  TDOC("inventory", productId, "stock", place);
+
+// colref se reconstruye DESPUÉS del login (en onAuthStateChanged)
+let colref = {};
+function buildColRef() {
+  colref = {
+    users: collection(db, "users"), // perfiles globales
+    products: TCOL("products"),
+    providers: TCOL("providers"),
+    workers: TCOL("workers"),
+    cashflow: TCOL("cashflow_entries"),
+    shifts: TCOL("shifts"),
+    purchases: TCOL("purchases")
+    // inventory se accede con stockRef() o collectionGroup("stock") filtrado por tenantId
+  };
+}
+2.2 Reemplaza tu colref global original
+BUSCA este bloque en tu archivo (está más arriba de tus funciones):
+
+js
+Copiar código
+// ANTES (bloque original a REEMPLAZAR completo)
+const colref = {
+  users: collection(db, "users"), products: collection(db, "products"), providers: collection(db, "providers"),
+  workers: collection(db, "workers"), cashflow: collection(db, "cashflow_entries"),
+  shifts: collection(db, "shifts"), purchases: collection(db, "purchases")
+};
 
     let appState = {
       user: null, userData: null, role: null, unsub: [],
@@ -395,11 +432,6 @@
     };
     let registrationData = {}, shiftSubListeners = {};
 
-    const colref = {
-      users: collection(db, "users"), products: collection(db, "products"), providers: collection(db, "providers"),
-      workers: collection(db, "workers"), cashflow: collection(db, "cashflow_entries"),
-      shifts: collection(db, "shifts"), purchases: collection(db, "purchases")
-    };
     
     const showToast = (msg, type = "success") => {
         const c = document.getElementById("toast-container");
@@ -578,6 +610,7 @@
         appState.user = user;
         appState.userData = userDoc.exists() ? userDoc.data() : { email: user.email };
         appState.role = "admin";
+        buildColRef();
         document.body.dataset.role = appState.role;
         document.getElementById("auth-container").classList.add("hidden");
         document.getElementById("app-container").classList.remove("hidden");
@@ -628,12 +661,16 @@
                 appState.activeShifts.push(newShift);
                 const shiftIndex = appState.activeShifts.length - 1;
 
-                const salesUnsub = onSnapshot(collection(db, "shifts", shiftData.id, "sales"), (salesSnapshot) => {
+                const salesUnsub = onSnapshot(
+  collection(db, "tenants", tenantId(), "shifts", shiftData.id, "sales"),
+  (salesSnapshot) => {
                     const shiftToUpdate = appState.activeShifts.find(s => s.id === shiftData.id);
                     if(shiftToUpdate) shiftToUpdate.sales = salesSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
                     scheduleRender();
                 });
-                const loansUnsub = onSnapshot(collection(db, "shifts", shiftData.id, "loans"), (loansSnapshot) => {
+                const loansUnsub = onSnapshot(
+  collection(db, "tenants", tenantId(), "shifts", shiftData.id, "loans"),
+  (loansSnapshot) => {
                      const shiftToUpdate = appState.activeShifts.find(s => s.id === shiftData.id);
                     if(shiftToUpdate) shiftToUpdate.loans = loansSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
                     scheduleRender();
@@ -645,8 +682,22 @@
         scheduleRender();
       }));
 
-      add(onSnapshot(collectionGroup(db,"stock"), snap=>{ const inv={}; snap.docs.forEach(ds=>{ const parts=ds.ref.path.split("/"); const pid=parts[1], place=parts[3]; (inv[pid]??={})[place]=ds.data(); }); appState.inventory=inv; scheduleRender(); }));
-    }
+      // DESPUÉS (filtra por tenantId y corrige índices de path)
+add(onSnapshot(
+  query(collectionGroup(db, "stock"), where("tenantId","==", tenantId())),
+  snap => {
+    const inv = {};
+    // path: tenants/{uid}/inventory/{productId}/stock/{place}
+    snap.docs.forEach(ds => {
+      const parts = ds.ref.path.split("/"); // ["tenants", uid, "inventory", productId, "stock", place]
+      const productId = parts[3];
+      const place = parts[5];
+      (inv[productId] ??= {})[place] = ds.data();
+    });
+    appState.inventory = inv; scheduleRender();
+  }
+));
+
 
     const content = document.getElementById("content");
     const row = (cols)=> `<tr>${cols.map(c=>`<td>${c}</td>`).join("")}</tr>`;
@@ -768,16 +819,22 @@
 
             try {
                 await runTransaction(db, async (t) => {
-                    const barraRef = doc(db, "inventory", productId, "stock", "barra");
+                    const barraRef = stockRef(productId, "barra");
                     const snap = await t.get(barraRef);
                     if (!snap.exists() || (snap.data().unidades || 0) < unidades) { throw new Error(`Stock insuficiente para ${prod.nombre}`); }
                     t.set(barraRef, { unidades: increment(-unidades) }, { merge: true });
                 });
-                await addDoc(collection(db, "shifts", appState.selectedShiftId, "sales"), {
-                    type: 'ficha', productId: productId, unidades: unidades,
-                    totalVenta: unidades * (prod.precioVenta || 0), totalComision: unidades * (prod.precioComision || 0),
-                    fecha: serverTimestamp()
-                });
+                await addDoc(
+  collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "sales"),
+  {
+    type: 'ficha', productId, unidades,
+    totalVenta: unidades * (prod.precioVenta || 0),
+    totalComision: unidades * (prod.precioComision || 0),
+    fecha: serverTimestamp(),
+    tenantId: tenantId()
+  }
+);
+
                 showToast("Venta registrada");
                 modal.classList.remove("visible");
             } catch(err) { showToast(err.message, "error"); }
@@ -791,7 +848,8 @@
             const valor = parseFloat(document.getElementById("loan-value").value);
             const desc = document.getElementById("loan-description").value;
             if (isNaN(valor) || !desc) return;
-            await addDoc(collection(db, "shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
+            await addDoc(
+  collection(db, "tenants", tenantId(), "shifts", appState.selectedShiftId, "loans"), { descripcion: desc, valor, fecha: serverTimestamp() });
             loanForm.reset();
             document.getElementById("loan-modal").classList.remove("visible");
         });
@@ -828,13 +886,16 @@
                 try {
                     if (id) {
                         await setDoc(doc(colref.products, id), data, { merge: true });
-                    } else {
-                        const ref = await addDoc(colref.products, data);
-                        const b = writeBatch(db);
-                        b.set(doc(db, "inventory", ref.id, "stock", "bodega"), { unidades: 0 });
-                        b.set(doc(db, "inventory", ref.id, "stock", "barra"), { unidades: 0 });
-                        await b.commit();
-                    }
+                    if (id) {
+  await setDoc(doc(colref.products, id), data, { merge: true });
+} else {
+  const ref = await addDoc(colref.products, { ...data, tenantId: tenantId() });
+  const b = writeBatch(db);
+  b.set(stockRef(ref.id, "bodega"), { unidades: 0, tenantId: tenantId() }, { merge: true });
+  b.set(stockRef(ref.id, "barra"),  { unidades: 0, tenantId: tenantId() }, { merge: true });
+  await b.commit();
+}
+
                     showToast("Guardado correctamente");
                     form.reset(); document.getElementById("product-id").value = "";
                 } catch (err) { showToast(err.message, "error"); } finally { btn.disabled = false; }
@@ -842,13 +903,46 @@
         }
         
         if(id==="inventory-view"){
-            const purchase=document.getElementById("purchase-form"); if(purchase) purchase.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=purchase.querySelector('button[type="submit"]'); btn.disabled=true; const providerId=document.getElementById("purchase-provider").value; const productId=document.getElementById("purchase-product").value; const cantidad=parseInt(document.getElementById("purchase-quantity").value); const unit=document.getElementById("purchase-unit").value; const tipo=document.getElementById("purchase-type").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || !providerId || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); const costo=unidades*(prod.precioCompra||0); try{ await Promise.all([ addDoc(colref.purchases,{providerId,productId,fecha:serverTimestamp(),tipo,cantidadUnidades:unidades,costoTotal:costo}), setDoc(doc(db,"inventory",productId,"stock","bodega"),{unidades: increment(unidades)},{merge:true}), (tipo==="consignacion") ? setDoc(doc(colref.providers,providerId),{saldoPendiente: increment(costo)},{merge:true}) : addDoc(colref.cashflow,{type:"egreso",amount:costo,description:`Compra contado: ${unidades} x ${prod.nombre}`,date:serverTimestamp()}) ]); showToast("Compra registrada"); purchase.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
-            const transfer=document.getElementById("transfer-form"); if(transfer) transfer.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=transfer.querySelector('button[type="submit"]'); btn.disabled=true; const productId=document.getElementById("transfer-product").value; const cantidad=parseInt(document.getElementById("transfer-quantity").value); const unit=document.getElementById("transfer-unit").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); try{ await runTransaction(db, async (t)=>{ const bRef=doc(db,"inventory",productId,"stock","bodega"); const rRef=doc(db,"inventory",productId,"stock","barra"); const bSnap=await t.get(bRef); if(!bSnap.exists() || (bSnap.data().unidades||0)<unidades) throw new Error("Stock insuficiente en bodega."); t.set(bRef,{unidades: increment(-unidades)},{merge:true}); t.set(rRef,{unidades: increment(unidades)},{merge:true}); }); showToast("Traslado exitoso"); transfer.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
+            const purchase=document.getElementById("purchase-form"); if(purchase) purchase.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=purchase.querySelector('button[type="submit"]'); btn.disabled=true; const providerId=document.getElementById("purchase-provider").value; const productId=document.getElementById("purchase-product").value; const cantidad=parseInt(document.getElementById("purchase-quantity").value); const unit=document.getElementById("purchase-unit").value; const tipo=document.getElementById("purchase-type").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || !providerId || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); const costo=unidades*(prod.precioCompra||0); try{ await Promise.all([
+  addDoc(colref.purchases, {
+    providerId, productId, fecha: serverTimestamp(), tipo,
+    cantidadUnidades: unidades, costoTotal: costo, tenantId: tenantId()
+  }),
+  setDoc(stockRef(productId, "bodega"),
+    { unidades: increment(unidades), tenantId: tenantId() }, { merge:true }),
+  (tipo === "consignacion")
+    ? setDoc(doc(colref.providers, providerId), { saldoPendiente: increment(costo) }, { merge:true })
+    : addDoc(colref.cashflow, {
+        type: "egreso", amount: costo,
+        description: `Compra contado: ${unidades} x ${prod.nombre}`,
+        date: serverTimestamp(),
+        tenantId: tenantId()
+      })
+]);
+ ]); showToast("Compra registrada"); purchase.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
+            const transfer=document.getElementById("transfer-form"); if(transfer) transfer.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=transfer.querySelector('button[type="submit"]'); btn.disabled=true; const productId=document.getElementById("transfer-product").value; const cantidad=parseInt(document.getElementById("transfer-quantity").value); const unit=document.getElementById("transfer-unit").value; const prod=appState.products.find(p=>p.id===productId); if(!prod || isNaN(cantidad)){ showToast("Datos inválidos","error"); btn.disabled=false; return; } const toUnidades=(qty,unit,prod)=> prod ? (unit==="cajas" ? qty*(prod.unidadesPorCaja||1) : (unit==="canastas" ? qty*(prod.unidadesPorCanasta||1) : qty)) : qty; const unidades=toUnidades(cantidad,unit,prod); try{ await runTransaction(db, async (t)=>{
+  const bRef = stockRef(productId, "bodega");
+  const rRef = stockRef(productId, "barra");
+  const bSnap = await t.get(bRef);
+  if (!bSnap.exists() || (bSnap.data().unidades || 0) < unidades)
+    throw new Error("Stock insuficiente en bodega.");
+  t.set(bRef, { unidades: increment(-unidades), tenantId: tenantId() }, { merge:true });
+  t.set(rRef, { unidades: increment(unidades),  tenantId: tenantId() }, { merge:true });
+});
+ showToast("Traslado exitoso"); transfer.reset(); }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } });
         }
 
         if(id==="cashflow-view"){ const form=document.getElementById("cashflow-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const data={ type:document.getElementById("cashflow-type").value, amount:parseFloat(document.getElementById("cashflow-amount").value), description:document.getElementById("cashflow-description").value, date:serverTimestamp(), manual:true, userId:appState.user.uid }; try{ await addDoc(colref.cashflow,data); showToast("Movimiento registrado"); form.reset(); } catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
 
-        if(id==="providers-view"){ content.querySelectorAll(".btn-edit-provider").forEach(b=>b.addEventListener("click",()=>{ const p=appState.providers.find(x=>x.id===b.dataset.id); if(!p) return; document.getElementById("provider-id").value=p.id; document.getElementById("provider-nombre").value=p.nombre||""; document.getElementById("provider-contacto").value=p.contacto||""; document.getElementById("provider-consignacion").checked=!!p.consignacion; })); const form=document.getElementById("provider-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("provider-id").value; const data={ nombre:document.getElementById("provider-nombre").value, contacto:document.getElementById("provider-contacto").value, consignacion:document.getElementById("provider-consignacion").checked }; try{ if(id) await setDoc(doc(colref.providers,id), data, {merge:true}); else await addDoc(colref.providers, {...data, saldoPendiente:0}); showToast("Proveedor guardado"); form.reset(); document.getElementById("provider-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); content.querySelectorAll(".btn-settle").forEach(b=>b.addEventListener("click",()=>{ const prov=appState.providers.find(x=>x.id===b.dataset.id); if(!prov) return; if((prov.saldoPendiente||0)<=0){ showToast("Proveedor sin saldo pendiente","error"); return; } document.getElementById("settlement-provider-name").textContent=prov.nombre; document.getElementById("settlement-provider-balance").textContent=COP(prov.saldoPendiente||0); document.getElementById("settle-provider-btn").dataset.providerId=prov.id; document.getElementById("settlement-details").classList.remove("hidden"); })); const settle=document.getElementById("settle-provider-btn"); if(settle) settle.addEventListener("click", async (e)=>{ const providerId=e.target.dataset.providerId; const prov=appState.providers.find(p=>p.id===providerId); if(!prov) return; const b=writeBatch(db); b.set(doc(colref.cashflow), {type:"egreso",amount:prov.saldoPendiente,description:`Pago liquidación: ${prov.nombre}`,date:serverTimestamp()}); b.set(doc(colref.providers,providerId), {saldoPendiente:0}, {merge:true}); try { await b.commit(); showToast("Liquidación realizada"); document.getElementById("settlement-details").classList.add("hidden"); } catch(err) { showToast(err.message, "error"); } }); }
+        if(id==="providers-view"){ content.querySelectorAll(".btn-edit-provider").forEach(b=>b.addEventListener("click",()=>{ const p=appState.providers.find(x=>x.id===b.dataset.id); if(!p) return; document.getElementById("provider-id").value=p.id; document.getElementById("provider-nombre").value=p.nombre||""; document.getElementById("provider-contacto").value=p.contacto||""; document.getElementById("provider-consignacion").checked=!!p.consignacion; })); const form=document.getElementById("provider-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("provider-id").value; const data={ nombre:document.getElementById("provider-nombre").value, contacto:document.getElementById("provider-contacto").value, consignacion:document.getElementById("provider-consignacion").checked }; try{ if(id) await setDoc(doc(colref.providers,id), data, {merge:true}); else await addDoc(colref.providers, {...data, saldoPendiente:0}); showToast("Proveedor guardado"); form.reset(); document.getElementById("provider-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); content.querySelectorAll(".btn-settle").forEach(b=>b.addEventListener("click",()=>{ const prov=appState.providers.find(x=>x.id===b.dataset.id); if(!prov) return; if((prov.saldoPendiente||0)<=0){ showToast("Proveedor sin saldo pendiente","error"); return; } document.getElementById("settlement-provider-name").textContent=prov.nombre; document.getElementById("settlement-provider-balance").textContent=COP(prov.saldoPendiente||0); document.getElementById("settle-provider-btn").dataset.providerId=prov.id; document.getElementById("settlement-details").classList.remove("hidden"); })); const settle=document.getElementById("settle-provider-btn"); if(settle) settle.addEventListener("click", async (e)=>{ const providerId=e.target.dataset.providerId; const prov=appState.providers.find(p=>p.id===providerId); if(!prov) return; const b = writeBatch(db);
+b.set(doc(colref.cashflow), {
+  type: "egreso", amount: prov.saldoPendiente,
+  description: `Pago liquidación: ${prov.nombre}`,
+  date: serverTimestamp(), tenantId: tenantId()
+});
+b.set(doc(colref.providers, providerId), { saldoPendiente: 0 }, { merge:true });
+await b.commit();
+ showToast("Liquidación realizada"); document.getElementById("settlement-details").classList.add("hidden"); } catch(err) { showToast(err.message, "error"); } }); }
 
         if(id==="workers-view"){ content.querySelectorAll(".btn-edit-worker").forEach(b=>b.addEventListener("click",()=>{ const w=appState.workers.find(x=>x.id===b.dataset.id); if(!w) return; document.getElementById("worker-id").value=w.id; document.getElementById("worker-nombre").value=w.nombre||""; document.getElementById("worker-pagoBase").value=w.pagoBase||0; document.getElementById("worker-activo").checked=!!w.activo; })); const form=document.getElementById("worker-form"); if(form) form.addEventListener("submit", async (e)=>{ e.preventDefault(); const btn=form.querySelector('button[type="submit"]'); btn.disabled=true; const id=document.getElementById("worker-id").value; const data={ nombre:document.getElementById("worker-nombre").value, pagoBase:parseFloat(document.getElementById("worker-pagoBase").value)||0, activo:document.getElementById("worker-activo").checked }; try{ if(id) await setDoc(doc(colref.workers,id), data, {merge:true}); else await addDoc(colref.workers, data); showToast("Trabajador guardado"); form.reset(); document.getElementById("worker-id").value=""; }catch(err){ showToast(err.message,"error"); } finally{ btn.disabled=false; } }); }
         
@@ -891,10 +985,25 @@
                     const totalAPagar = (worker?.pagoBase || 0) + comisiones - prestamos;
                     try {
                         const b = writeBatch(db);
-                        b.set(doc(colref.cashflow), { type: "ingreso", amount: ingresos, description: `Cierre turno ${worker?.nombre || ""}`, date: serverTimestamp() });
-                        if (totalAPagar > 0) b.set(doc(colref.cashflow), { type: "egreso", amount: totalAPagar, description: `Pago liquidación ${worker?.nombre || ""}`, date: serverTimestamp() });
-                        b.set(doc(colref.shifts, shift.id), { estado: "cerrado", fin: serverTimestamp(), totalIngresos: ingresos, totalComisiones: comisiones, totalPrestamos: prestamos, totalPagado: totalAPagar }, { merge: true });
-                        await b.commit();
+b.set(doc(colref.cashflow), {
+  type: "ingreso", amount: ingresos,
+  description: `Cierre turno ${worker?.nombre || ""}`,
+  date: serverTimestamp(), tenantId: tenantId()
+});
+if (totalAPagar > 0) {
+  b.set(doc(colref.cashflow), {
+    type: "egreso", amount: totalAPagar,
+    description: `Pago liquidación ${worker?.nombre || ""}`,
+    date: serverTimestamp(), tenantId: tenantId()
+  });
+}
+b.set(doc(colref.shifts, shift.id), {
+  estado: "cerrado", fin: serverTimestamp(),
+  totalIngresos: ingresos, totalComisiones: comisiones,
+  totalPrestamos: prestamos, totalPagado: totalAPagar
+}, { merge: true });
+await b.commit();
+
                         appState.selectedShiftId = null;
                         showToast("Turno cerrado y liquidado");
                     } catch (err) {
@@ -906,7 +1015,12 @@
                     }
                 });
             } else {
-                document.getElementById("open-shift-form")?.addEventListener("submit", async (e) => { e.preventDefault(); const workerId = document.getElementById("shift-worker").value; if (!workerId) return; const worker = appState.workers.find(w => w.id === workerId); await addDoc(colref.shifts, { workerId, pagoBase: worker?.pagoBase || 0, inicio: serverTimestamp(), estado: "abierto" }); });
+                document.getElementById("open-shift-form")?.addEventListener("submit", async (e) => { e.preventDefault(); const workerId = document.getElementById("shift-worker").value; if (!workerId) return; const worker = appState.workers.find(w => w.id === workerId); await addDoc(colref.shifts, {
+  workerId, pagoBase: worker?.pagoBase || 0,
+  inicio: serverTimestamp(), estado: "abierto",
+  tenantId: tenantId()
+});
+
                 content.querySelectorAll('.btn-manage-shift').forEach(btn => btn.addEventListener('click', (e) => { appState.selectedShiftId = e.target.dataset.shiftId; scheduleRender(); }));
                 content.querySelectorAll('.btn-view-desglose').forEach(btn => btn.addEventListener('click', (e) => {
                     const shiftId = e.target.dataset.shiftId; const shift = appState.activeShifts.find(s => s.id === shiftId); if (!shift) return;
