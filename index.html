@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>seb365 pro</title>
+  <title>Seb365 PRO</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,15 +14,12 @@
       --bg-primary: #ffffff; --bg-secondary: #f8f9fa; --bg-tertiary: #f1f3f4;
       --border-color: #e0e0e0; --text-primary: #202124; --text-secondary: #5f6368;
       --brand-primary: #ff6f00; --brand-secondary: #f57c00; --accent-red: #d93025;
-      --accent-green: #1e8e3e; --shadow-color: rgba(0, 0, 0, 0.08); --logo-color: #f57c00;
+      --accent-green: #1e8e3e; --shadow-color: rgba(0, 0, 0, 0.08);
       --dark-bg-primary: #202124; --dark-bg-secondary: #303134; --dark-bg-tertiary: #3c4043;
       --dark-border-color: #424548; --dark-text-primary: #e8eaed; --dark-text-secondary: #9aa0a6;
       --dark-brand-primary: #ff8f00; --dark-brand-secondary: #ffa000; --dark-accent-red: #f28b82;
-      --dark-accent-green: #81c995; --dark-shadow-color: rgba(0, 0, 0, 0.3); --dark-logo-color: #ff8f00;
-      /* Paleta de degradado para el logo (amarillo → naranja → rojo) */
-      --grad-yellow: #ffc107;
-      --grad-orange: #ff6f00;
-      --grad-red: #ff3d00;
+      --dark-accent-green: #81c995; --dark-shadow-color: rgba(0, 0, 0, 0.3);
+      --grad-yellow: #ffc107; --grad-orange: #ff6f00; --grad-red: #ff3d00;
     }
     body[data-theme="dark"] {
       --bg-primary: var(--dark-bg-primary); --bg-secondary: var(--dark-bg-secondary);
@@ -30,7 +27,7 @@
       --text-primary: var(--dark-text-primary); --text-secondary: var(--dark-text-secondary);
       --brand-primary: var(--dark-brand-primary); --brand-secondary: var(--dark-brand-secondary);
       --accent-red: var(--dark-accent-red); --accent-green: var(--dark-accent-green);
-      --shadow-color: var(--dark-shadow-color); --logo-color: var(--dark-logo-color);
+      --shadow-color: var(--dark-shadow-color);
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; overflow-x: hidden; }
@@ -42,84 +39,55 @@
     #content { flex: 1; padding: 24px; padding-bottom: 80px; }
     .hidden { display: none !important; }
 
-    /* --- Animación de Inicio (SVG cube line-by-line + fill) --- */
+    /* --- Animación de Inicio --- */
     #splash-screen {
-      position: fixed; inset: 0;
-      background: #0f1115;
-      z-index: 10000;
+      position: fixed; inset: 0; background: #0f1115; z-index: 10000;
       display: flex; align-items: center; justify-content: center; flex-direction: column;
       transition: opacity 0.5s ease-out;
     }
     #splash-screen.hidden { opacity: 0; pointer-events: none; }
-
     .splash-title {
-      font-size: clamp(2rem, 10vw, 3.5rem);
-      font-weight: 700;
+      font-size: clamp(2rem, 10vw, 3.5rem); font-weight: 700;
       background: linear-gradient(90deg, var(--grad-yellow), var(--grad-orange), var(--grad-red));
-      background-size: 200% auto;
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      white-space: nowrap; overflow: hidden;
-      border-right: .15em solid var(--brand-primary);
+      background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+      white-space: nowrap; overflow: hidden; border-right: .15em solid var(--brand-primary);
       animation: typing 2.2s steps(11, end), blink-caret .75s step-end infinite, color-pan 3s linear infinite;
       margin-top: 24px;
     }
     @keyframes typing { from { width: 0 } to { width: 100% } }
     @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--brand-primary); } }
     @keyframes color-pan { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-
-    .logo-cube-container{
-      width: clamp(120px, 22vw, 180px);
-      aspect-ratio: 1/1;
-      display: grid; place-items: center;
-      filter: drop-shadow(0 10px 30px rgba(255, 111, 0, .18));
-      transform: translateZ(0);
-    }
-    /* Sutileza de presencia mientras se dibuja */
-    .logo-cube{
-      width: 100%; height: 100%;
-      transform: rotate(-2deg);
-    }
-
-    /* Trazos que se “escriben” */
-    .edge{
-      stroke: url(#brandStroke);
-      stroke-width: 3.2;
-      stroke-linecap: round;
-      fill: none;
-      stroke-dasharray: 100;
-      stroke-dashoffset: 100;
-      filter: drop-shadow(0 0 6px rgba(255,111,0,.35));
-      animation: draw 0.85s ease forwards;
-      animation-delay: calc(var(--i) * 0.12s);
-    }
+    .logo-cube-container{ width: clamp(120px, 22vw, 180px); aspect-ratio: 1/1; display: grid; place-items: center; filter: drop-shadow(0 10px 30px rgba(255, 111, 0, .18)); transform: translateZ(0); }
+    .logo-cube{ width: 100%; height: 100%; transform: rotate(-2deg); }
+    .edge{ stroke: url(#brandStroke); stroke-width: 3.2; stroke-linecap: round; fill: none; stroke-dasharray: 100; stroke-dashoffset: 100; filter: drop-shadow(0 0 6px rgba(255,111,0,.35)); animation: draw 0.85s ease forwards; animation-delay: calc(var(--i) * 0.12s); }
     @keyframes draw { to { stroke-dashoffset: 0; } }
-
-    /* Caras: se pintan con el degradado después del trazado */
-    .face{
-      fill: url(#brandGradient);
-      fill-opacity: 0;
-      stroke: none;
-      animation: faceIn 0.9s ease forwards;
-      animation-delay: 1.8s; /* después de la mayoría de bordes */
-    }
+    .face{ fill: url(#brandGradient); fill-opacity: 0; stroke: none; animation: faceIn 0.9s ease forwards; animation-delay: 1.8s; }
     @keyframes faceIn { to { fill-opacity: 1; } }
-
-    /* Brillo de barrido sobre el cubo ya pintado */
-    .shine{
-      opacity: 0;
-      animation: shineIn 2.2s ease-in-out 1.9s forwards;
-      mix-blend-mode: screen;
-    }
+    .shine{ opacity: 0; animation: shineIn 2.2s ease-in-out 1.9s forwards; mix-blend-mode: screen; }
     @keyframes shineIn { 10% {opacity:.0} 20%{opacity:.25} 70%{opacity:.12} 100%{opacity:0} }
 
+    /* --- Header y Logo --- */
     header {
       display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
       height: 60px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-secondary);
     }
-    header h1 {
-      margin: 0; font-size: 22px; font-weight: 700; color: var(--logo-color);
-      display: flex; align-items: center; gap: 8px;
+    .header-logo {
+      margin: 0; font-size: 22px; font-weight: 700;
+      display: flex; align-items: center; gap: 10px;
     }
+    .header-logo-icon { width: 28px; height: 28px; }
+    .header-logo-text {
+      background: linear-gradient(90deg, var(--grad-yellow), var(--grad-orange), var(--grad-red));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .header-logo-pro { font-weight: 900; }
+    body[data-theme="dark"] .header-logo-text { background: none; -webkit-background-clip: initial; background-clip: initial; }
+    body[data-theme="dark"] .header-logo-seb { color: var(--dark-text-primary); }
+    body[data-theme="dark"] .header-logo-pro {
+      background: linear-gradient(90deg, var(--grad-yellow), var(--grad-orange), var(--grad-red));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+
     .user-info { display: flex; align-items: center; gap: 12px; font-size: 14px; }
     #main-nav {
       width: 250px; padding: 16px 8px; border-right: 1px solid var(--border-color);
@@ -146,6 +114,15 @@
       width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border-color);
       background-color: var(--bg-primary); color: var(--text-primary); transition: border-color 0.2s;
     }
+    .password-wrapper { position: relative; }
+    .password-wrapper input { padding-right: 44px; }
+    .password-toggle-btn {
+      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .password-toggle-btn:hover { color: var(--text-primary); }
+    .password-toggle-btn svg { width: 20px; height: 20px; }
     input:focus, select:focus { border-color: var(--brand-primary); }
     button {
       background: linear-gradient(45deg, var(--grad-red), var(--grad-orange), var(--grad-yellow)); background-size: 200% auto;
@@ -179,6 +156,7 @@
     .amount-positive { color: var(--accent-green); } .amount-negative { color: var(--accent-red); }
     #auth-container { display: flex; align-items: center; justify-content: center; padding: 24px; min-height: 100vh; }
     .auth-box { max-width: 420px; width: 100%; text-align: center; }
+    .auth-form-fields { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
     .modal {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center; z-index: 1000;
@@ -186,14 +164,15 @@
     }
     .modal.visible { opacity: 1; pointer-events: all; }
     .modal-content {
-        background: var(--bg-primary); padding: 24px; border-radius: 12px;
+        background: var(--bg-primary); padding: 32px; border-radius: 12px;
         width: 90%; max-width: 600px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         transform: scale(0.95); transition: transform 0.3s ease;
     }
     .modal.visible .modal-content { transform: scale(1); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .modal-header h3 { margin: 0; }
-    .modal-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-header h3 { margin: 0; font-size: 22px; }
+    .modal-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); line-height: 1; }
+    .modal-form-body { display: flex; flex-direction: column; gap: 20px; }
     #fichas-grid {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 16px; margin-bottom: 24px;
@@ -254,66 +233,28 @@
 
   <div id="splash-screen">
     <div class="logo-cube-container" aria-label="Animación de cubo">
-      <!-- SVG: Cubo isométrico con trazos secuenciales y caras en degradado -->
       <svg class="logo-cube" viewBox="0 0 120 120" role="img" aria-hidden="true">
         <defs>
-          <!-- Degradado para las caras (amarillo → naranja → rojo) -->
           <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%"  stop-color="var(--grad-yellow)"/>
             <stop offset="55%" stop-color="var(--grad-orange)"/>
             <stop offset="100%" stop-color="var(--grad-red)"/>
           </linearGradient>
-          <!-- Degradado para los bordes (ligero cambio para brillo) -->
           <linearGradient id="brandStroke" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="var(--grad-yellow)"/>
             <stop offset="50%" stop-color="var(--grad-orange)"/>
             <stop offset="100%" stop-color="var(--grad-red)"/>
           </linearGradient>
-          <!-- Brillo de barrido -->
           <linearGradient id="shineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
             <stop offset="40%" stop-color="rgba(255,255,255,.35)"/>
             <stop offset="60%" stop-color="rgba(255,255,255,.0)"/>
           </linearGradient>
-          <clipPath id="cubeClip">
-            <!-- mismo contorno que la proyección del cubo para recortar el brillo -->
-            <path d="M60 10 L100 30 L100 70 L60 90 L20 70 L20 30 Z"/>
-          </clipPath>
+          <clipPath id="cubeClip"><path d="M60 10 L100 30 L100 70 L60 90 L20 70 L20 30 Z"/></clipPath>
         </defs>
-
-        <!-- Caras (pintado posterior) -->
-        <!-- Top -->
-        <polygon class="face" points="60,10 100,30 60,50 20,30"/>
-        <!-- Right -->
-        <polygon class="face" points="100,30 100,70 60,90 60,50"/>
-        <!-- Left -->
-        <polygon class="face" points="20,30 60,50 60,90 20,70"/>
-
-        <!-- Aristas (12), se dibujan secuenciales. pathLength=100 para facilitar la animación uniforme -->
-        <!-- Top perimeter -->
-        <path class="edge" style="--i:0"  d="M60 10 L100 30" pathLength="100"/>
-        <path class="edge" style="--i:1"  d="M100 30 L60 50" pathLength="100"/>
-        <path class="edge" style="--i:2"  d="M60 50 L20 30" pathLength="100"/>
-        <path class="edge" style="--i:3"  d="M20 30 L60 10" pathLength="100"/>
-        <!-- Verticals -->
-        <path class="edge" style="--i:4"  d="M100 30 L100 70" pathLength="100"/>
-        <path class="edge" style="--i:5"  d="M20 30  L20 70"  pathLength="100"/>
-        <!-- Bottom perimeter connections -->
-        <path class="edge" style="--i:6"  d="M100 70 L60 90" pathLength="100"/>
-        <path class="edge" style="--i:7"  d="M60 90  L20 70" pathLength="100"/>
-        <!-- Uprights to center (closing) -->
-        <path class="edge" style="--i:8"  d="M60 50 L60 90" pathLength="100"/>
-        <!-- diagonals (subtle structure/shine) -->
-        <path class="edge" style="--i:9"  d="M60 10 L60 50" pathLength="100"/>
-        <path class="edge" style="--i:10" d="M20 70 L60 50" pathLength="100"/>
-        <path class="edge" style="--i:11" d="M60 50 L100 70" pathLength="100"/>
-
-        <!-- Brillo animado que barre el cubo ya pintado -->
-        <g class="shine" clip-path="url(#cubeClip)">
-          <rect x="-120" y="0" width="240" height="120" fill="url(#shineGrad)">
-            <animate attributeName="x" from="-120" to="120" dur="1.8s" fill="freeze" begin="1.95s" />
-          </rect>
-        </g>
+        <polygon class="face" points="60,10 100,30 60,50 20,30"/><polygon class="face" points="100,30 100,70 60,90 60,50"/><polygon class="face" points="20,30 60,50 60,90 20,70"/>
+        <path class="edge" style="--i:0"  d="M60 10 L100 30" pathLength="100"/><path class="edge" style="--i:1"  d="M100 30 L60 50" pathLength="100"/><path class="edge" style="--i:2"  d="M60 50 L20 30" pathLength="100"/><path class="edge" style="--i:3"  d="M20 30 L60 10" pathLength="100"/><path class="edge" style="--i:4"  d="M100 30 L100 70" pathLength="100"/><path class="edge" style="--i:5"  d="M20 30  L20 70"  pathLength="100"/><path class="edge" style="--i:6"  d="M100 70 L60 90" pathLength="100"/><path class="edge" style="--i:7"  d="M60 90  L20 70" pathLength="100"/><path class="edge" style="--i:8"  d="M60 50 L60 90" pathLength="100"/><path class="edge" style="--i:9"  d="M60 10 L60 50" pathLength="100"/><path class="edge" style="--i:10" d="M20 70 L60 50" pathLength="100"/><path class="edge" style="--i:11" d="M60 50 L100 70" pathLength="100"/>
+        <g class="shine" clip-path="url(#cubeClip)"><rect x="-120" y="0" width="240" height="120" fill="url(#shineGrad)"><animate attributeName="x" from="-120" to="120" dur="1.8s" fill="freeze" begin="1.95s" /></rect></g>
       </svg>
     </div>
     <h1 class="splash-title">seb365 pro</h1>
@@ -327,9 +268,14 @@
       <button id="menu-toggle" title="Menú" class="button-secondary" style="padding: 8px 10px; display: none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
-      <h1>
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-        seb365 pro
+      <h1 class="header-logo">
+        <svg class="header-logo-icon" viewBox="0 0 120 120">
+          <defs><linearGradient id="headerLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--grad-yellow)"/><stop offset="55%" stop-color="var(--grad-orange)"/><stop offset="100%" stop-color="var(--grad-red)"/></linearGradient></defs>
+          <g fill="url(#headerLogoGradient)">
+            <polygon points="60,10 100,30 60,50 20,30"/><polygon points="100,30 100,70 60,90 60,50"/><polygon points="20,30 60,50 60,90 20,70"/>
+          </g>
+        </svg>
+        <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
       </h1>
       <div class="user-info">
         <button id="theme-toggle" title="Alternar tema" class="button-secondary" style="padding: 8px;">
@@ -370,9 +316,9 @@
 
   <div id="loan-modal" class="modal">
     <div class="modal-content">
-        <div class="modal-header"><h3>Registrar Préstamo</h3><button class="modal-close-btn">&times;</button></div>
+        <div class="modal-header"><h3>Registrar Préstamo</h3><button type="button" class="modal-close-btn">&times;</button></div>
         <form id="loan-form">
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="modal-form-body">
                 <input id="loan-description" placeholder="Descripción" required>
                 <input id="loan-value" type="number" step="any" min="1" placeholder="Valor" required>
                 <button type="submit">Añadir Préstamo</button>
@@ -385,14 +331,18 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="ficha-sale-modal-title">Vender Ficha</h3>
-            <button class="modal-close-btn">&times;</button>
+            <button type="button" class="modal-close-btn">&times;</button>
         </div>
         <form id="ficha-sale-form">
-            <input type="hidden" id="ficha-sale-product-id">
-            <p>Stock disponible: <strong id="ficha-sale-stock"></strong></p>
-            <label for="ficha-sale-quantity">Cantidad a vender:</label>
-            <input id="ficha-sale-quantity" type="number" min="1" required>
-            <button type="submit" style="margin-top: 16px;">Confirmar Venta</button>
+            <div class="modal-form-body">
+                <input type="hidden" id="ficha-sale-product-id">
+                <p>Stock disponible: <strong id="ficha-sale-stock"></strong></p>
+                <div>
+                    <label for="ficha-sale-quantity">Cantidad a vender:</label>
+                    <input id="ficha-sale-quantity" type="number" min="1" required>
+                </div>
+                <button type="submit">Confirmar Venta</button>
+            </div>
         </form>
     </div>
   </div>
@@ -401,12 +351,11 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="desglose-modal-title">Desglose del Turno</h3>
-            <button class="modal-close-btn">&times;</button>
+            <button type="button" class="modal-close-btn">&times;</button>
         </div>
         <div id="desglose-modal-body" class="table-wrapper" style="max-height: 60vh; overflow-y: auto;"></div>
     </div>
   </div>
-
 
   <script>
     window.__FIREBASE_CONFIG__ = {
@@ -519,30 +468,106 @@
     updateThemeToggleIcon(initialTheme);
     
     const authContainer = document.getElementById("auth-container");
-    authContainer.innerHTML = `
-      <div class="auth-box card">
-        <h1>seb365 pro</h1><p>Gestión de inventario simplificada</p>
-        <div id="login-view">
-          <form id="login-form" autocomplete="on"><input type="email" id="login-email" placeholder="Correo electrónico" required><input type="password" id="login-password" placeholder="Contraseña" required><button type="submit">Ingresar</button><button id="google-login-btn" type="button" class="button-secondary" style="display:flex;justify-content:center;align-items:center;"><svg viewBox="0 0 48 48" style="width:18px;height:18px;margin-right:8px;"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button></form>
-          <p style="margin-top:20px; font-size: 14px;">¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
-        </div>
-        <div id="register-view" class="hidden">
-          <h2>Paso 1: Datos Personales</h2>
-          <form id="register-personal-form" autocomplete="on"><input type="text" id="register-name" placeholder="Nombre completo" required><input type="tel" id="register-phone" placeholder="Número de teléfono" required><input type="email" id="register-email" placeholder="Correo electrónico" required><input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required><button type="submit">Siguiente</button></form>
-          <p style="margin-top:20px; font-size: 14px;">¿Ya tienes cuenta? <a href="#" id="show-login-link">Inicia sesión</a></p>
-        </div>
-        <div id="register-business-view" class="hidden">
-          <h2>Paso 2: Datos del Negocio</h2>
-          <form id="register-business-form" autocomplete="on"><input type="text" id="register-business-name" placeholder="Nombre del negocio" required><select id="register-business-type" required><option value="">Tipo de negocio...</option><option value="bar">Bar</option><option value="discoteca">Discoteca</option><option value="cafeteria">Cafetería</option><option value="restaurante">Restaurante</option></select><button type="submit">Crear Cuenta</button></form>
-        </div>
-      </div>`;
+    const ICONS = {
+        eye: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
+        eyeOff: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`
+    };
+
+    function renderAuthUI() {
+        authContainer.innerHTML = `
+        <div class="auth-box card">
+            <h1 class="header-logo" style="justify-content: center; font-size: 28px; margin-bottom: 8px;">
+              <svg class="header-logo-icon" viewBox="0 0 120 120" style="width: 36px; height: 36px;">
+                <defs><linearGradient id="authLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--grad-yellow)"/><stop offset="55%" stop-color="var(--grad-orange)"/><stop offset="100%" stop-color="var(--grad-red)"/></linearGradient></defs>
+                <g fill="url(#authLogoGradient)"><polygon points="60,10 100,30 60,50 20,30"/><polygon points="100,30 100,70 60,90 60,50"/><polygon points="20,30 60,50 60,90 20,70"/></g>
+              </svg>
+              <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
+            </h1>
+            <p>Gestión de inventario simplificada</p>
+
+            <div id="login-view">
+            <form id="login-form" autocomplete="on">
+                <div class="auth-form-fields">
+                    <input type="email" id="login-email" placeholder="Correo electrónico" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-password" placeholder="Contraseña" required>
+                        <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+                    </div>
+                </div>
+                <button type="submit">Ingresar</button>
+                <button id="google-login-btn" type="button" class="button-secondary" style="margin-top: 12px; display:flex;justify-content:center;align-items:center;"><svg viewBox="0 0 48 48" style="width:18px;height:18px;margin-right:8px;"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button>
+            </form>
+            <p style="margin-top:20px; font-size: 14px;">¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
+            </div>
+            
+            <div id="register-view" class="hidden">
+            <h2>Paso 1: Datos Personales</h2>
+            <form id="register-personal-form" autocomplete="on">
+                <div class="auth-form-fields">
+                    <input type="text" id="register-name" placeholder="Nombre completo" required>
+                    <input type="tel" id="register-phone" placeholder="Número de teléfono" required>
+                    <input type="email" id="register-email" placeholder="Correo electrónico" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required>
+                        <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+                    </div>
+                    <div class="password-wrapper">
+                        <input type="password" id="register-password-confirm" placeholder="Confirmar contraseña" required>
+                        <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+                    </div>
+                </div>
+                <button type="submit">Siguiente</button>
+            </form>
+            <p style="margin-top:20px; font-size: 14px;">¿Ya tienes cuenta? <a href="#" id="show-login-link">Inicia sesión</a></p>
+            </div>
+            <div id="register-business-view" class="hidden">
+            <h2>Paso 2: Datos del Negocio</h2>
+            <form id="register-business-form" autocomplete="on">
+                <div class="auth-form-fields">
+                    <input type="text" id="register-business-name" placeholder="Nombre del negocio" required>
+                    <select id="register-business-type" required><option value="">Tipo de negocio...</option><option value="bar">Bar</option><option value="discoteca">Discoteca</option><option value="cafeteria">Cafetería</option><option value="restaurante">Restaurante</option></select>
+                </div>
+                <button type="submit">Crear Cuenta</button>
+            </form>
+            </div>
+        </div>`;
+
+        document.getElementById("login-form").addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; signInWithEmailAndPassword(auth, document.getElementById("login-email").value, document.getElementById("login-password").value).catch(err=>showToast(err.message,"error")).finally(()=>{btn.disabled=false;}); });
+        document.getElementById("google-login-btn").addEventListener("click", async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(err) { showToast(err.message, "error"); } });
+        document.getElementById("register-personal-form").addEventListener("submit", (e) => { 
+            e.preventDefault(); 
+            const password = document.getElementById("register-password").value;
+            const confirmPassword = document.getElementById("register-password-confirm").value;
+            if (password !== confirmPassword) {
+                showToast("Las contraseñas no coinciden.", "error");
+                return;
+            }
+            registrationData.displayName = document.getElementById("register-name").value; 
+            registrationData.phone = document.getElementById("register-phone").value; 
+            registrationData.email = document.getElementById("register-email").value; 
+            registrationData.password = password;
+            document.getElementById("register-view").classList.add("hidden"); 
+            document.getElementById("register-business-view").classList.remove("hidden"); 
+        });
+        document.getElementById("register-business-form").addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; registrationData.businessName = document.getElementById("register-business-name").value; registrationData.businessType = document.getElementById("register-business-type").value; try { const cred = await createUserWithEmailAndPassword(auth, registrationData.email, registrationData.password); await setDoc(doc(colref.users, cred.user.uid), { email: registrationData.email, displayName: registrationData.displayName, phone: registrationData.phone, businessName: registrationData.businessName, businessType: registrationData.businessType, role: "admin", active: true, createdAt: serverTimestamp() }); showToast("Cuenta creada exitosamente"); registrationData = {}; } catch(err) { showToast(err.message, "error"); document.getElementById("register-view").classList.remove("hidden"); document.getElementById("register-business-view").classList.add("hidden"); } finally { btn.disabled = false; } });
+        document.getElementById("show-register-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("login-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("register-view").classList.remove("hidden"); });
+        document.getElementById("show-login-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("register-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("login-view").classList.remove("hidden"); });
+        
+        authContainer.addEventListener('click', (e) => {
+            const toggleBtn = e.target.closest('.password-toggle-btn');
+            if (toggleBtn) {
+                const passwordInput = toggleBtn.previousElementSibling;
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleBtn.innerHTML = ICONS.eyeOff;
+                } else {
+                    passwordInput.type = 'password';
+                    toggleBtn.innerHTML = ICONS.eye;
+                }
+            }
+        });
+    }
     
-    document.getElementById("login-form").addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; signInWithEmailAndPassword(auth, document.getElementById("login-email").value, document.getElementById("login-password").value).catch(err=>showToast(err.message,"error")).finally(()=>{btn.disabled=false;}); });
-    document.getElementById("google-login-btn").addEventListener("click", async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(err) { showToast(err.message, "error"); } });
-    document.getElementById("register-personal-form").addEventListener("submit", (e) => { e.preventDefault(); registrationData.displayName = document.getElementById("register-name").value; registrationData.phone = document.getElementById("register-phone").value; registrationData.email = document.getElementById("register-email").value; registrationData.password = document.getElementById("register-password").value; document.getElementById("register-view").classList.add("hidden"); document.getElementById("register-business-view").classList.remove("hidden"); });
-    document.getElementById("register-business-form").addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; registrationData.businessName = document.getElementById("register-business-name").value; registrationData.businessType = document.getElementById("register-business-type").value; try { const cred = await createUserWithEmailAndPassword(auth, registrationData.email, registrationData.password); await setDoc(doc(colref.users, cred.user.uid), { email: registrationData.email, displayName: registrationData.displayName, phone: registrationData.phone, businessName: registrationData.businessName, businessType: registrationData.businessType, role: "admin", active: true, createdAt: serverTimestamp() }); showToast("Cuenta creada exitosamente"); registrationData = {}; } catch(err) { showToast(err.message, "error"); document.getElementById("register-view").classList.remove("hidden"); document.getElementById("register-business-view").classList.add("hidden"); } finally { btn.disabled = false; } });
-    document.getElementById("show-register-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("login-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("register-view").classList.remove("hidden"); });
-    document.getElementById("show-login-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("register-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("login-view").classList.remove("hidden"); });
     document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
     
     let persistentHandlersAttached = false;
@@ -570,6 +595,7 @@
         appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
         document.getElementById("app-container").classList.add("hidden");
         document.getElementById("auth-container").classList.remove("hidden");
+        renderAuthUI();
         persistentHandlersAttached = false;
       }
     });
