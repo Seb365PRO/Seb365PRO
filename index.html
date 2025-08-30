@@ -9,8 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   
+  <!-- Librerías para PDF y Gráficos -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.autotable.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 
   <style>
     :root {
@@ -42,33 +44,6 @@
     #content { flex: 1; padding: 24px; padding-bottom: 80px; }
     .hidden { display: none !important; }
 
-    /* --- Animación de Inicio --- */
-    #splash-screen {
-      position: fixed; inset: 0; background: #0f1115; z-index: 10000;
-      display: flex; align-items: center; justify-content: center; flex-direction: column;
-      transition: opacity 0.5s ease-out;
-    }
-    #splash-screen.hidden { opacity: 0; pointer-events: none; }
-    .splash-title {
-      font-size: clamp(2rem, 10vw, 3.5rem); font-weight: 700;
-      background: linear-gradient(90deg, var(--grad-yellow), var(--grad-orange), var(--grad-red));
-      background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
-      white-space: nowrap; overflow: hidden; border-right: .15em solid var(--brand-primary);
-      animation: typing 2.2s steps(11, end), blink-caret .75s step-end infinite, color-pan 3s linear infinite;
-      margin-top: 24px;
-    }
-    @keyframes typing { from { width: 0 } to { width: 100% } }
-    @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--brand-primary); } }
-    @keyframes color-pan { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-    .logo-cube-container{ width: clamp(120px, 22vw, 180px); aspect-ratio: 1/1; display: grid; place-items: center; filter: drop-shadow(0 10px 30px rgba(255, 111, 0, .18)); transform: translateZ(0); }
-    .logo-cube{ width: 100%; height: 100%; transform: rotate(-2deg); }
-    .edge{ stroke: url(#brandStroke); stroke-width: 3.2; stroke-linecap: round; fill: none; stroke-dasharray: 100; stroke-dashoffset: 100; filter: drop-shadow(0 0 6px rgba(255,111,0,.35)); animation: draw 0.85s ease forwards; animation-delay: calc(var(--i) * 0.12s); }
-    @keyframes draw { to { stroke-dashoffset: 0; } }
-    .face{ fill: url(#brandGradient); fill-opacity: 0; stroke: none; animation: faceIn 0.9s ease forwards; animation-delay: 1.8s; }
-    @keyframes faceIn { to { fill-opacity: 1; } }
-    .shine{ opacity: 0; animation: shineIn 2.2s ease-in-out 1.9s forwards; mix-blend-mode: screen; }
-    @keyframes shineIn { 10% {opacity:.0} 20%{opacity:.25} 70%{opacity:.12} 100%{opacity:0} }
-
     /* --- Header y Logo --- */
     header {
       display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
@@ -77,7 +52,7 @@
     }
     .header-logo {
       margin: 0; font-size: 22px; font-weight: 700;
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
     }
     .header-logo-icon { width: 28px; height: 28px; }
     .header-logo-text {
@@ -112,7 +87,7 @@
       background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px;
       padding: 20px; box-shadow: 0 2px 4px var(--shadow-color);
     }
-    .content-view h2, .card h2, .auth-box h2 { margin: 0 0 24px 0; font-size: 24px; font-weight: 500; }
+    .content-view h2, .card h2 { margin: 0 0 24px 0; font-size: 24px; font-weight: 500; }
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
     input, select, button { font: inherit; outline-color: var(--brand-primary); }
     input, select {
@@ -159,13 +134,35 @@
     .toast.success { border-left: 4px solid var(--accent-green); }
     .toast.error { border-left: 4px solid var(--accent-red); }
     .amount-positive { color: var(--accent-green); } .amount-negative { color: var(--accent-red); }
-    #auth-container { display: flex; align-items: center; justify-content: center; padding: 24px; min-height: 100vh; }
-    .auth-box { max-width: 420px; width: 100%; text-align: center; }
-    .auth-form-fields { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
+
+    /* --- Autenticación Rediseñada --- */
+    #auth-container {
+        display: flex; align-items: center; justify-content: center; padding: 24px;
+        min-height: 100vh;
+        background-color: var(--bg-secondary);
+    }
+    .auth-box {
+        max-width: 450px; width: 100%; text-align: center;
+        background: var(--bg-primary); padding: 32px; border-radius: 16px;
+        box-shadow: 0 8px 32px var(--shadow-color);
+    }
+    .auth-box h2 { font-size: 28px; font-weight: 700; margin: 16px 0 8px 0; }
+    .auth-box p { color: var(--text-secondary); margin-bottom: 32px; }
+    .auth-form-fields { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .auth-box button[type="submit"] { width: 100%; padding: 14px; font-size: 16px; }
+    .auth-box .button-secondary { width: 100%; }
+    .divider { display: flex; align-items: center; text-align: center; color: var(--text-secondary); font-size: 12px; margin: 24px 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
+    .divider:not(:empty)::before { margin-right: .5em; }
+    .divider:not(:empty)::after { margin-left: .5em; }
+    .auth-switch-link { color: var(--brand-primary); text-decoration: none; font-weight: 500; }
+    .auth-switch-link:hover { text-decoration: underline; }
+    .register-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
     .modal {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center; z-index: 1000;
-        backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
     .modal.visible { opacity: 1; pointer-events: all; }
     .modal-content {
@@ -214,56 +211,76 @@
     .mobile-nav-link span { font-size: 10px; font-weight: 500; }
     .mobile-nav-link.active { color: var(--brand-primary); }
 
+    /* --- Reportes y Estadísticas Mejoradas --- */
+    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
     .report-card h3 {
-        font-size: 16px;
-        color: var(--text-secondary);
-        font-weight: 500;
-        margin: 0 0 8px 0;
+        font-size: 14px; color: var(--text-secondary); font-weight: 500; margin: 0 0 8px 0;
     }
-    .report-card p {
-        font-size: 28px;
-        font-weight: 700;
-        margin: 0;
+    .report-card p { font-size: 24px; font-weight: 700; margin: 0; }
+    #stats-visuals { margin-top: 24px; }
+    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .chart-container { position: relative; }
+    .chart-container h3 { margin-bottom: 16px; font-size: 18px; font-weight: 500; }
+    .d3-tooltip {
+        position: absolute; text-align: center;
+        padding: 8px; font-size: 12px;
+        background: var(--dark-bg-secondary); color: var(--dark-text-primary);
+        border: 0px; border-radius: 8px; pointer-events: none;
+        opacity: 0; transition: opacity 0.2s;
     }
+    .axis path, .axis line { stroke: var(--border-color); }
+    .axis text { fill: var(--text-secondary); }
 
-    /* Notificaciones */
+    /* --- Notificaciones Mejoradas --- */
     .notification-container { position: relative; }
     #notification-counter {
         position: absolute; top: 0px; right: 0px;
         background-color: var(--accent-red); color: white;
-        border-radius: 50%; width: 18px; height: 18px;
-        font-size: 11px; font-weight: 700;
-        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%; width: 18px; height: 18px; font-size: 11px;
+        display: flex; align-items: center; justify-content: center; font-weight: 700;
         border: 2px solid var(--bg-secondary);
     }
     #notification-dropdown {
         position: absolute; top: calc(100% + 10px); right: 0;
-        width: 380px; max-height: 450px;
+        width: 380px; z-index: 110;
+        background-color: rgba(var(--bg-primary-rgb), 0.8);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(var(--border-color-rgb), 0.5);
+        box-shadow: 0 8px 24px var(--shadow-color);
+        border-radius: 12px;
         display: flex; flex-direction: column;
-        z-index: 110;
         overflow: hidden;
     }
     .notification-header {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 0 20px 16px 20px;
-        border-bottom: 1px solid var(--border-color);
+        padding: 16px 20px; border-bottom: 1px solid var(--border-color);
     }
     .notification-header h3 { margin: 0; font-size: 18px;}
-    #notification-list { flex-grow: 1; overflow-y: auto; }
+    #notification-list { flex-grow: 1; max-height: 350px; overflow-y: auto; }
     .notification-item {
-        padding: 12px 20px;
-        border-bottom: 1px solid var(--border-color);
-        display: flex; gap: 12px;
+        padding: 12px 20px; border-bottom: 1px solid var(--border-color);
+        display: flex; gap: 12px; align-items: center;
         cursor: pointer; transition: background-color 0.2s;
     }
     .notification-item:last-child { border-bottom: none; }
-    .notification-item:hover { background-color: var(--bg-tertiary); }
-    .notification-item.unread { background-color: rgba(255, 111, 0, 0.05); }
-    .notification-icon { flex-shrink: 0; margin-top: 4px; }
+    .notification-item:hover { background-color: rgba(var(--border-color-rgb), 0.2); }
+    .notification-item.unread { background-color: rgba(255, 111, 0, 0.1); }
+    .notification-icon {
+        flex-shrink: 0; width: 36px; height: 36px;
+        display: grid; place-items: center;
+        border-radius: 50%;
+        background-color: var(--bg-tertiary);
+    }
     .notification-icon svg { width: 18px; height: 18px; color: var(--text-secondary); }
-    .notification-content p { margin: 0 0 4px 0; font-size: 14px; line-height: 1.4; }
+    .notification-content p { margin: 0 0 4px 0; font-size: 14px; line-height: 1.4; color: var(--text-primary); }
     .notification-content span { font-size: 12px; color: var(--text-secondary); }
-
+    body.notification-backdrop-active::before {
+      content: ""; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 109;
+    }
+    
+    @media (max-width: 992px) {
+        .charts-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 768px) {
       #main-nav { position: fixed; left: -270px; top: 60px; z-index: 80; box-shadow: 4px 0 15px rgba(0,0,0,.1); }
       #main-nav.open { left: 0; }
@@ -272,11 +289,16 @@
       #mobile-footer { display: block; }
       #logout-btn span { display: none; }
       #logout-btn { padding: 8px; }
-      #notification-dropdown { width: 90vw; max-width: 380px; }
+      #notification-dropdown.mobile-active {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 90vw; max-width: 380px;
+      }
+      .register-fields-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       header { padding: 0 16px; }
       .form-grid { grid-template-columns: 1fr; }
+      .report-card-grid { grid-template-columns: 1fr 1fr; }
       .active-shift-item { flex-direction: column; align-items: flex-start; gap: 12px; }
       table { font-size: 14px; }
       thead th, tbody td { padding: 12px 8px; }
@@ -287,44 +309,15 @@
 </head>
 <body>
 
-  <div id="splash-screen">
-    <div class="logo-cube-container" aria-label="Animación de cubo">
-      <svg class="logo-cube" viewBox="0 0 120 120" role="img" aria-hidden="true">
-        <defs>
-          <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"  stop-color="var(--grad-yellow)"/>
-            <stop offset="55%" stop-color="var(--grad-orange)"/>
-            <stop offset="100%" stop-color="var(--grad-red)"/>
-          </linearGradient>
-          <linearGradient id="brandStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="var(--grad-yellow)"/>
-            <stop offset="50%" stop-color="var(--grad-orange)"/>
-            <stop offset="100%" stop-color="var(--grad-red)"/>
-          </linearGradient>
-          <linearGradient id="shineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
-            <stop offset="40%" stop-color="rgba(255,255,255,.35)"/>
-            <stop offset="60%" stop-color="rgba(255,255,255,.0)"/>
-          </linearGradient>
-          <clipPath id="cubeClip"><path d="M60 10 L100 30 L100 70 L60 90 L20 70 L20 30 Z"/></clipPath>
-        </defs>
-        <polygon class="face" points="60,10 100,30 60,50 20,30"/><polygon class="face" points="100,30 100,70 60,90 60,50"/><polygon class="face" points="20,30 60,50 60,90 20,70"/>
-        <path class="edge" style="--i:0"  d="M60 10 L100 30" pathLength="100"/><path class="edge" style="--i:1"  d="M100 30 L60 50" pathLength="100"/><path class="edge" style="--i:2"  d="M60 50 L20 30" pathLength="100"/><path class="edge" style="--i:3"  d="M20 30 L60 10" pathLength="100"/><path class="edge" style="--i:4"  d="M100 30 L100 70" pathLength="100"/><path class="edge" style="--i:5"  d="M20 30  L20 70"  pathLength="100"/><path class="edge" style="--i:6"  d="M100 70 L60 90" pathLength="100"/><path class="edge" style="--i:7"  d="M60 90  L20 70" pathLength="100"/><path class="edge" style="--i:8"  d="M60 50 L60 90" pathLength="100"/><path class="edge" style="--i:9"  d="M60 10 L60 50" pathLength="100"/><path class="edge" style="--i:10" d="M20 70 L60 50" pathLength="100"/><path class="edge" style="--i:11" d="M60 50 L100 70" pathLength="100"/>
-        <g class="shine" clip-path="url(#cubeClip)"><rect x="-120" y="0" width="240" height="120" fill="url(#shineGrad)"><animate attributeName="x" from="-120" to="120" dur="1.8s" fill="freeze" begin="1.95s" /></rect></g>
-      </svg>
-    </div>
-    <h1 class="splash-title">seb365 pro</h1>
-  </div>
-
   <div id="toast-container"></div>
-  <div id="auth-container"></div>
+  <div id="auth-container" class="hidden"></div>
 
   <div id="app-container" class="hidden">
     <header>
       <button id="menu-toggle" title="Menú" class="button-secondary" style="padding: 8px 10px; display: none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
-      <h1 class="header-logo">
+      <a href="#" class="header-logo" data-view="reports-view">
         <svg class="header-logo-icon" viewBox="0 0 120 120">
           <defs><linearGradient id="headerLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--grad-yellow)"/><stop offset="55%" stop-color="var(--grad-orange)"/><stop offset="100%" stop-color="var(--grad-red)"/></linearGradient></defs>
           <g fill="url(#headerLogoGradient)">
@@ -332,7 +325,7 @@
           </g>
         </svg>
         <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
-      </h1>
+      </a>
       <div class="user-info">
         <button id="theme-toggle" title="Alternar tema" class="button-secondary" style="padding: 8px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -342,7 +335,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 <span id="notification-counter" class="hidden"></span>
             </button>
-            <div id="notification-dropdown" class="card hidden">
+            <div id="notification-dropdown" class="hidden">
                 <div class="notification-header">
                     <h3>Notificaciones</h3>
                 </div>
@@ -482,7 +475,8 @@
       user: null, userData: null, role: null, unsub: [],
       products: [], providers: [], workers: [], notifications: [],
       inventory: {}, cashflow: [],
-      activeShifts: [], selectedShiftId: null
+      activeShifts: [], selectedShiftId: null,
+      reportCache: null 
     };
     let registrationData = {}, shiftSubListeners = {}, stockUnsubscribers = {};
 
@@ -506,6 +500,16 @@
         if (unit === "canastas") return qty * (prod.unidadesPorCanasta || 1);
         return qty;
     };
+    
+    // Función para convertir colores HEX a RGB para usar en RGBA
+    function hexToRgb(hex) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
 
     let raf = null;
     const scheduleRender = (forceId = null) => {
@@ -525,8 +529,8 @@
     const mobileFooterNav = document.getElementById("mobile-footer-nav");
     
     function handleNavClick(e) {
-      const link = e.target.closest(".nav-link, .mobile-nav-link");
-      if (!link) return;
+      const link = e.target.closest(".nav-link, .mobile-nav-link, .header-logo");
+      if (!link || !link.dataset.view) return;
       e.preventDefault();
       mainNav.classList.remove("open");
       const viewId = link.dataset.view;
@@ -539,6 +543,7 @@
 
     mainNav.addEventListener("click", handleNavClick);
     mobileFooterNav.addEventListener("click", handleNavClick);
+    document.querySelector('header').addEventListener("click", handleNavClick);
     document.getElementById("menu-toggle").addEventListener("click", () => mainNav.classList.toggle("open"));
     document.getElementById("profile-btn").addEventListener("click", () => document.querySelector('.nav-link[data-view="profile-view"]').click());
     document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
@@ -551,16 +556,29 @@
         ? `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`
         : `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
     };
+    
+    function applyTheme(theme) {
+        document.body.setAttribute('data-theme', theme);
+        updateThemeToggleIcon(theme);
+        // Colores para RGBA
+        const primaryBG = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim();
+        const borderC = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+        const primaryRgb = hexToRgb(primaryBG) || {r: 255, g: 255, b: 255}; // Fallback to white
+        const borderRgb = hexToRgb(borderC) || {r: 224, g: 224, b: 224}; // Fallback to light grey
+        document.documentElement.style.setProperty('--bg-primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
+        document.documentElement.style.setProperty('--border-color-rgb', `${borderRgb.r}, ${borderRgb.g}, ${borderRgb.b}`);
+    }
+
     themeToggleBtn.addEventListener('click', () => {
       const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.body.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
-      updateThemeToggleIcon(newTheme);
+      applyTheme(newTheme);
     });
+    
     const savedTheme = localStorage.getItem('theme');
     const initialTheme = savedTheme || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    document.body.setAttribute('data-theme', initialTheme);
-    updateThemeToggleIcon(initialTheme);
+    applyTheme(initialTheme);
+
 
     // --- Flujo de Autenticación ---
     const authContainer = document.getElementById("auth-container");
@@ -569,137 +587,130 @@
         eyeOff: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`
     };
 
-    function renderAuthUI() {
+    function renderAuthUI(view = 'login') {
+        const loginActive = view === 'login';
         authContainer.innerHTML = `
-        <div class="auth-box card">
-            <h1 class="header-logo" style="justify-content: center; font-size: 28px; margin-bottom: 8px;">
-              <svg class="header-logo-icon" viewBox="0 0 120 120" style="width: 36px; height: 36px;">
-                <defs><linearGradient id="authLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--grad-yellow)"/><stop offset="55%" stop-color="var(--grad-orange)"/><stop offset="100%" stop-color="var(--grad-red)"/></linearGradient></defs>
-                <g fill="url(#authLogoGradient)"><polygon points="60,10 100,30 60,50 20,30"/><polygon points="100,30 100,70 60,90 60,50"/><polygon points="20,30 60,50 60,90 20,70"/></g>
-              </svg>
-              <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
-            </h1>
-            <p>Gestión de inventario simplificada</p>
-            <div id="login-view">
-            <form id="login-form" autocomplete="on">
-                <div class="auth-form-fields">
-                    <input type="email" id="login-email" placeholder="Correo electrónico" required>
-                    <div class="password-wrapper">
-                        <input type="password" id="login-password" placeholder="Contraseña" required>
-                        <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+        <div class="auth-box">
+            <a href="#" class="header-logo" style="justify-content: center; text-decoration: none;">
+                <svg class="header-logo-icon" viewBox="0 0 120 120" style="width: 36px; height: 36px;">
+                  <defs><linearGradient id="authLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--grad-yellow)"/><stop offset="55%" stop-color="var(--grad-orange)"/><stop offset="100%" stop-color="var(--grad-red)"/></linearGradient></defs>
+                  <g fill="url(#authLogoGradient)"><polygon points="60,10 100,30 60,50 20,30"/><polygon points="100,30 100,70 60,90 60,50"/><polygon points="20,30 60,50 60,90 20,70"/></g>
+                </svg>
+                <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
+            </a>
+            
+            <div id="login-view" class="${loginActive ? '' : 'hidden'}">
+                <h2>Bienvenido de Nuevo</h2>
+                <p>Ingresa tus credenciales para continuar.</p>
+                <form id="login-form" autocomplete="on">
+                    <div class="auth-form-fields">
+                        <input type="email" id="login-email" placeholder="Correo electrónico" required>
+                        <div class="password-wrapper">
+                            <input type="password" id="login-password" placeholder="Contraseña" required>
+                            <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+                        </div>
                     </div>
-                </div>
-                <button type="submit">Ingresar</button>
-                <button id="google-login-btn" type="button" class="button-secondary" style="margin-top: 12px; display:flex;justify-content:center;align-items:center;"><svg viewBox="0 0 48 48" style="width:18px;height:18px;margin-right:8px;"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button>
-            </form>
-            <p style="margin-top:20px; font-size: 14px;">¿No tienes cuenta? <a href="#" id="show-register-link">Regístrate</a></p>
+                    <button type="submit">Ingresar</button>
+                    <div class="divider">o</div>
+                    <button id="google-login-btn" type="button" class="button-secondary" style="display:flex;justify-content:center;align-items:center;"><svg viewBox="0 0 48 48" style="width:18px;height:18px;margin-right:8px;"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg><span>Entrar con Google</span></button>
+                </form>
+                <p style="margin-top:20px; font-size: 14px;">¿No tienes cuenta? <a href="#" id="show-register-link" class="auth-switch-link">Crea una ahora</a></p>
             </div>
-            <div id="register-view" class="hidden">
-            <h2>Paso 1: Datos Personales</h2>
-            <form id="register-personal-form" autocomplete="on">
-                <div class="auth-form-fields">
-                    <input type="text" id="register-name" placeholder="Nombre completo" required>
-                    <input type="tel" id="register-phone" placeholder="Número de teléfono" required>
-                    <input type="email" id="register-email" placeholder="Correo electrónico" required>
-                    <div class="password-wrapper">
-                        <input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required>
-                        <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+
+            <div id="register-view" class="${loginActive ? 'hidden' : ''}">
+                <h2>Crea tu Cuenta</h2>
+                <p>Completa el formulario para empezar a gestionar tu negocio.</p>
+                <form id="register-form" autocomplete="on">
+                    <div class="auth-form-fields">
+                         <input type="text" id="register-name" placeholder="Nombre completo" required>
+                         <input type="email" id="register-email" placeholder="Correo electrónico" required>
+                        <div class="register-fields-grid">
+                            <input type="tel" id="register-phone" placeholder="Teléfono" required>
+                            <input type="text" id="register-business-name" placeholder="Nombre del negocio" required>
+                        </div>
+                        <select id="register-business-type" required><option value="">Tipo de negocio...</option><option value="bar">Bar</option><option value="discoteca">Discoteca</option><option value="cafeteria">Cafetería</option><option value="restaurante">Restaurante</option></select>
+                        <div class="register-fields-grid">
+                            <div class="password-wrapper">
+                                <input type="password" id="register-password" placeholder="Contraseña" required>
+                                <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+                            </div>
+                            <div class="password-wrapper">
+                                <input type="password" id="register-password-confirm" placeholder="Confirmar" required>
+                                <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="password-wrapper">
-                        <input type="password" id="register-password-confirm" placeholder="Confirmar contraseña" required>
-                        <button type="button" class="password-toggle-btn" title="Mostrar/Ocultar contraseña">${ICONS.eye}</button>
-                    </div>
-                </div>
-                <button type="submit">Siguiente</button>
-            </form>
-            <p style="margin-top:20px; font-size: 14px;">¿Ya tienes cuenta? <a href="#" id="show-login-link">Inicia sesión</a></p>
-            </div>
-            <div id="register-business-view" class="hidden">
-            <h2>Paso 2: Datos del Negocio</h2>
-            <form id="register-business-form" autocomplete="on">
-                <div class="auth-form-fields">
-                    <input type="text" id="register-business-name" placeholder="Nombre del negocio" required>
-                    <select id="register-business-type" required><option value="">Tipo de negocio...</option><option value="bar">Bar</option><option value="discoteca">Discoteca</option><option value="cafeteria">Cafetería</option><option value="restaurante">Restaurante</option></select>
-                </div>
-                <button type="submit">Crear Cuenta</button>
-            </form>
+                    <button type="submit">Crear Cuenta</button>
+                </form>
+                 <p style="margin-top:20px; font-size: 14px;">¿Ya tienes cuenta? <a href="#" id="show-login-link" class="auth-switch-link">Inicia sesión</a></p>
             </div>
         </div>`;
 
         document.getElementById("login-form").addEventListener("submit", async (e) => { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; signInWithEmailAndPassword(auth, document.getElementById("login-email").value, document.getElementById("login-password").value).catch(err=>showToast(err.message,"error")).finally(()=>{btn.disabled=false;}); });
         document.getElementById("google-login-btn").addEventListener("click", async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(err) { showToast(err.message, "error"); } });
-        document.getElementById("register-personal-form").addEventListener("submit", (e) => { 
+        document.getElementById("register-form").addEventListener("submit", async (e) => { 
             e.preventDefault(); 
             const password = document.getElementById("register-password").value;
             const confirmPassword = document.getElementById("register-password-confirm").value;
-            if (password !== confirmPassword) {
-                showToast("Las contraseñas no coinciden.", "error");
-                return;
+            if (password.length < 6) {
+                showToast("La contraseña debe tener al menos 6 caracteres.", "error"); return;
             }
-            registrationData.displayName = document.getElementById("register-name").value; 
-            registrationData.phone = document.getElementById("register-phone").value; 
-            registrationData.email = document.getElementById("register-email").value; 
-            registrationData.password = password;
-            document.getElementById("register-view").classList.add("hidden"); 
-            document.getElementById("register-business-view").classList.remove("hidden"); 
-        });
-        document.getElementById("register-business-form").addEventListener("submit", async (e) => { 
-            e.preventDefault(); 
-            const btn = e.target.querySelector('button[type="submit"]'); 
-            btn.disabled = true; 
-            registrationData.businessName = document.getElementById("register-business-name").value; 
-            registrationData.businessType = document.getElementById("register-business-type").value; 
+            if (password !== confirmPassword) {
+                showToast("Las contraseñas no coinciden.", "error"); return;
+            }
+
+            const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
+            const regData = {
+                displayName: document.getElementById("register-name").value,
+                phone: document.getElementById("register-phone").value,
+                email: document.getElementById("register-email").value,
+                password: password,
+                businessName: document.getElementById("register-business-name").value,
+                businessType: document.getElementById("register-business-type").value
+            };
+            
             try { 
-                const cred = await createUserWithEmailAndPassword(auth, registrationData.email, registrationData.password); 
+                const cred = await createUserWithEmailAndPassword(auth, regData.email, regData.password); 
                 const batch = writeBatch(db);
                 const userRef = doc(db, "users", cred.user.uid);
                 batch.set(userRef, { 
-                    email: registrationData.email, 
-                    displayName: registrationData.displayName,
+                    email: regData.email, 
+                    displayName: regData.displayName,
                     createdAt: serverTimestamp()
                 });
                 const tenantRef = doc(db, "tenants", cred.user.uid);
                 batch.set(tenantRef, {
-                    ownerName: registrationData.displayName,
-                    ownerEmail: registrationData.email,
-                    phone: registrationData.phone,
-                    businessName: registrationData.businessName,
-                    businessType: registrationData.businessType,
+                    ownerName: regData.displayName,
+                    ownerEmail: regData.email,
+                    phone: regData.phone,
+                    businessName: regData.businessName,
+                    businessType: regData.businessType,
                     role: "admin",
                     active: true,
                     createdAt: serverTimestamp()
                 });
                 await batch.commit();
                 showToast("Cuenta creada exitosamente"); 
-                registrationData = {}; 
             } catch(err) { 
                 showToast(err.message, "error"); 
-                document.getElementById("register-view").classList.remove("hidden"); 
-                document.getElementById("register-business-view").classList.add("hidden"); 
             } finally { 
                 btn.disabled = false; 
             } 
         });
-        document.getElementById("show-register-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("login-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("register-view").classList.remove("hidden"); });
-        document.getElementById("show-login-link").addEventListener("click", (e) => { e.preventDefault(); document.getElementById("register-view").classList.add("hidden"); document.getElementById("register-business-view").classList.add("hidden"); document.getElementById("login-view").classList.remove("hidden"); });
+        document.getElementById("show-register-link").addEventListener("click", (e) => { e.preventDefault(); renderAuthUI('register'); });
+        document.getElementById("show-login-link").addEventListener("click", (e) => { e.preventDefault(); renderAuthUI('login'); });
         authContainer.addEventListener('click', (e) => {
             const toggleBtn = e.target.closest('.password-toggle-btn');
             if (toggleBtn) {
-                const passwordInput = toggleBtn.previousElementSibling;
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    toggleBtn.innerHTML = ICONS.eyeOff;
-                } else {
-                    passwordInput.type = 'password';
-                    toggleBtn.innerHTML = ICONS.eye;
-                }
+                const passwordInput = toggleBtn.closest('.password-wrapper').querySelector('input');
+                passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+                toggleBtn.innerHTML = passwordInput.type === 'password' ? ICONS.eye : ICONS.eyeOff;
             }
         });
     }
-   
+    
     let persistentHandlersAttached = false;
     onAuthStateChanged(auth, async (user) => {
-      const splash = document.getElementById('splash-screen');
       if (user) {
         buildColRef();
         const tenantDocRef = doc(db, "tenants", user.uid);
@@ -712,8 +723,8 @@
         document.getElementById("app-container").classList.remove("hidden");
         document.querySelector('.nav-link[data-view="reports-view"]').classList.add("active");
         if (!persistentHandlersAttached) {
-            attachPersistentHandlers();
-            persistentHandlersAttached = true;
+          attachPersistentHandlers();
+          persistentHandlersAttached = true;
         }
         initRealtime();
         scheduleRender("reports-view");
@@ -723,15 +734,11 @@
         Object.values(shiftSubListeners).forEach(unsubArray => unsubArray.forEach(unsub => { if(typeof unsub === 'function') unsub() }));
         stockUnsubscribers = {};
         shiftSubListeners = {};
-        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], notifications: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null };
+        appState = { user: null, userData: null, role: null, unsub: [], products: [], providers: [], workers: [], notifications: [], inventory: {}, cashflow: [], activeShifts: [], selectedShiftId: null, reportCache: null };
         document.getElementById("app-container").classList.add("hidden");
         document.getElementById("auth-container").classList.remove("hidden");
-        renderAuthUI();
+        renderAuthUI('login');
         persistentHandlersAttached = false;
-      }
-      if (splash) {
-          splash.classList.add('hidden');
-          setTimeout(() => splash.remove(), 600);
       }
     });
 
@@ -746,9 +753,8 @@
       const add = (un)=> appState.unsub.push(un);
 
       add(onSnapshot(query(colref.products, orderBy("nombre")), (snapshot) => {
-          const newProducts = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
-          const newProductIds = new Set(newProducts.map(p => p.id));
-
+          appState.products = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+          const newProductIds = new Set(appState.products.map(p => p.id));
           for (const productId in stockUnsubscribers) {
               if (!newProductIds.has(productId)) {
                   stockUnsubscribers[productId].forEach(unsub => unsub());
@@ -756,9 +762,6 @@
                   delete appState.inventory[productId];
               }
           }
-
-          appState.products = newProducts;
-
           appState.products.forEach(product => {
               if (!stockUnsubscribers[product.id]) {
                   const unsubBodega = onSnapshot(stockRef(product.id, 'bodega'), (docSnap) => {
@@ -825,7 +828,7 @@
 
     const content = document.getElementById("content");
     const row = (cols)=> `<tr>${cols.map(c=>`<td>${c}</td>`).join("")}</tr>`;
-   
+    
     function renderView(id) {
         let html = "";
         if (id === 'reports-view') {
@@ -844,13 +847,12 @@
                         </div>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                            <button type="button" id="set-today-btn" class="button-secondary" style="flex-grow: 1;">Hoy</button>
-                           <button type="submit" style="flex-grow: 2;">Calcular</button>
                         </div>
                     </form>
                 </div>
-                <div class="form-grid">
+                <div class="report-card-grid">
                     <div class="card report-card">
-                        <h3>Ganancia Bruta (Ventas)</h3>
+                        <h3>Ganancia Bruta</h3>
                         <p id="report-ganancia-bruta" class="amount-positive">${COP(0)}</p>
                     </div>
                      <div class="card report-card">
@@ -860,6 +862,27 @@
                     <div class="card report-card">
                         <h3>Ganancia Neta</h3>
                         <p id="report-ganancia-neta">${COP(0)}</p>
+                    </div>
+                    <div class="card report-card">
+                        <h3>Unidades Vendidas</h3>
+                        <p id="report-unidades">${0}</p>
+                    </div>
+                     <div class="card report-card">
+                        <h3>Ticket Promedio</h3>
+                        <p id="report-ticket-promedio">${COP(0)}</p>
+                    </div>
+                </div>
+                 <div id="stats-visuals" class="card" style="margin-top: 24px;">
+                    <h2>Estadísticas Visuales</h2>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h3>Ingresos por Día</h3>
+                            <div id="bar-chart-container"></div>
+                        </div>
+                        <div class="chart-container">
+                             <h3>Top Productos</h3>
+                            <div id="donut-chart-container"></div>
+                        </div>
                     </div>
                 </div>
                 <div style="margin-top: 24px;">
@@ -963,7 +986,7 @@
             renderNotifications();
         }
     }
-   
+    
     function attachPersistentHandlers() {
         const fichaSaleForm = document.getElementById("ficha-sale-form");
         if(fichaSaleForm) fichaSaleForm.addEventListener("submit", async (e) => {
@@ -1064,32 +1087,46 @@
         });
 
         const notificationBell = document.getElementById('notification-bell');
-        if (notificationBell) {
-            notificationBell.addEventListener('click', async () => {
-                const dropdown = document.getElementById('notification-dropdown');
-                const isVisible = !dropdown.classList.contains('hidden');
-                
-                if (isVisible) {
-                    dropdown.classList.add('hidden');
-                } else {
-                    dropdown.classList.remove('hidden');
-                    const unreadNotifs = appState.notifications.filter(n => !n.read);
-                    if (unreadNotifs.length > 0) {
-                        const batch = writeBatch(db);
-                        unreadNotifs.forEach(notif => {
-                            const notifRef = doc(colref.notifications, notif.id);
-                            batch.update(notifRef, { read: true });
-                        });
-                        await batch.commit();
-                    }
-                }
-            });
-        }
+        const notificationDropdown = document.getElementById('notification-dropdown');
+
+        const toggleNotifications = async () => {
+          const isVisible = !notificationDropdown.classList.contains('hidden');
+          
+          if (isVisible) {
+              notificationDropdown.classList.add('hidden');
+              notificationDropdown.classList.remove('mobile-active');
+              document.body.classList.remove('notification-backdrop-active');
+          } else {
+              notificationDropdown.classList.remove('hidden');
+              if (window.innerWidth <= 768) {
+                  notificationDropdown.classList.add('mobile-active');
+                  document.body.classList.add('notification-backdrop-active');
+              }
+              const unreadNotifs = appState.notifications.filter(n => !n.read);
+              if (unreadNotifs.length > 0) {
+                  const batch = writeBatch(db);
+                  unreadNotifs.forEach(notif => {
+                      const notifRef = doc(colref.notifications, notif.id);
+                      batch.update(notifRef, { read: true });
+                  });
+                  await batch.commit().catch(console.error);
+              }
+          }
+        };
+
+        notificationBell.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNotifications();
+        });
+
         document.addEventListener('click', (e) => {
-            const bell = document.getElementById('notification-bell');
-            const dropdown = document.getElementById('notification-dropdown');
-            if (bell && dropdown && !bell.contains(e.target)) {
-                dropdown.classList.add('hidden');
+            if (notificationDropdown.classList.contains('hidden')) return;
+
+            const clickedOnBell = notificationBell.contains(e.target);
+            const clickedOnDropdown = notificationDropdown.contains(e.target);
+
+            if (!clickedOnBell && !clickedOnDropdown) {
+              toggleNotifications();
             }
         });
     }
@@ -1138,16 +1175,16 @@
         }
 
         if (appState.notifications.length === 0) {
-            list.innerHTML = `<div class="notification-item"><p>No hay notificaciones.</p></div>`;
+            list.innerHTML = `<div class="notification-item" style="justify-content: center;"><p>No hay notificaciones.</p></div>`;
             return;
         }
 
         const ICONS_NOTIF = {
-            sale: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
-            purchase: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`,
-            stock: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
-            shift: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
-            loan: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`
+            sale: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 2a10 10 0 1 0-10 10" /><path d="M12 2v20" /><path d="M12 2a10 10 0 1 0 10 10" /><path d="M2 12h20" /></svg>`,
+            purchase: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
+            stock: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
+            shift: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+            loan: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`
         };
 
         list.innerHTML = appState.notifications.map(n => {
@@ -1164,6 +1201,203 @@
         }).join('');
     }
 
+    async function updateAndDisplayReport() {
+        const startDateInput = document.getElementById('report-start-date');
+        const endDateInput = document.getElementById('report-end-date');
+        const pdfBtn = document.getElementById('generate-pdf-btn');
+        if (!startDateInput || !endDateInput) return; 
+
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+
+        if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+            pdfBtn.disabled = true;
+            appState.reportCache = null;
+            return;
+        }
+
+        try {
+            const allShiftsSnapshot = await getDocs(colref.shifts);
+            let allSales = [];
+            for (const shiftDoc of allShiftsSnapshot.docs) {
+                const salesSnapshot = await getDocs(TCOL('shifts', shiftDoc.id, 'sales'));
+                salesSnapshot.forEach(saleDoc => {
+                    allSales.push({ id: saleDoc.id, ...saleDoc.data() });
+                });
+            }
+
+            const filteredSales = allSales.filter(s => s.fecha && s.fecha.toDate() >= startDate && s.fecha.toDate() <= endDate);
+            const filteredCashflow = appState.cashflow.filter(cf => cf.date && cf.date.toDate() >= startDate && cf.date.toDate() <= endDate);
+            
+            const gananciaBruta = filteredSales.reduce((sum, sale) => sum + sale.totalVenta, 0);
+            const unidadesVendidas = filteredSales.reduce((sum, sale) => sum + sale.unidades, 0);
+            const numeroVentas = filteredSales.length;
+            const ticketPromedio = numeroVentas > 0 ? gananciaBruta / numeroVentas : 0;
+            
+            const costoMercanciaVendida = filteredSales.reduce((sum, sale) => {
+                const product = appState.products.find(p => p.id === sale.productId);
+                return sum + (sale.unidades * (product?.precioCompra || 0));
+            }, 0);
+
+            const otrosEgresos = filteredCashflow
+                .filter(cf => cf.type === 'egreso')
+                .reduce((sum, entry) => sum + entry.amount, 0);
+
+            const costosTotales = costoMercanciaVendida + otrosEgresos;
+            const gananciaNeta = gananciaBruta - costosTotales;
+            
+            document.getElementById('report-ganancia-bruta').textContent = COP(gananciaBruta);
+            document.getElementById('report-costos-totales').textContent = COP(-costosTotales);
+            document.getElementById('report-ganancia-neta').textContent = COP(gananciaNeta);
+            document.getElementById('report-ganancia-neta').className = gananciaNeta >= 0 ? 'amount-positive' : 'amount-negative';
+            document.getElementById('report-unidades').textContent = unidadesVendidas;
+            document.getElementById('report-ticket-promedio').textContent = COP(ticketPromedio);
+
+
+            appState.reportCache = { gananciaBruta, costosTotales, gananciaNeta, costoMercanciaVendida, otrosEgresos, filteredSales, filteredCashflow, startDate, endDate, unidadesVendidas, ticketPromedio };
+            pdfBtn.disabled = false;
+            
+            // Renderizar gráficos
+            renderBarChart(filteredSales);
+            renderDonutChart(filteredSales);
+
+        } catch (error) {
+            showToast(`Error al calcular: ${error.message}`, "error");
+            console.error("Error calculating report:", error);
+            appState.reportCache = null;
+            pdfBtn.disabled = true;
+        }
+    }
+    
+    // --- Funciones para Gráficos D3 ---
+    function renderBarChart(salesData) {
+        const container = d3.select("#bar-chart-container");
+        container.selectAll("*").remove(); // Limpiar gráfico anterior
+
+        if (salesData.length === 0) {
+            container.append("p").attr("class", "text-secondary").text("No hay datos de ventas para mostrar en este período.");
+            return;
+        }
+
+        const dailyData = d3.rollups(salesData, v => d3.sum(v, d => d.totalVenta), d => d.fecha.toDate().setHours(0,0,0,0))
+            .map(([key, value]) => ({ date: new Date(key), total: value }))
+            .sort((a,b) => a.date - b.date);
+
+        const margin = {top: 20, right: 20, bottom: 40, left: 60};
+        const width = container.node().getBoundingClientRect().width - margin.left - margin.right;
+        const height = 300 - margin.top - margin.bottom;
+
+        const svg = container.append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+        svg.append("defs").html(`<linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="var(--grad-red)" />
+            <stop offset="50%" stop-color="var(--grad-orange)" />
+            <stop offset="100%" stop-color="var(--grad-yellow)" />
+        </linearGradient>`);
+
+        const x = d3.scaleBand()
+            .domain(dailyData.map(d => d.date))
+            .range([0, width])
+            .padding(0.2);
+
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(dailyData, d => d.total) * 1.1])
+            .range([height, 0]);
+            
+        svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d %b")));
+            
+        svg.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d/1000}k`));
+            
+        const tooltip = d3.select("body").append("div").attr("class", "d3-tooltip");
+
+        svg.selectAll(".bar")
+            .data(dailyData)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => x(d.date))
+            .attr("y", d => y(d.total))
+            .attr("width", x.bandwidth())
+            .attr("height", d => height - y(d.total))
+            .attr("fill", "url(#barGradient)")
+            .on("mouseover", (event, d) => {
+                tooltip.transition().style("opacity", .9);
+                tooltip.html(`<strong>${d3.timeFormat("%a, %d %b")(d.date)}</strong><br/>${COP(d.total)}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", () => {
+                tooltip.transition().style("opacity", 0);
+            });
+    }
+
+    function renderDonutChart(salesData) {
+        const container = d3.select("#donut-chart-container");
+        container.selectAll("*").remove();
+
+        if (salesData.length === 0) {
+            container.append("p").attr("class", "text-secondary").text("Sin datos.");
+            return;
+        }
+
+        const productData = d3.rollups(salesData, v => d3.sum(v, d => d.totalVenta), d => d.productId)
+            .map(([key, value]) => ({
+                productId: key,
+                name: appState.products.find(p => p.id === key)?.nombre || 'Desconocido',
+                total: value
+            }))
+            .sort((a,b) => b.total - a.total)
+            .slice(0, 5); // Top 5 productos
+
+        const width = container.node().getBoundingClientRect().width;
+        const height = 300;
+        const radius = Math.min(width, height) / 2 - 10;
+        
+        const svg = container.append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", `translate(${width / 2},${height / 2})`);
+
+        const color = d3.scaleOrdinal()
+            .domain(productData.map(d => d.productId))
+            .range(["var(--grad-red)", "var(--grad-orange)", "var(--grad-yellow)", "#ffcd56", "#ff9f40"]);
+            
+        const pie = d3.pie().value(d => d.total);
+        const data_ready = pie(productData);
+
+        const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius * 0.8);
+        
+        const tooltip = d3.select("body").append("div").attr("class", "d3-tooltip");
+        
+        svg.selectAll('whatever')
+            .data(data_ready)
+            .enter()
+            .append('path')
+            .attr('d', arc)
+            .attr('fill', d => color(d.data.productId))
+            .attr("stroke", "var(--bg-primary)")
+            .style("stroke-width", "2px")
+            .on("mouseover", (event, d) => {
+                tooltip.transition().style("opacity", .9);
+                tooltip.html(`<strong>${d.data.name}</strong><br/>${COP(d.data.total)}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", () => {
+                tooltip.transition().style("opacity", 0);
+            });
+    }
+
+
     function attachHandlers(id){
         if (id === 'reports-view') {
             const startDateInput = document.getElementById('report-start-date');
@@ -1176,105 +1410,38 @@
                 const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
                 startDateInput.value = todayStart.toISOString().slice(0, 16);
                 endDateInput.value = todayEnd.toISOString().slice(0, 16);
+                updateAndDisplayReport();
             };
             setToday();
 
             document.getElementById('set-today-btn').addEventListener('click', setToday);
+            
+            startDateInput.addEventListener('change', updateAndDisplayReport);
+            endDateInput.addEventListener('change', updateAndDisplayReport);
+            window.addEventListener('resize', updateAndDisplayReport);
+            
+            document.getElementById('reports-form').addEventListener('submit', (e) => e.preventDefault());
 
-            document.getElementById('reports-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = e.target.querySelector('button[type="submit"]');
+            pdfBtn.addEventListener('click', () => {
+                const btn = pdfBtn;
                 btn.disabled = true;
-                
-                const startDate = new Date(startDateInput.value);
-                const endDate = new Date(endDateInput.value);
-                
-                if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
-                    showToast("Por favor, selecciona un rango de fechas válido.", "error");
-                    btn.disabled = false;
-                    return;
-                }
 
                 try {
-                    const allShiftsSnapshot = await getDocs(colref.shifts);
-                    let allSales = [];
-                    for (const shiftDoc of allShiftsSnapshot.docs) {
-                        const salesSnapshot = await getDocs(TCOL('shifts', shiftDoc.id, 'sales'));
-                        salesSnapshot.forEach(saleDoc => {
-                            allSales.push({ id: saleDoc.id, ...saleDoc.data() });
-                        });
+                    if (!appState.reportCache) {
+                        throw new Error("Primero deben calcularse los datos del reporte.");
                     }
-
-                    const filteredSales = allSales.filter(s => s.fecha && s.fecha.toDate() >= startDate && s.fecha.toDate() <= endDate);
-                    const filteredCashflow = appState.cashflow.filter(cf => cf.date && cf.date.toDate() >= startDate && cf.date.toDate() <= endDate);
-                    
-                    const gananciaBruta = filteredSales.reduce((sum, sale) => sum + sale.totalVenta, 0);
-                    
-                    const costoMercanciaVendida = filteredSales.reduce((sum, sale) => {
-                        const product = appState.products.find(p => p.id === sale.productId);
-                        return sum + (sale.unidades * (product?.precioCompra || 0));
-                    }, 0);
-
-                    const otrosEgresos = filteredCashflow
-                        .filter(cf => cf.type === 'egreso')
-                        .reduce((sum, entry) => sum + entry.amount, 0);
-
-                    const costosTotales = costoMercanciaVendida + otrosEgresos;
-                    const gananciaNeta = gananciaBruta - costosTotales;
-                    
-                    document.getElementById('report-ganancia-bruta').textContent = COP(gananciaBruta);
-                    document.getElementById('report-costos-totales').textContent = COP(-costosTotales);
-                    const gananciaNetaEl = document.getElementById('report-ganancia-neta');
-                    gananciaNetaEl.textContent = COP(gananciaNeta);
-                    gananciaNetaEl.className = gananciaNeta >= 0 ? 'amount-positive' : 'amount-negative';
-
-                    pdfBtn.disabled = false;
-
-                } catch (error) {
-                    showToast(`Error al calcular: ${error.message}`, "error");
-                    console.error("Error calculating report:", error);
-                } finally {
-                    btn.disabled = false;
-                }
-            });
-
-            pdfBtn.addEventListener('click', async () => {
-                 const startDate = new Date(startDateInput.value);
-                 const endDate = new Date(endDateInput.value);
-
-                 if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
-                    showToast("Rango de fechas inválido para generar PDF.", "error");
-                    return;
-                }
-                
-                showToast("Generando reporte PDF...", "success");
-                pdfBtn.disabled = true;
-
-                try {
+                    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+                        throw new Error("La librería PDF principal (jsPDF) no está cargada.");
+                    }
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
-                    
-                    const allShiftsSnapshot = await getDocs(colref.shifts);
-                    let allSales = [];
-                    for (const shiftDoc of allShiftsSnapshot.docs) {
-                        const salesSnapshot = await getDocs(TCOL('shifts', shiftDoc.id, 'sales'));
-                        salesSnapshot.forEach(saleDoc => {
-                            allSales.push({ id: saleDoc.id, ...saleDoc.data() });
-                        });
+                    if (typeof doc.autoTable !== 'function') {
+                        throw new Error("El plugin de tablas para PDF (autoTable) no está cargado correctamente.");
                     }
-                    
-                    const filteredSales = allSales.filter(s => s.fecha && s.fecha.toDate() >= startDate && s.fecha.toDate() <= endDate);
-                    const filteredCashflow = appState.cashflow.filter(cf => cf.date && cf.date.toDate() >= startDate && cf.date.toDate() <= endDate);
+                    showToast("Generando reporte PDF...", "success");
 
-                    const gananciaBruta = filteredSales.reduce((sum, sale) => sum + sale.totalVenta, 0);
-                    const costoMercanciaVendida = filteredSales.reduce((sum, sale) => {
-                        const product = appState.products.find(p => p.id === sale.productId);
-                        return sum + (sale.unidades * (product?.precioCompra || 0));
-                    }, 0);
-                    const otrosEgresos = filteredCashflow.filter(cf => cf.type === 'egreso').reduce((sum, entry) => sum + entry.amount, 0);
-                    const costosTotales = costoMercanciaVendida + otrosEgresos;
-                    const gananciaNeta = gananciaBruta - costosTotales;
-                    
+                    const { gananciaBruta, costoMercanciaVendida, otrosEgresos, gananciaNeta, unidadesVendidas, ticketPromedio, filteredSales, startDate, endDate } = appState.reportCache;
+
                     doc.setFontSize(20);
                     doc.text(`Reporte Financiero - ${appState.userData.businessName || 'seb365 pro'}`, 14, 22);
                     doc.setFontSize(11);
@@ -1286,6 +1453,8 @@
                         head: [['Métrica', 'Valor']],
                         body: [
                             ['Ganancia Bruta (Ingresos por Ventas)', COP(gananciaBruta)],
+                            ['Unidades Vendidas', unidadesVendidas.toString()],
+                            ['Ticket Promedio', COP(ticketPromedio)],
                             ['Costo de Mercancía Vendida (CMV)', COP(-costoMercanciaVendida)],
                             ['Otros Egresos (Flujo de Caja)', COP(-otrosEgresos)],
                             [{ content: 'GANANCIA NETA', styles: { fontStyle: 'bold' } }, { content: COP(gananciaNeta), styles: { fontStyle: 'bold' } }]
@@ -1293,11 +1462,11 @@
                         theme: 'grid',
                         headStyles: { fillColor: [255, 111, 0] },
                         didParseCell: function(data) {
-                            if (data.row.index > 0 && data.row.index < 3) {
-                                data.cell.styles.textColor = [217, 48, 37]; // Red for costs
+                            if (data.row.index >= 3 && data.row.index <= 4) { 
+                                if (data.column.index === 1) data.cell.styles.textColor = [217, 48, 37];
                             }
-                            if (data.row.index === 3) {
-                                data.cell.styles.textColor = gananciaNeta >= 0 ? [30, 142, 62] : [217, 48, 37];
+                            if (data.row.index === 5) {
+                                if (data.column.index === 1) data.cell.styles.textColor = gananciaNeta >= 0 ? [30, 142, 62] : [217, 48, 37];
                             }
                         }
                     });
@@ -1315,7 +1484,7 @@
                         });
                     }
 
-                    const egresosFiltrados = filteredCashflow.filter(cf => cf.type === 'egreso');
+                    const egresosFiltrados = appState.reportCache.filteredCashflow.filter(cf => cf.type === 'egreso');
                     if (egresosFiltrados.length > 0) {
                         doc.autoTable({
                             startY: doc.autoTable.previous.finalY + 10,
@@ -1332,7 +1501,9 @@
                     showToast(`Error al generar PDF: ${error.message}`, 'error');
                     console.error("PDF generation error:", error);
                 } finally {
-                    pdfBtn.disabled = false;
+                    if (appState.reportCache) {
+                       btn.disabled = false;
+                    }
                 }
             });
         }
