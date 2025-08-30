@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   
-  <!-- Librerías para PDF y Gráficos -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.autotable.min.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root {
@@ -115,6 +115,11 @@
       background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);
     }
     .button-secondary:hover { background: var(--border-color); }
+    .button-secondary.active {
+        background: var(--brand-primary);
+        color: white;
+        border-color: var(--brand-primary);
+    }
     label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 14px; text-align: left; }
     .table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
     table { width: 100%; border-collapse: collapse; border-spacing: 0; }
@@ -211,7 +216,7 @@
     .mobile-nav-link span { font-size: 10px; font-weight: 500; }
     .mobile-nav-link.active { color: var(--brand-primary); }
 
-    /* --- Reportes y Estadísticas Mejoradas --- */
+    /* --- Reportes y Estadísticas Reestructurado --- */
     .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
     .report-card h3 {
         font-size: 14px; color: var(--text-secondary); font-weight: 500; margin: 0 0 8px 0;
@@ -230,8 +235,10 @@
     }
     .axis path, .axis line { stroke: var(--border-color); }
     .axis text { fill: var(--text-secondary); }
+    #report-loader { text-align: center; padding: 40px; }
 
-    /* --- Notificaciones Mejoradas --- */
+
+    /* --- Notificaciones Reestructuradas (Estilo Google) --- */
     .notification-container { position: relative; }
     #notification-counter {
         position: absolute; top: 0px; right: 0px;
@@ -241,42 +248,39 @@
         border: 2px solid var(--bg-secondary);
     }
     #notification-dropdown {
-        position: absolute; top: calc(100% + 10px); right: 0;
+        position: absolute; top: calc(100% + 12px); right: 0;
         width: 380px; z-index: 110;
-        background-color: rgba(var(--bg-primary-rgb), 0.8);
-        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(var(--border-color-rgb), 0.5);
-        box-shadow: 0 8px 24px var(--shadow-color);
+        background-color: var(--bg-primary); /* Fondo Sólido */
+        border: 1px solid var(--border-color); /* Borde Definido */
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12); /* Sombra Sutil */
         border-radius: 12px;
         display: flex; flex-direction: column;
         overflow: hidden;
+        /* Se eliminó backdrop-filter y fondo con opacidad */
     }
     .notification-header {
         padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+        display: flex; justify-content: space-between; align-items: center;
     }
     .notification-header h3 { margin: 0; font-size: 18px;}
-    #notification-list { flex-grow: 1; max-height: 350px; overflow-y: auto; }
+    #notification-list { flex-grow: 1; max-height: 400px; overflow-y: auto; }
     .notification-item {
         padding: 12px 20px; border-bottom: 1px solid var(--border-color);
-        display: flex; gap: 12px; align-items: center;
+        display: flex; gap: 12px; align-items: flex-start;
         cursor: pointer; transition: background-color 0.2s;
     }
     .notification-item:last-child { border-bottom: none; }
-    .notification-item:hover { background-color: rgba(var(--border-color-rgb), 0.2); }
-    .notification-item.unread { background-color: rgba(255, 111, 0, 0.1); }
+    .notification-item:hover { background-color: var(--bg-tertiary); }
+    .notification-item.unread { font-weight: 500; }
     .notification-icon {
         flex-shrink: 0; width: 36px; height: 36px;
-        display: grid; place-items: center;
-        border-radius: 50%;
-        background-color: var(--bg-tertiary);
+        display: grid; place-items: center; border-radius: 50%;
+        background-color: var(--bg-tertiary); margin-top: 2px;
     }
     .notification-icon svg { width: 18px; height: 18px; color: var(--text-secondary); }
     .notification-content p { margin: 0 0 4px 0; font-size: 14px; line-height: 1.4; color: var(--text-primary); }
     .notification-content span { font-size: 12px; color: var(--text-secondary); }
-    body.notification-backdrop-active::before {
-      content: ""; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5); z-index: 109;
-    }
+    /* Se eliminó .notification-backdrop-active y su pseudo-elemento ::before */
     
     @media (max-width: 992px) {
         .charts-grid { grid-template-columns: 1fr; }
@@ -289,6 +293,7 @@
       #mobile-footer { display: block; }
       #logout-btn span { display: none; }
       #logout-btn { padding: 8px; }
+      /* Notificaciones en móvil: se muestran como un modal centrado */
       #notification-dropdown.mobile-active {
         position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
         width: 90vw; max-width: 380px;
@@ -340,7 +345,7 @@
                     <h3>Notificaciones</h3>
                 </div>
                 <div id="notification-list">
-                </div>
+                    </div>
             </div>
         </div>
         <button id="profile-btn" title="Mi Perfil" class="button-secondary" style="padding: 8px;">
@@ -434,7 +439,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, collectionGroup, doc, setDoc, addDoc, getDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, collectionGroup, doc, setDoc, addDoc, getDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, runTransaction, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // --- Inicialización de Firebase ---
     const firebaseConfig = {
@@ -573,6 +578,8 @@
       const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       localStorage.setItem('theme', newTheme);
       applyTheme(newTheme);
+      // Rerenderiza la vista para que los gráficos D3 tomen el nuevo tema
+      scheduleRender();
     });
     
     const savedTheme = localStorage.getItem('theme');
@@ -831,62 +838,56 @@
     
     function renderView(id) {
         let html = "";
+        // MODIFICACIÓN #1: SECCIÓN DE REPORTES REESTRUCTURADA
         if (id === 'reports-view') {
             html = `<div class="content-view">
-                <h2>Reportes y Estadísticas</h2>
+                <h2>Panel de Reportes</h2>
                 <div class="card" style="margin-bottom: 24px;">
-                    <h3>Seleccionar Periodo</h3>
-                    <form id="reports-form" class="form-grid" style="align-items: flex-end; gap: 16px 24px;">
-                        <div>
-                            <label for="report-start-date">Fecha de Inicio</label>
-                            <input type="datetime-local" id="report-start-date" required>
+                    <form id="reports-form" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div class="form-grid" style="align-items: flex-end;">
+                            <div>
+                                <label for="report-start-date">Fecha de Inicio</label>
+                                <input type="datetime-local" id="report-start-date" required>
+                            </div>
+                            <div>
+                                <label for="report-end-date">Fecha de Fin</label>
+                                <input type="datetime-local" id="report-end-date" required>
+                            </div>
                         </div>
-                        <div>
-                            <label for="report-end-date">Fecha de Fin</label>
-                            <input type="datetime-local" id="report-end-date" required>
-                        </div>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                           <button type="button" id="set-today-btn" class="button-secondary" style="flex-grow: 1;">Hoy</button>
+                        <div id="date-presets" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="button-secondary" data-range="today">Hoy</button>
+                            <button type="button" class="button-secondary" data-range="yesterday">Ayer</button>
+                            <button type="button" class="button-secondary" data-range="week">Últimos 7 días</button>
+                            <button type="button" class="button-secondary" data-range="month">Este Mes</button>
                         </div>
                     </form>
                 </div>
-                <div class="report-card-grid">
-                    <div class="card report-card">
-                        <h3>Ganancia Bruta</h3>
-                        <p id="report-ganancia-bruta" class="amount-positive">${COP(0)}</p>
-                    </div>
-                     <div class="card report-card">
-                        <h3>Costos Totales</h3>
-                        <p id="report-costos-totales" class="amount-negative">${COP(0)}</p>
-                    </div>
-                    <div class="card report-card">
-                        <h3>Ganancia Neta</h3>
-                        <p id="report-ganancia-neta">${COP(0)}</p>
-                    </div>
-                    <div class="card report-card">
-                        <h3>Unidades Vendidas</h3>
-                        <p id="report-unidades">${0}</p>
-                    </div>
-                     <div class="card report-card">
-                        <h3>Ticket Promedio</h3>
-                        <p id="report-ticket-promedio">${COP(0)}</p>
-                    </div>
-                </div>
-                 <div id="stats-visuals" class="card" style="margin-top: 24px;">
-                    <h2>Estadísticas Visuales</h2>
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <h3>Ingresos por Día</h3>
-                            <div id="bar-chart-container"></div>
+
+                <div id="report-content">
+                    <div id="report-loader" class="hidden"><p>Calculando reporte...</p></div>
+                    <div id="report-data-container">
+                        <div class="report-card-grid">
+                            <div class="card report-card"><h3>Ganancia Bruta</h3><p id="report-ganancia-bruta">${COP(0)}</p></div>
+                            <div class="card report-card"><h3>Costos Totales</h3><p id="report-costos-totales" class="amount-negative">${COP(0)}</p></div>
+                            <div class="card report-card"><h3>Ganancia Neta</h3><p id="report-ganancia-neta">${COP(0)}</p></div>
+                            <div class="card report-card"><h3>Unidades Vendidas</h3><p id="report-unidades">0</p></div>
                         </div>
-                        <div class="chart-container">
-                             <h3>Top Productos</h3>
-                            <div id="donut-chart-container"></div>
+
+                        <div id="stats-visuals" class="card" style="margin-top: 24px;">
+                            <h2>Estadísticas Visuales</h2>
+                            <div class="charts-grid">
+                                <div class="chart-container"><h3>Ingresos por Día</h3><div id="bar-chart-container"></div></div>
+                                <div class="chart-container"><h3>Top Productos Vendidos</h3><div id="donut-chart-container"></div></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                            <button id="generate-pdf-btn" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px; vertical-align: middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                Generar Reporte PDF
+                            </button>
                         </div>
                     </div>
-                </div>
-                <div style="margin-top: 24px;">
-                    <button id="generate-pdf-btn" disabled>Generar Reporte PDF</button>
                 </div>
             </div>`;
         }
@@ -1086,22 +1087,23 @@
             }
         });
 
+        // MODIFICACIÓN #2: LÓGICA DE NOTIFICACIONES REESTRUCTURADA
         const notificationBell = document.getElementById('notification-bell');
         const notificationDropdown = document.getElementById('notification-dropdown');
 
-        const toggleNotifications = async () => {
+        const toggleNotifications = async (e) => {
+          e.stopPropagation();
           const isVisible = !notificationDropdown.classList.contains('hidden');
           
           if (isVisible) {
               notificationDropdown.classList.add('hidden');
               notificationDropdown.classList.remove('mobile-active');
-              document.body.classList.remove('notification-backdrop-active');
           } else {
               notificationDropdown.classList.remove('hidden');
               if (window.innerWidth <= 768) {
                   notificationDropdown.classList.add('mobile-active');
-                  document.body.classList.add('notification-backdrop-active');
               }
+              // Marcar como leídas al abrir
               const unreadNotifs = appState.notifications.filter(n => !n.read);
               if (unreadNotifs.length > 0) {
                   const batch = writeBatch(db);
@@ -1114,19 +1116,16 @@
           }
         };
 
-        notificationBell.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleNotifications();
-        });
+        notificationBell.addEventListener('click', toggleNotifications);
 
+        // Click fuera para cerrar
         document.addEventListener('click', (e) => {
             if (notificationDropdown.classList.contains('hidden')) return;
-
             const clickedOnBell = notificationBell.contains(e.target);
             const clickedOnDropdown = notificationDropdown.contains(e.target);
-
             if (!clickedOnBell && !clickedOnDropdown) {
-              toggleNotifications();
+                notificationDropdown.classList.add('hidden');
+                notificationDropdown.classList.remove('mobile-active');
             }
         });
     }
@@ -1175,16 +1174,16 @@
         }
 
         if (appState.notifications.length === 0) {
-            list.innerHTML = `<div class="notification-item" style="justify-content: center;"><p>No hay notificaciones.</p></div>`;
+            list.innerHTML = `<div class="notification-item" style="justify-content: center; padding: 20px;"><p style="color: var(--text-secondary);">No hay notificaciones.</p></div>`;
             return;
         }
 
         const ICONS_NOTIF = {
-            sale: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 2a10 10 0 1 0-10 10" /><path d="M12 2v20" /><path d="M12 2a10 10 0 1 0 10 10" /><path d="M2 12h20" /></svg>`,
+            sale: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
             purchase: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
             stock: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
             shift: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-            loan: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`
+            loan: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="21" x2="8" y2="3"/><line x1="3" y1="16" x2="13" y2="16"/><line x1="3" y1="8" x2="13" y2="8"/></svg>`
         };
 
         list.innerHTML = appState.notifications.map(n => {
@@ -1201,81 +1200,98 @@
         }).join('');
     }
 
-    async function updateAndDisplayReport() {
-        const startDateInput = document.getElementById('report-start-date');
-        const endDateInput = document.getElementById('report-end-date');
+    async function generateReportData() {
+        const loader = document.getElementById('report-loader');
+        const dataContainer = document.getElementById('report-data-container');
         const pdfBtn = document.getElementById('generate-pdf-btn');
-        if (!startDateInput || !endDateInput) return; 
 
-        const startDate = new Date(startDateInput.value);
-        const endDate = new Date(endDateInput.value);
-
-        if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
-            pdfBtn.disabled = true;
-            appState.reportCache = null;
-            return;
-        }
+        loader.classList.remove('hidden');
+        dataContainer.classList.add('hidden');
+        pdfBtn.disabled = true;
+        appState.reportCache = null;
 
         try {
-            const allShiftsSnapshot = await getDocs(colref.shifts);
+            const startDate = new Date(document.getElementById('report-start-date').value);
+            const endDate = new Date(document.getElementById('report-end-date').value);
+
+            if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+                showToast("Por favor, selecciona un rango de fechas válido.", "error");
+                return;
+            }
+
+            // 1. Obtener turnos cerrados en el rango de fechas
+            const shiftsQuery = query(colref.shifts, where("estado", "==", "cerrado"), where("fin", ">=", Timestamp.fromDate(startDate)), where("fin", "<=", Timestamp.fromDate(endDate)));
+            const shiftsSnapshot = await getDocs(shiftsQuery);
+            const closedShifts = shiftsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            // 2. Obtener todas las ventas de esos turnos
             let allSales = [];
-            for (const shiftDoc of allShiftsSnapshot.docs) {
-                const salesSnapshot = await getDocs(TCOL('shifts', shiftDoc.id, 'sales'));
+            for (const shift of closedShifts) {
+                const salesSnapshot = await getDocs(TCOL('shifts', shift.id, 'sales'));
                 salesSnapshot.forEach(saleDoc => {
                     allSales.push({ id: saleDoc.id, ...saleDoc.data() });
                 });
             }
 
-            const filteredSales = allSales.filter(s => s.fecha && s.fecha.toDate() >= startDate && s.fecha.toDate() <= endDate);
-            const filteredCashflow = appState.cashflow.filter(cf => cf.date && cf.date.toDate() >= startDate && cf.date.toDate() <= endDate);
-            
-            const gananciaBruta = filteredSales.reduce((sum, sale) => sum + sale.totalVenta, 0);
-            const unidadesVendidas = filteredSales.reduce((sum, sale) => sum + sale.unidades, 0);
-            const numeroVentas = filteredSales.length;
-            const ticketPromedio = numeroVentas > 0 ? gananciaBruta / numeroVentas : 0;
-            
-            const costoMercanciaVendida = filteredSales.reduce((sum, sale) => {
+            // 3. Obtener movimientos de caja en el rango
+            const cashflowQuery = query(colref.cashflow, where("date", ">=", Timestamp.fromDate(startDate)), where("date", "<=", Timestamp.fromDate(endDate)));
+            const cashflowSnapshot = await getDocs(cashflowQuery);
+            const cashflowEntries = cashflowSnapshot.docs.map(d => d.data());
+
+            // 4. Calcular métricas
+            const gananciaBruta = allSales.reduce((sum, sale) => sum + sale.totalVenta, 0);
+            const unidadesVendidas = allSales.reduce((sum, sale) => sum + sale.unidades, 0);
+
+            const costoMercanciaVendida = allSales.reduce((sum, sale) => {
                 const product = appState.products.find(p => p.id === sale.productId);
                 return sum + (sale.unidades * (product?.precioCompra || 0));
             }, 0);
-
-            const otrosEgresos = filteredCashflow
-                .filter(cf => cf.type === 'egreso')
+            
+            const pagoTrabajadores = closedShifts.reduce((sum, shift) => sum + (shift.totalPagado || 0), 0);
+            
+            const otrosEgresos = cashflowEntries
+                .filter(cf => cf.type === 'egreso' && !cf.description.toLowerCase().includes('pago liquidación')) // Evitar doble conteo
                 .reduce((sum, entry) => sum + entry.amount, 0);
 
-            const costosTotales = costoMercanciaVendida + otrosEgresos;
+            const costosTotales = costoMercanciaVendida + pagoTrabajadores + otrosEgresos;
             const gananciaNeta = gananciaBruta - costosTotales;
             
+            // 5. Actualizar UI
             document.getElementById('report-ganancia-bruta').textContent = COP(gananciaBruta);
             document.getElementById('report-costos-totales').textContent = COP(-costosTotales);
             document.getElementById('report-ganancia-neta').textContent = COP(gananciaNeta);
             document.getElementById('report-ganancia-neta').className = gananciaNeta >= 0 ? 'amount-positive' : 'amount-negative';
             document.getElementById('report-unidades').textContent = unidadesVendidas;
-            document.getElementById('report-ticket-promedio').textContent = COP(ticketPromedio);
 
-
-            appState.reportCache = { gananciaBruta, costosTotales, gananciaNeta, costoMercanciaVendida, otrosEgresos, filteredSales, filteredCashflow, startDate, endDate, unidadesVendidas, ticketPromedio };
-            pdfBtn.disabled = false;
+            // 6. Guardar en caché y renderizar gráficos
+            appState.reportCache = {
+                gananciaBruta, costosTotales, gananciaNeta, costoMercanciaVendida, pagoTrabajadores, otrosEgresos,
+                allSales, cashflowEntries, closedShifts, startDate, endDate
+            };
             
-            // Renderizar gráficos
-            renderBarChart(filteredSales);
-            renderDonutChart(filteredSales);
+            renderBarChart(allSales);
+            renderDonutChart(allSales);
 
         } catch (error) {
-            showToast(`Error al calcular: ${error.message}`, "error");
-            console.error("Error calculating report:", error);
-            appState.reportCache = null;
-            pdfBtn.disabled = true;
+            console.error("Error generando el reporte:", error);
+            showToast("Error al generar el reporte: " + error.message, "error");
+        } finally {
+            loader.classList.add('hidden');
+            dataContainer.classList.remove('hidden');
+            if (appState.reportCache) {
+              pdfBtn.disabled = false;
+            }
         }
     }
+
     
     // --- Funciones para Gráficos D3 ---
     function renderBarChart(salesData) {
         const container = d3.select("#bar-chart-container");
-        container.selectAll("*").remove(); // Limpiar gráfico anterior
+        container.selectAll("*").remove(); 
 
         if (salesData.length === 0) {
-            container.append("p").attr("class", "text-secondary").text("No hay datos de ventas para mostrar en este período.");
+            container.append("p").style("color", "var(--text-secondary)").style("text-align", "center").style("padding-top", "50px").text("No hay datos para mostrar.");
             return;
         }
 
@@ -1317,7 +1333,7 @@
             .attr("class", "axis")
             .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d/1000}k`));
             
-        const tooltip = d3.select("body").append("div").attr("class", "d3-tooltip");
+        const tooltip = d3.select("body").selectAll(".d3-tooltip").data([null]).join("div").attr("class", "d3-tooltip");
 
         svg.selectAll(".bar")
             .data(dailyData)
@@ -1327,6 +1343,7 @@
             .attr("y", d => y(d.total))
             .attr("width", x.bandwidth())
             .attr("height", d => height - y(d.total))
+            .attr("rx", 2)
             .attr("fill", "url(#barGradient)")
             .on("mouseover", (event, d) => {
                 tooltip.transition().style("opacity", .9);
@@ -1344,22 +1361,22 @@
         container.selectAll("*").remove();
 
         if (salesData.length === 0) {
-            container.append("p").attr("class", "text-secondary").text("Sin datos.");
+            container.append("p").style("color", "var(--text-secondary)").style("text-align", "center").style("padding-top", "50px").text("Sin datos.");
             return;
         }
 
-        const productData = d3.rollups(salesData, v => d3.sum(v, d => d.totalVenta), d => d.productId)
+        const productData = d3.rollups(salesData, v => d3.sum(v, d => d.unidades), d => d.productId)
             .map(([key, value]) => ({
                 productId: key,
                 name: appState.products.find(p => p.id === key)?.nombre || 'Desconocido',
-                total: value
+                units: value
             }))
-            .sort((a,b) => b.total - a.total)
+            .sort((a,b) => b.units - a.units)
             .slice(0, 5); // Top 5 productos
 
         const width = container.node().getBoundingClientRect().width;
         const height = 300;
-        const radius = Math.min(width, height) / 2 - 10;
+        const radius = Math.min(width, height) / 2 - 20;
         
         const svg = container.append("svg")
             .attr("width", width)
@@ -1369,113 +1386,177 @@
 
         const color = d3.scaleOrdinal()
             .domain(productData.map(d => d.productId))
-            .range(["var(--grad-red)", "var(--grad-orange)", "var(--grad-yellow)", "#ffcd56", "#ff9f40"]);
+            .range(d3.schemeTableau10.map(c => d3.color(c).brighter(0.2)));
             
-        const pie = d3.pie().value(d => d.total);
+        const pie = d3.pie().value(d => d.units).sort(null);
         const data_ready = pie(productData);
 
         const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius * 0.8);
+        const outerArc = d3.arc().innerRadius(radius * 0.9).outerRadius(radius * 0.9);
         
-        const tooltip = d3.select("body").append("div").attr("class", "d3-tooltip");
+        const tooltip = d3.select("body").selectAll(".d3-tooltip").data([null]).join("div").attr("class", "d3-tooltip");
         
-        svg.selectAll('whatever')
+        svg.selectAll('path.slice')
             .data(data_ready)
             .enter()
-            .append('path')
+            .append('path').attr('class', 'slice')
             .attr('d', arc)
             .attr('fill', d => color(d.data.productId))
             .attr("stroke", "var(--bg-primary)")
             .style("stroke-width", "2px")
             .on("mouseover", (event, d) => {
                 tooltip.transition().style("opacity", .9);
-                tooltip.html(`<strong>${d.data.name}</strong><br/>${COP(d.data.total)}`)
+                tooltip.html(`<strong>${d.data.name}</strong><br/>${d.data.units} unidades`)
                     .style("left", (event.pageX + 5) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
             .on("mouseout", () => {
                 tooltip.transition().style("opacity", 0);
             });
-    }
+        
+        svg.selectAll('polyline.label-line')
+            .data(data_ready)
+            .enter()
+            .append('polyline').attr('class', 'label-line')
+              .attr("stroke", "var(--text-secondary)")
+              .style("fill", "none")
+              .attr("stroke-width", 1)
+              .attr('points', d => {
+                const posA = arc.centroid(d);
+                const posB = outerArc.centroid(d);
+                const posC = outerArc.centroid(d);
+                const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                posC[0] = radius * 0.95 * (midangle < Math.PI ? 1 : -1);
+                return [posA, posB, posC]
+              });
 
+        svg.selectAll('text.label-text')
+            .data(data_ready)
+            .enter()
+            .append('text').attr('class', 'label-text')
+            .text(d => d.data.name)
+            .attr('transform', d => {
+                const pos = outerArc.centroid(d);
+                const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                pos[0] = radius * 0.99 * (midangle < Math.PI ? 1 : -1);
+                return `translate(${pos})`;
+            })
+            .style('text-anchor', d => {
+                const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                return (midangle < Math.PI ? 'start' : 'end');
+            })
+            .style('fill', 'var(--text-primary)')
+            .style('font-size', '12px');
+    }
 
     function attachHandlers(id){
         if (id === 'reports-view') {
             const startDateInput = document.getElementById('report-start-date');
             const endDateInput = document.getElementById('report-end-date');
-            const pdfBtn = document.getElementById('generate-pdf-btn');
-
-            const setToday = () => {
-                const now = new Date();
-                const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-                const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-                startDateInput.value = todayStart.toISOString().slice(0, 16);
-                endDateInput.value = todayEnd.toISOString().slice(0, 16);
-                updateAndDisplayReport();
+            const presets = document.getElementById('date-presets');
+            
+            const setDates = (start, end) => {
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                startDateInput.value = start.toISOString().slice(0, 16);
+                endDateInput.value = end.toISOString().slice(0, 16);
+                generateReportData();
             };
-            setToday();
-
-            document.getElementById('set-today-btn').addEventListener('click', setToday);
             
-            startDateInput.addEventListener('change', updateAndDisplayReport);
-            endDateInput.addEventListener('change', updateAndDisplayReport);
-            window.addEventListener('resize', updateAndDisplayReport);
-            
-            document.getElementById('reports-form').addEventListener('submit', (e) => e.preventDefault());
+            presets.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON') return;
 
-            pdfBtn.addEventListener('click', () => {
-                const btn = pdfBtn;
+                document.querySelectorAll('#date-presets button').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+
+                const range = e.target.dataset.range;
+                const now = new Date();
+                let start = new Date(now);
+                
+                if (range === 'today') {
+                    setDates(start, new Date(now));
+                } else if (range === 'yesterday') {
+                    start.setDate(now.getDate() - 1);
+                    let end = new Date(start);
+                    setDates(start, end);
+                } else if (range === 'week') {
+                    start.setDate(now.getDate() - 6);
+                    setDates(start, new Date(now));
+                } else if (range === 'month') {
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    setDates(start, new Date(now));
+                }
+            });
+
+            startDateInput.addEventListener('change', generateReportData);
+            endDateInput.addEventListener('change', generateReportData);
+            window.addEventListener('resize', () => { if(appState.reportCache) { renderBarChart(appState.reportCache.allSales); renderDonutChart(appState.reportCache.allSales); }});
+
+            // Set initial range to 'today'
+            presets.querySelector('button[data-range="today"]').click();
+            
+            document.getElementById('generate-pdf-btn').addEventListener('click', async () => {
+                const btn = document.getElementById('generate-pdf-btn');
                 btn.disabled = true;
+                btn.innerHTML = 'Generando...';
 
                 try {
-                    if (!appState.reportCache) {
-                        throw new Error("Primero deben calcularse los datos del reporte.");
-                    }
-                    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                        throw new Error("La librería PDF principal (jsPDF) no está cargada.");
-                    }
+                    if (!appState.reportCache) throw new Error("Los datos del reporte no están disponibles.");
+                    if (!window.jspdf || !window.html2canvas) throw new Error("Librerías PDF no cargadas.");
+
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
-                    if (typeof doc.autoTable !== 'function') {
-                        throw new Error("El plugin de tablas para PDF (autoTable) no está cargado correctamente.");
-                    }
-                    showToast("Generando reporte PDF...", "success");
+                    const { gananciaBruta, costosTotales, gananciaNeta, startDate, endDate, allSales, cashflowEntries } = appState.reportCache;
 
-                    const { gananciaBruta, costoMercanciaVendida, otrosEgresos, gananciaNeta, unidadesVendidas, ticketPromedio, filteredSales, startDate, endDate } = appState.reportCache;
+                    // Capturar gráficos como imágenes
+                    const barChartCanvas = await html2canvas(document.getElementById('bar-chart-container'));
+                    const donutChartCanvas = await html2canvas(document.getElementById('donut-chart-container'));
+                    const barChartImg = barChartCanvas.toDataURL('image/png');
+                    const donutChartImg = donutChartCanvas.toDataURL('image/png');
 
+                    // Encabezado
                     doc.setFontSize(20);
                     doc.text(`Reporte Financiero - ${appState.userData.businessName || 'seb365 pro'}`, 14, 22);
                     doc.setFontSize(11);
                     doc.setTextColor(100);
-                    doc.text(`Periodo: ${startDate.toLocaleString('es-CO')} - ${endDate.toLocaleString('es-CO')}`, 14, 30);
+                    doc.text(`Periodo: ${fmtDateShort(startDate)} - ${fmtDateShort(endDate)}`, 14, 30);
 
+                    // Resumen
                     doc.autoTable({
                         startY: 40,
-                        head: [['Métrica', 'Valor']],
+                        head: [['Métrica Principal', 'Valor']],
                         body: [
                             ['Ganancia Bruta (Ingresos por Ventas)', COP(gananciaBruta)],
-                            ['Unidades Vendidas', unidadesVendidas.toString()],
-                            ['Ticket Promedio', COP(ticketPromedio)],
-                            ['Costo de Mercancía Vendida (CMV)', COP(-costoMercanciaVendida)],
-                            ['Otros Egresos (Flujo de Caja)', COP(-otrosEgresos)],
+                            ['Costos Totales', COP(-costosTotales)],
                             [{ content: 'GANANCIA NETA', styles: { fontStyle: 'bold' } }, { content: COP(gananciaNeta), styles: { fontStyle: 'bold' } }]
                         ],
                         theme: 'grid',
                         headStyles: { fillColor: [255, 111, 0] },
-                        didParseCell: function(data) {
-                            if (data.row.index >= 3 && data.row.index <= 4) { 
-                                if (data.column.index === 1) data.cell.styles.textColor = [217, 48, 37];
-                            }
-                            if (data.row.index === 5) {
-                                if (data.column.index === 1) data.cell.styles.textColor = gananciaNeta >= 0 ? [30, 142, 62] : [217, 48, 37];
-                            }
+                        didParseCell: (data) => {
+                            if (data.row.index === 1 && data.column.index === 1) data.cell.styles.textColor = [217, 48, 37];
+                            if (data.row.index === 2 && data.column.index === 1) data.cell.styles.textColor = gananciaNeta >= 0 ? [30, 142, 62] : [217, 48, 37];
                         }
                     });
+                    
+                    let finalY = doc.autoTable.previous.finalY;
 
-                    if (filteredSales.length > 0) {
+                    // Gráficos
+                    doc.addPage();
+                    doc.setFontSize(16);
+                    doc.text('Estadísticas Visuales', 14, 20);
+                    doc.addImage(barChartImg, 'PNG', 14, 30, 180, 80);
+                    doc.addImage(donutChartImg, 'PNG', 14, 120, 180, 80);
+
+
+                    // Detalle de Ventas
+                    if (allSales.length > 0) {
+                        doc.addPage();
+                        doc.setFontSize(16);
+                        doc.text('Detalle de Ventas', 14, 20);
                         doc.autoTable({
-                            startY: doc.autoTable.previous.finalY + 10,
+                            startY: 30,
                             head: [['Fecha', 'Producto', 'Cant.', 'Total Venta', 'Comisión']],
-                            body: filteredSales.map(sale => {
+                            body: allSales.map(sale => {
                                 const product = appState.products.find(p => p.id === sale.productId);
                                 return [ fmtDate(sale.fecha), product?.nombre || 'N/A', sale.unidades, COP(sale.totalVenta), COP(sale.totalComision || 0)];
                             }),
@@ -1484,26 +1565,30 @@
                         });
                     }
 
-                    const egresosFiltrados = appState.reportCache.filteredCashflow.filter(cf => cf.type === 'egreso');
-                    if (egresosFiltrados.length > 0) {
+                    // Detalle de Egresos
+                    const egresos = cashflowEntries.filter(cf => cf.type === 'egreso');
+                    if (egresos.length > 0) {
+                        doc.addPage();
+                        doc.setFontSize(16);
+                        doc.text('Detalle de Egresos', 14, 20);
                         doc.autoTable({
-                            startY: doc.autoTable.previous.finalY + 10,
+                            startY: 30,
                             head: [['Fecha', 'Descripción Egreso', 'Monto']],
-                            body: egresosFiltrados.map(entry => [fmtDate(entry.date), entry.description, COP(entry.amount)]),
+                            body: egresos.map(entry => [fmtDate(entry.date), entry.description, COP(entry.amount)]),
                             theme: 'striped',
                             headStyles: { fillColor: [48, 49, 52] },
                         });
                     }
                     
                     doc.save(`Reporte_${fmtDateShort(new Date())}.pdf`);
+                    showToast("PDF generado exitosamente", "success");
 
                 } catch (error) {
                     showToast(`Error al generar PDF: ${error.message}`, 'error');
                     console.error("PDF generation error:", error);
                 } finally {
-                    if (appState.reportCache) {
-                       btn.disabled = false;
-                    }
+                    btn.disabled = false;
+                    btn.innerHTML = 'Generar Reporte PDF'; // Restore original text
                 }
             });
         }
@@ -1615,7 +1700,7 @@
                         if (provider.tipoPago === "consignacion") {
                             const providerRef = doc(colref.providers, providerId);
                             t.update(providerRef, { saldoPendiente: increment(costo) });
-                        } else if (provider.tipoPago === "contado") {
+                        } else if (provider.tipoPago === "contado" && costo > 0) {
                             const cashflowRef = doc(colref.cashflow); 
                             t.set(cashflowRef, {
                                 type: "egreso", amount: costo,
@@ -2025,4 +2110,3 @@
   </script>
 </body>
 </html>
-
