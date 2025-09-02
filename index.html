@@ -216,7 +216,8 @@
     .mobile-nav-link.active { color: var(--brand-primary); }
 
     /* --- Dashboard & Reportes --- */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    /* MODIFICADO: Se ajusta el tamaño mínimo de las tarjetas para mejor visualización en móviles */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .kpi-card {
         transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
@@ -2238,29 +2239,24 @@
             });
         }
         
-        // --- CORRECCIÓN PARA iOS ---
-        // El método .save() no funciona de forma fiable en iOS.
-        // En su lugar, generamos una URL de datos y la abrimos en una nueva pestaña.
+        // --- INICIO DE CORRECCIÓN PARA PDF en iOS ---
         try {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            // Detección robusta de iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !window.MSStream);
+            
             if (isIOS) {
-                // Este método es el más compatible con iOS y abre el PDF en una nueva pestaña.
-                doc.output('dataurlnewwindow');
+                // Para iOS, abrir un blob URL en una nueva ventana es la solución más compatible.
+                const blob = doc.output('blob');
+                window.open(URL.createObjectURL(blob));
             } else {
-                // El método de guardado estándar para otros sistemas operativos.
+                // Método estándar de guardado para todos los demás sistemas operativos.
                 doc.save(`Reporte_${new Date().toISOString().slice(0,10)}.pdf`);
             }
         } catch (e) {
             console.error("Error al exportar PDF:", e);
-            showToast("No se pudo generar el PDF. Intentándolo de otra manera...", "error");
-            // Como fallback, intentar abrir en nueva ventana para todos los casos si el primero falla
-            try {
-                doc.output('dataurlnewwindow');
-            } catch (fallbackError) {
-                 console.error("Error en el método de fallback para PDF:", fallbackError);
-                 showToast("Falló el método alternativo para generar PDF.", "error");
-            }
+            showToast("No se pudo generar el PDF. Por favor, intente de nuevo.", "error");
         }
+        // --- FIN DE CORRECCIÓN ---
     }
 
     function exportReportExcel() {
@@ -2309,3 +2305,4 @@
   </script>
 </body>
 </html>
+
