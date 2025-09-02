@@ -319,7 +319,6 @@
     @media (max-width: 640px) {
       header { padding: 0 16px; }
       .form-grid { grid-template-columns: 1fr; }
-      .kpi-grid { grid-template-columns: 1fr 1fr; }
       .kpi-card p {font-size: 22px; }
       .active-shift-item { flex-direction: column; align-items: flex-start; gap: 12px; }
       table { font-size: 14px; }
@@ -2238,8 +2237,30 @@
                 headStyles: { fillColor: [48, 49, 52] }
             });
         }
-
-        doc.save(`Reporte_${new Date().toISOString().slice(0,10)}.pdf`);
+        
+        // --- CORRECCIÓN PARA iOS ---
+        // El método .save() no funciona de forma fiable en iOS.
+        // En su lugar, generamos una URL de datos y la abrimos en una nueva pestaña.
+        try {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (isIOS) {
+                // Este método es el más compatible con iOS y abre el PDF en una nueva pestaña.
+                doc.output('dataurlnewwindow');
+            } else {
+                // El método de guardado estándar para otros sistemas operativos.
+                doc.save(`Reporte_${new Date().toISOString().slice(0,10)}.pdf`);
+            }
+        } catch (e) {
+            console.error("Error al exportar PDF:", e);
+            showToast("No se pudo generar el PDF. Intentándolo de otra manera...", "error");
+            // Como fallback, intentar abrir en nueva ventana para todos los casos si el primero falla
+            try {
+                doc.output('dataurlnewwindow');
+            } catch (fallbackError) {
+                 console.error("Error en el método de fallback para PDF:", fallbackError);
+                 showToast("Falló el método alternativo para generar PDF.", "error");
+            }
+        }
     }
 
     function exportReportExcel() {
@@ -2288,4 +2309,3 @@
   </script>
 </body>
 </html>
-
