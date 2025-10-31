@@ -213,15 +213,29 @@
     .modal-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); line-height: 1; }
     .modal-form-body { display: flex; flex-direction: column; gap: 20px; }
     #fichas-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        display: grid; grid-template-columns: repeat(auto-fill, 150px);
         gap: 16px; margin-bottom: 24px;
+        justify-content: center;
     }
     .ficha-card {
         background-color: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 12px;
         padding: 16px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        width: 150px; /* Ancho Fijo */
+        height: 110px; /* Altura Fija */
+        min-height: 110px; /* Altura Fija */
+        max-height: 110px; /* Altura Fija */
+        overflow: hidden; /* Evita que el contenido se desborde */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     .ficha-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px var(--shadow-color); }
-    .ficha-card h4 { margin: 0 0 8px 0; font-size: 16px; color: var(--text-primary); text-transform: uppercase; }
+    .ficha-card h4 {
+        margin: 0 0 8px 0; font-size: 16px; color: var(--text-primary); text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     .ficha-card-stock { font-size: 20px; font-weight: 700; color: var(--brand-primary); }
     .ficha-card-stock span { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
     .active-shifts-list { display: flex; flex-direction: column; gap: 12px; }
