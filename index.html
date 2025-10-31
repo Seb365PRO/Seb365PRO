@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>seb365 pro</title>
+  <title>SebLogix</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -161,7 +161,6 @@
     }
     .toast.success { border-left: 4px solid var(--accent-green); }
     .toast.error { border-left: 4px solid var(--accent-red); }
-    .amount-positive { color: var(--accent-green); } .amount-negative { color: var(--accent-red); }
 
     /* --- Autenticación Rediseñada --- */
     #auth-container {
@@ -258,7 +257,7 @@
     .mobile-nav-link.active { color: var(--brand-primary); }
 
     /* --- Dashboard & Reportes --- */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(154px, 1fr)); gap: 20px; margin-bottom: 24px; }
     .kpi-card {
         transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
@@ -383,13 +382,12 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
       <a href="#" class="header-logo" data-view="dashboard-view">
-        <svg class="header-logo-icon" viewBox="0 0 120 120">
-          <defs><linearGradient id="headerLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--grad-yellow)"/><stop offset="55%" stop-color="var(--grad-orange)"/><stop offset="100%" stop-color="var(--grad-red)"/></linearGradient></defs>
-          <g fill="url(#headerLogoGradient)">
-            <polygon points="60,10 100,30 60,50 20,30"/><polygon points="100,30 100,70 60,90 60,50"/><polygon points="20,30 60,50 60,90 20,70"/>
-          </g>
+        <svg class="header-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--brand-primary);">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
         </svg>
-        <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
+        <span class="header-logo-text"><span class="header-logo-seb">Seb</span><span class="header-logo-pro">Logix</span></span>
       </a>
       <div class="user-info">
         <button id="theme-toggle" title="Alternar tema" class="button-secondary" style="padding: 8px;">
@@ -672,11 +670,12 @@
         authContainer.innerHTML = `
         <div class="auth-box">
             <a href="#" class="header-logo" style="justify-content: center; text-decoration: none;">
-                <svg class="header-logo-icon" viewBox="0 0 120 120" style="width: 36px; height: 36px;">
-                  <defs><linearGradient id="authLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--grad-yellow)"/><stop offset="55%" stop-color="var(--grad-orange)"/><stop offset="100%" stop-color="var(--grad-red)"/></linearGradient></defs>
-                  <g fill="url(#authLogoGradient)"><polygon points="60,10 100,30 60,50 20,30"/><polygon points="100,30 100,70 60,90 60,50"/><polygon points="20,30 60,50 60,90 20,70"/></g>
+                <svg class="header-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--brand-primary); width: 36px; height: 36px;">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
                 </svg>
-                <span class="header-logo-text"><span class="header-logo-seb">seb365</span> <span class="header-logo-pro">pro</span></span>
+                <span class="header-logo-text"><span class="header-logo-seb">Seb</span><span class="header-logo-pro">Logix</span></span>
             </a>
             
             <div id="login-view" class="${loginActive ? '' : 'hidden'}">
@@ -920,48 +919,35 @@
                 <div class="kpi-grid">
                     <div class="card kpi-card" data-kpi="inventory-value">
                         <h3>Valor Total del Inventario</h3>
-                        <p id="db-kpi-inventory-value" style="color: var(--accent-blue);">${COP(0)}</p>
+                        <p id="db-kpi-inventory-value" style="color: #ccc;">${COP(0)}</p>
                     </div>
                      <div class="card kpi-card" data-kpi="gross-sales">
                         <h3>Ventas Brutas (Hoy)</h3>
-                        <p id="db-kpi-gross-sales" class="amount-positive">${COP(0)}</p>
+                        <p id="db-kpi-gross-sales" style="color: #ccc;">${COP(0)}</p>
                     </div>
                     <div class="card kpi-card" data-kpi="total-costs">
                         <h3>Costos Totales (Hoy)</h3>
-                        <p id="db-kpi-total-costs" class="amount-negative">${COP(0)}</p>
+                        <p id="db-kpi-total-costs" style="color: #ccc;">${COP(0)}</p>
                     </div>
                     <div class="card kpi-card" data-kpi="net-profit">
                         <h3>Ganancia Neta (Hoy)</h3>
-                        <p id="db-kpi-net-profit">${COP(0)}</p>
+                        <p id="db-kpi-net-profit" style="color: #ccc;">${COP(0)}</p>
                     </div>
                     <div class="card kpi-card" data-kpi="low-stock">
                         <h3>Productos Bajo Stock</h3>
-                        <p id="db-kpi-low-stock" style="color: var(--accent-yellow-tag);">0</p>
+                        <p id="db-kpi-low-stock" style="color: #ccc;">0</p>
                     </div>
                     <div class="card kpi-card" data-kpi="provider-balance">
                         <h3>Saldo Proveedores</h3>
-                        <p id="db-kpi-provider-balance" class="amount-negative">${COP(0)}</p>
+                        <p id="db-kpi-provider-balance" style="color: #ccc;">${COP(0)}</p>
                     </div>
                     <div class="card kpi-card" data-kpi="active-loans">
                         <h3>Préstamos Activos</h3>
-                        <p id="db-kpi-active-loans">${COP(0)}</p>
+                        <p id="db-kpi-active-loans" style="color: #ccc;">${COP(0)}</p>
                     </div>
                     <div class="card kpi-card" data-kpi="average-ticket">
                         <h3>Ticket Promedio (Hoy)</h3>
-                        <p id="db-kpi-average-ticket">${COP(0)}</p>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-bottom: 24px;">
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <h3>Ingresos por Hora (Últimas 24h)</h3>
-                            <div id="bar-chart-container"></div>
-                        </div>
-                        <div class="chart-container">
-                            <h3>Top 5 Productos (Hoy)</h3>
-                            <div id="donut-chart-container"></div>
-                        </div>
+                        <p id="db-kpi-average-ticket" style="color: #ccc;">${COP(0)}</p>
                     </div>
                 </div>
 
@@ -1373,7 +1359,6 @@
         document.getElementById('db-kpi-gross-sales').textContent = COP(dashboardData.grossSalesToday);
         document.getElementById('db-kpi-total-costs').textContent = COP(-dashboardData.totalCostsToday);
         document.getElementById('db-kpi-net-profit').textContent = COP(dashboardData.netProfitToday);
-        document.getElementById('db-kpi-net-profit').className = dashboardData.netProfitToday >= 0 ? 'amount-positive' : 'amount-negative';
         document.getElementById('db-kpi-low-stock').textContent = dashboardData.lowStockProducts.length;
         document.getElementById('db-kpi-provider-balance').textContent = COP(-dashboardData.providerBalance);
         document.getElementById('db-kpi-active-loans').textContent = COP(dashboardData.totalActiveLoans);
@@ -1406,139 +1391,8 @@
              salesSnapshot.forEach(saleDoc => salesLast24h.push(saleDoc.data()));
         }
 
-        renderBarChart(salesLast24h);
-        renderDonutChart(dashboardData.salesToday);
     }
     
-    // --- Funciones para Gráficos D3 ---
-    function renderBarChart(salesData) {
-        const container = d3.select("#bar-chart-container");
-        container.selectAll("*").remove(); 
-
-        if (salesData.length === 0) {
-            container.append("p").style("text-align", "center").style("color", "var(--text-secondary)").text("Sin ventas en las últimas 24h.");
-            return;
-        }
-
-        const hourlyData = d3.rollups(salesData, v => d3.sum(v, d => d.totalVenta), d => d.fecha.toDate().getHours())
-            .map(([key, value]) => ({ hour: key, total: value }))
-            .sort((a,b) => a.hour - b.hour);
-
-        const margin = {top: 20, right: 20, bottom: 30, left: 50};
-        const width = container.node().getBoundingClientRect().width - margin.left - margin.right;
-        const height = 250 - margin.top - margin.bottom;
-
-        const svg = container.append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-            
-        svg.append("defs").html(`<linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="var(--grad-red)" />
-            <stop offset="50%" stop-color="var(--grad-orange)" />
-            <stop offset="100%" stop-color="var(--grad-yellow)" />
-        </linearGradient>`);
-
-        const x = d3.scaleBand()
-            .domain(d3.range(24))
-            .range([0, width])
-            .padding(0.2);
-
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(hourlyData, d => d.total) * 1.1 || 1])
-            .range([height, 0]);
-            
-        svg.append("g")
-            .attr("class", "axis")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x).tickValues(x.domain().filter((d,i) => !(i%3))));
-            
-        svg.append("g")
-            .attr("class", "axis")
-            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d/1000}k`));
-            
-        const tooltip = d3.select("body").append("div").attr("class", "d3-tooltip");
-
-        svg.selectAll(".bar")
-            .data(hourlyData)
-            .enter().append("rect")
-            .attr("class", "bar")
-            .attr("x", d => x(d.hour))
-            .attr("y", d => y(d.total))
-            .attr("width", x.bandwidth())
-            .attr("height", d => height - y(d.total))
-            .attr("fill", "url(#barGradient)")
-            .on("mouseover", (event, d) => {
-                tooltip.transition().style("opacity", .9);
-                tooltip.html(`<strong>${d.hour}:00h</strong><br/>${COP(d.total)}`)
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", () => {
-                tooltip.transition().style("opacity", 0);
-            });
-    }
-
-    function renderDonutChart(salesData) {
-        const container = d3.select("#donut-chart-container");
-        container.selectAll("*").remove();
-
-        if (salesData.length === 0) {
-            container.append("p").style("text-align", "center").style("color", "var(--text-secondary)").text("Sin ventas hoy.");
-            return;
-        }
-
-        const productData = d3.rollups(salesData, v => d3.sum(v, d => d.totalVenta), d => d.productId)
-            .map(([key, value]) => ({
-                productId: key,
-                name: appState.products.find(p => p.id === key)?.nombre || 'Desconocido',
-                total: value
-            }))
-            .sort((a,b) => b.total - a.total)
-            .slice(0, 5);
-
-        const width = container.node().getBoundingClientRect().width;
-        const height = 250;
-        const radius = Math.min(width, height) / 2 - 20;
-        
-        const svg = container.append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", `translate(${width / 2},${height / 2})`);
-
-        const color = d3.scaleOrdinal()
-            .domain(productData.map(d => d.productId))
-            .range(d3.quantize(t => d3.interpolateSpectral(t * 0.7 + 0.1), productData.length).reverse());
-            
-        const pie = d3.pie().value(d => d.total);
-        const data_ready = pie(productData);
-
-        const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius * 0.8);
-        
-        const tooltip = d3.select("body").append("div").attr("class", "d3-tooltip");
-        
-        svg.selectAll('path')
-            .data(data_ready)
-            .enter()
-            .append('path')
-            .attr('d', arc)
-            .attr('fill', d => color(d.data.productId))
-            .attr("stroke", "var(--bg-secondary)")
-            .style("stroke-width", "3px")
-            .on("mouseover", (event, d) => {
-                tooltip.transition().style("opacity", .9);
-                tooltip.html(`<strong>${d.data.name}</strong><br/>${COP(d.data.total)}`)
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", () => {
-                tooltip.transition().style("opacity", 0);
-            });
-    }
-
-
     function attachHandlers(id){
         if (id === 'dashboard-view') {
             updateDashboardData();
